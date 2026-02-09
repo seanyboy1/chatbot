@@ -692,3 +692,61 @@ body {
     font-size: 11px;
   }
 }
+
+/* Terminal Header Card in Sidebar */
+.terminal-header-card {
+  background: var(--bg-terminal);
+  border: 1px solid var(--green-dark);
+  border-radius: 4px;
+  padding: 16px;
+  box-shadow: 
+    0 0 15px rgba(0, 255, 65, 0.08),
+    inset 0 0 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.terminal-header-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  pointer-events: none;
+  border-radius: 4px;
+}
+
+.terminal-header-card .terminal-dots {
+  display: flex;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
+}
+
+.terminal-title-sidebar {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--green);
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+  font-weight: bold;
+}
+
+.terminal-status-sidebar {
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--green-dim);
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 1;
+}
