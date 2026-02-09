@@ -46,10 +46,49 @@ const sendBtn = document.getElementById('send-btn');
 function appendMessage(text, type) {
   const msg = document.createElement('div');
   msg.classList.add('message', type);
-  msg.textContent = text;
+
+  // Format the message with basic markdown-style parsing
+  if (type === 'bot') {
+    msg.innerHTML = formatBotMessage(text);
+  } else {
+    msg.textContent = text;
+  }
+
   chatWindow.appendChild(msg);
   chatWindow.scrollTop = chatWindow.scrollHeight;
   return msg;
+}
+
+function formatBotMessage(text) {
+  // Convert markdown-style formatting to HTML
+  let formatted = text
+    // Bold: **text** or __text__
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__(.+?)__/g, '<strong>$1</strong>')
+    // Code blocks: ```code```
+    .replace(/```(.+?)```/gs, '<pre><code>$1</code></pre>')
+    // Inline code: `code`
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    // Lists: - item or * item
+    .replace(/^[\-\*] (.+)$/gm, '<li>$1</li>')
+    // Numbered lists: 1. item
+    .replace(/^\d+\.\s(.+)$/gm, '<li>$1</li>')
+    // Headers: ## Header
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    // Paragraphs: double newline
+    .split('\n\n').map(para => {
+      if (para.includes('<li>')) {
+        return '<ul>' + para + '</ul>';
+      }
+      if (para.startsWith('<h') || para.startsWith('<pre>')) {
+        return para;
+      }
+      return para ? '<p>' + para.replace(/\n/g, '<br>') + '</p>' : '';
+    }).join('');
+
+  return formatted;
 }
 
 function showTypingIndicator() {
