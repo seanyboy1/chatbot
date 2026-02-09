@@ -3,48 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CHATBOT // TERMINAL</title>
+  <title>CHATBOT // ADMIN PANEL</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <canvas id="matrix-rain"></canvas>
 
-  <div class="terminal-container">
-    <div class="terminal-header">
-      <div class="terminal-dots">
-        <span class="dot red"></span>
-        <span class="dot yellow"></span>
-        <span class="dot green"></span>
-      </div>
-      <div class="terminal-title">CHATBOT_v1.0 // SECURE_CHANNEL</div>
-      <div class="terminal-status">
-        <span class="status-indicator"></span> ONLINE
-      </div>
+  <!-- Top Navigation -->
+  <nav class="dashboard-nav">
+    <div class="nav-brand">CHATBOT // ADMIN PANEL</div>
+    <div class="nav-status">
+      <span class="status-dot"></span> ONLINE
     </div>
+  </nav>
 
-    <div class="terminal-body" id="chat-window">
-      <div class="boot-sequence" id="boot-sequence">
-        <p>> INITIALIZING SYSTEM...</p>
-        <p>> LOADING NEURAL NETWORK...</p>
-        <p>> ESTABLISHING SECURE CONNECTION...</p>
-        <p>> CHATBOT ONLINE. READY FOR INPUT.</p>
-        <p class="separator">════════════════════════════════════════════════</p>
-      </div>
-    </div>
+  <!-- Dashboard Grid -->
+  <div class="dashboard-container">
 
-    <div class="terminal-input-area">
-      <div class="input-row">
-        <span class="prompt-symbol">&gt;&gt;&gt;</span>
-        <input
-          type="text"
-          id="user-input"
-          placeholder="ENTER MESSAGE..."
-          autocomplete="off"
-          spellcheck="false"
-        >
-        <button id="send-btn">TRANSMIT</button>
+    <!-- Left Sidebar -->
+    <aside class="sidebar-left">
+      <div class="stats-card">
+        <h3>System Status</h3>
+        <div class="stat-row">
+          <span>Webhook</span>
+          <span class="stat-value" id="webhook-status">CONNECTED</span>
+        </div>
+        <div class="stat-row">
+          <span>Uptime</span>
+          <span class="stat-value" id="uptime">--</span>
+        </div>
       </div>
-    </div>
+
+      <div class="stats-card">
+        <h3>Statistics</h3>
+        <div class="stat-row">
+          <span>Messages</span>
+          <span class="stat-value" id="message-count">0</span>
+        </div>
+        <div class="stat-row">
+          <span>Avg Response</span>
+          <span class="stat-value" id="avg-response">--</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Terminal -->
+    <main class="dashboard-main">
+      <div class="terminal-container">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <div class="terminal-title">CHATBOT_v1.0 // SECURE_CHANNEL</div>
+          <div class="terminal-status">
+            <span class="status-indicator"></span> ONLINE
+          </div>
+        </div>
+
+        <div class="terminal-body" id="chat-window">
+          <div class="boot-sequence" id="boot-sequence">
+            <p>> INITIALIZING SYSTEM...</p>
+            <p>> LOADING NEURAL NETWORK...</p>
+            <p>> ESTABLISHING SECURE CONNECTION...</p>
+            <p>> CHATBOT ONLINE. READY FOR INPUT.</p>
+            <p class="separator">════════════════════════════════════════════════</p>
+          </div>
+        </div>
+
+        <div class="terminal-input-area">
+          <div class="input-row">
+            <span class="prompt-symbol">&gt;&gt;&gt;</span>
+            <input
+              type="text"
+              id="user-input"
+              placeholder="ENTER MESSAGE..."
+              autocomplete="off"
+              spellcheck="false"
+            >
+            <button id="send-btn">TRANSMIT</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Sidebar -->
+    <aside class="sidebar-right">
+      <div class="activity-card">
+        <h3>Recent Activity</h3>
+        <div id="activity-log" class="activity-list">
+          <!-- Activity items will be added here -->
+        </div>
+      </div>
+
+      <div class="actions-card">
+        <h3>Quick Actions</h3>
+        <button class="action-btn" id="clear-chat">Clear Chat</button>
+        <button class="action-btn" id="export-chat">Export</button>
+        <button class="action-btn" id="test-connection">Test Connection</button>
+      </div>
+    </aside>
+
   </div>
 
   <script src="/js/app.js"></script>

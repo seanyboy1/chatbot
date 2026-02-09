@@ -148,3 +148,168 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setTimeout(() => userInput.focus(), bootLines.length * 400);
 });
+
+// ══════════════════════════════════════════════════════════
+// DASHBOARD FUNCTIONALITY
+// ══════════════════════════════════════════════════════════
+
+let messageCount = 0;
+let startTime = Date.now();
+let responseTimes = [];
+
+function updateStats() {
+  // Update message count
+  const messageCountEl = document.getElementById('message-count');
+  if (messageCountEl) {
+    messageCountEl.textContent = messageCount;
+  }
+
+  // Update uptime
+  const uptimeEl = document.getElementById('uptime');
+  if (uptimeEl) {
+    const uptime = Math.floor((Date.now() - startTime) / 1000 / 60);
+    uptimeEl.textContent = `${uptime}m`;
+  }
+
+  // Update average response time
+  const avgResponseEl = document.getElementById('avg-response');
+  if (avgResponseEl && responseTimes.length > 0) {
+    const avg = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+    avgResponseEl.textContent = `${avg.toFixed(1)}s`;
+  }
+}
+
+function addActivityLog(message, type = 'info') {
+  const log = document.getElementById('activity-log');
+  if (!log) return;
+
+  const item = document.createElement('div');
+  item.className = 'activity-item';
+  const time = new Date().toLocaleTimeString();
+  item.textContent = `[${time}] ${message}`;
+  log.prepend(item);
+
+  // Keep only last 20 items
+  while (log.children.length > 20) {
+    log.removeChild(log.lastChild);
+  }
+}
+
+// Override sendMessage to include dashboard tracking
+const originalSendMessage = sendMessage;
+sendMessage = async function() {
+  const text = userInput.value.trim();
+  if (!text) return;
+
+  messageCount++;
+  const sendTime = Date.now();
+
+  // Log activity
+  const shortText = text.length > 30 ? text.substring(0, 30) + '...' : text;
+  addActivityLog(`User: ${shortText}`, 'user');
+
+  // Call original sendMessage
+  appendMessage(text, 'user');
+  userInput.value = '';
+  userInput.disabled = true;
+  sendBtn.disabled = true;
+
+  const typing = showTypingIndicator();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text }),
+    });
+
+    const data = await res.json();
+    typing.remove();
+    appendMessage(data.reply, 'bot');
+
+    // Track response time
+    const responseTime = (Date.now() - sendTime) / 1000;
+    responseTimes.push(responseTime);
+    if (responseTimes.length > 10) responseTimes.shift();
+
+    updateStats();
+    addActivityLog('Response received', 'success');
+  } catch {
+    typing.remove();
+    appendMessage('ERROR: CONNECTION LOST. RETRANSMIT.', 'bot');
+    addActivityLog('ERROR: Connection failed', 'error');
+  } finally {
+    userInput.disabled = false;
+    sendBtn.disabled = false;
+    userInput.focus();
+  }
+};
+
+// Quick Actions
+document.getElementById('clear-chat')?.addEventListener('click', () => {
+  if (confirm('Clear all chat messages?')) {
+    const chatWindow = document.getElementById('chat-window');
+    chatWindow.innerHTML = '';
+    messageCount = 0;
+    updateStats();
+    addActivityLog('Chat history cleared', 'system');
+  }
+});
+
+document.getElementById('export-chat')?.addEventListener('click', () => {
+  const messages = Array.from(document.querySelectorAll('.message'))
+    .map(m => m.textContent)
+    .join('\n\n');
+
+  const blob = new Blob([messages], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `chat-export-${Date.now()}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  addActivityLog('Chat exported successfully', 'system');
+});
+
+document.getElementById('test-connection')?.addEventListener('click', async () => {
+  addActivityLog('Testing webhook connection...', 'system');
+
+  const webhookStatusEl = document.getElementById('webhook-status');
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'ping' }),
+    });
+
+    if (res.ok) {
+      addActivityLog('✓ Connection test: SUCCESS', 'success');
+      if (webhookStatusEl) {
+        webhookStatusEl.textContent = 'CONNECTED';
+        webhookStatusEl.style.color = 'var(--green)';
+      }
+    } else {
+      addActivityLog('✗ Connection test: FAILED (HTTP ' + res.status + ')', 'error');
+      if (webhookStatusEl) {
+        webhookStatusEl.textContent = 'ERROR';
+        webhookStatusEl.style.color = '#ff5f56';
+      }
+    }
+  } catch (error) {
+    addActivityLog('✗ Connection test: FAILED', 'error');
+    if (webhookStatusEl) {
+      webhookStatusEl.textContent = 'OFFLINE';
+      webhookStatusEl.style.color = '#ff5f56';
+    }
+  }
+});
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', () => {
+  updateStats();
+  setInterval(updateStats, 5000); // Update every 5 seconds
+  addActivityLog('Dashboard initialized', 'system');
+  addActivityLog('System ready', 'system');
+});
