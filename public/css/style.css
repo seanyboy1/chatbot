@@ -742,40 +742,37 @@ body {
 
   .dashboard-container {
     padding-top: 120px; /* Account for nav + tabs */
+    grid-template-rows: auto 1fr;
   }
 
-  /* Hide sidebars by default on mobile */
-  .sidebar-left,
-  .sidebar-right,
+  /* Terminal always visible at bottom */
   .dashboard-main {
+    display: flex !important;
+    order: 2;
+  }
+
+  /* Tab content area for cards */
+  .sidebar-left,
+  .sidebar-right {
+    order: 1;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Hide all cards by default */
+  .stats-card,
+  .activity-card,
+  .actions-card {
     display: none;
-  }
-
-  /* Show active tab content */
-  .sidebar-left.active,
-  .sidebar-right.active,
-  .dashboard-main.active {
-    display: flex;
-  }
-
-  /* When stats tab is active */
-  .sidebar-left.active {
-    flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  /* When actions tab is active */
-  .sidebar-right.active {
-    flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .sidebar-left.active .stats-card,
-  .sidebar-right.active .activity-card,
-  .sidebar-right.active .actions-card {
     min-width: 100%;
     width: 100%;
+  }
+
+  /* Show cards based on active tab */
+  .stats-card.active,
+  .activity-card.active,
+  .actions-card.active {
+    display: block;
   }
 }

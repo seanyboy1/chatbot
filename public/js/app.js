@@ -324,37 +324,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('DOMContentLoaded', () => {
   const tabBtns = document.querySelectorAll('.tab-btn');
-  const sidebarLeft = document.querySelector('.sidebar-left');
-  const sidebarRight = document.querySelector('.sidebar-right');
-  const dashboardMain = document.querySelector('.dashboard-main');
+
+  // Get individual cards
+  const systemCard = document.querySelector('.stats-card:nth-child(1)'); // System Status
+  const statsCard = document.querySelector('.stats-card:nth-child(2)');  // Statistics
+  const actionsCard = document.querySelector('.actions-card');
+  const activityCard = document.querySelector('.activity-card');
 
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       // Remove active class from all buttons
       tabBtns.forEach(b => b.classList.remove('active'));
-      
+
       // Add active class to clicked button
       btn.classList.add('active');
 
-      // Hide all content
-      sidebarLeft?.classList.remove('active');
-      sidebarRight?.classList.remove('active');
-      dashboardMain?.classList.remove('active');
+      // Hide all cards
+      systemCard?.classList.remove('active');
+      statsCard?.classList.remove('active');
+      actionsCard?.classList.remove('active');
+      activityCard?.classList.remove('active');
 
-      // Show selected tab content
+      // Show selected card
       const tab = btn.getAttribute('data-tab');
-      if (tab === 'stats') {
-        sidebarLeft?.classList.add('active');
+      if (tab === 'system') {
+        systemCard?.classList.add('active');
+      } else if (tab === 'statistics') {
+        statsCard?.classList.add('active');
       } else if (tab === 'actions') {
-        sidebarRight?.classList.add('active');
-      } else if (tab === 'chat') {
-        dashboardMain?.classList.add('active');
+        actionsCard?.classList.add('active');
+      } else if (tab === 'activity') {
+        activityCard?.classList.add('active');
       }
     });
   });
 
-  // Initialize: show stats tab by default on mobile
+  // Initialize: show system card by default on mobile
   if (window.innerWidth <= 1200) {
-    sidebarLeft?.classList.add('active');
+    systemCard?.classList.add('active');
   }
 });
