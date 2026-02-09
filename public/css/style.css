@@ -20,11 +20,9 @@ body {
   background: var(--bg);
   color: var(--green);
   font-family: 'Share Tech Mono', 'Courier New', monospace;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* ── Matrix rain canvas ── */
@@ -581,6 +579,8 @@ body {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr auto;
     padding: 80px 16px 16px;
+    height: auto;
+    min-height: 100vh;
   }
 
   .sidebar-left,
@@ -588,17 +588,44 @@ body {
     flex-direction: row;
     overflow-x: auto;
     overflow-y: hidden;
+    gap: 12px;
+    padding-bottom: 8px;
+  }
+
+  .sidebar-left::-webkit-scrollbar,
+  .sidebar-right::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .sidebar-left::-webkit-scrollbar-thumb,
+  .sidebar-right::-webkit-scrollbar-thumb {
+    background: var(--green-dark);
+    border-radius: 3px;
   }
 
   .stats-card,
   .activity-card,
   .actions-card {
-    min-width: 240px;
+    min-width: 260px;
     flex-shrink: 0;
   }
 
+  .dashboard-main {
+    order: 2;
+  }
+
+  .sidebar-left {
+    order: 1;
+  }
+
+  .sidebar-right {
+    order: 3;
+  }
+
   .dashboard-main .terminal-container {
-    height: 600px;
+    height: 70vh;
+    min-height: 500px;
+    max-height: 800px;
   }
 }
 
@@ -619,6 +646,49 @@ body {
   .stats-card,
   .activity-card,
   .actions-card {
-    min-width: 200px;
+    min-width: 220px;
+  }
+
+  .dashboard-main .terminal-container {
+    height: 60vh;
+    min-height: 400px;
+  }
+
+  .activity-list {
+    max-height: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-brand {
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .dashboard-container {
+    padding: 70px 12px 12px;
+  }
+
+  .stats-card,
+  .activity-card,
+  .actions-card {
+    min-width: 180px;
+    padding: 12px;
+  }
+
+  .stats-card h3,
+  .activity-card h3,
+  .actions-card h3 {
+    font-size: 10px;
+  }
+
+  .stat-row {
+    font-size: 11px;
+    padding: 8px 0;
+  }
+
+  .action-btn {
+    padding: 10px;
+    font-size: 11px;
   }
 }
