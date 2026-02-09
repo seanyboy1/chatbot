@@ -577,7 +577,7 @@ body {
 @media (max-width: 1200px) {
   .dashboard-container {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto auto 1fr;
     padding: 80px 16px 16px;
     height: auto;
     min-height: 100vh;
@@ -610,15 +610,16 @@ body {
     flex-shrink: 0;
   }
 
-  .dashboard-main {
-    order: 2;
-  }
-
+  /* Reorder: sidebars on top, terminal at bottom */
   .sidebar-left {
     order: 1;
   }
 
   .sidebar-right {
+    order: 2;
+  }
+
+  .dashboard-main {
     order: 3;
   }
 
