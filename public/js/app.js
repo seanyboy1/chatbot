@@ -146,7 +146,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }, i * 400);
   });
 
-  setTimeout(() => userInput.focus(), bootLines.length * 400);
+  // Scroll chat window to bottom on load
+  setTimeout(() => {
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+    userInput.focus();
+  }, bootLines.length * 400);
 });
 
 // ══════════════════════════════════════════════════════════
