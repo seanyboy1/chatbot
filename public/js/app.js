@@ -317,3 +317,44 @@ document.addEventListener('DOMContentLoaded', () => {
   addActivityLog('Dashboard initialized', 'system');
   addActivityLog('System ready', 'system');
 });
+
+// ══════════════════════════════════════════════════════════
+// MOBILE TAB NAVIGATION
+// ══════════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const sidebarLeft = document.querySelector('.sidebar-left');
+  const sidebarRight = document.querySelector('.sidebar-right');
+  const dashboardMain = document.querySelector('.dashboard-main');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Remove active class from all buttons
+      tabBtns.forEach(b => b.classList.remove('active'));
+      
+      // Add active class to clicked button
+      btn.classList.add('active');
+
+      // Hide all content
+      sidebarLeft?.classList.remove('active');
+      sidebarRight?.classList.remove('active');
+      dashboardMain?.classList.remove('active');
+
+      // Show selected tab content
+      const tab = btn.getAttribute('data-tab');
+      if (tab === 'stats') {
+        sidebarLeft?.classList.add('active');
+      } else if (tab === 'actions') {
+        sidebarRight?.classList.add('active');
+      } else if (tab === 'chat') {
+        dashboardMain?.classList.add('active');
+      }
+    });
+  });
+
+  // Initialize: show stats tab by default on mobile
+  if (window.innerWidth <= 1200) {
+    sidebarLeft?.classList.add('active');
+  }
+});
