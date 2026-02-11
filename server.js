@@ -43,6 +43,37 @@ app.use(async (req, res, next) => {
 
 app.use(express.static(join(__dirname, 'public')));
 
+// Endpoint to save activity log entry
+app.post('/api/activity', async (req, res) => {
+  const { message, action } = req.body;
+
+  if (!message) {
+    return res.status(400).json({ error: 'Message is required' });
+  }
+
+  const ip = req.headers['x-forwarded-for'] ||
+             req.headers['x-real-ip'] ||
+             req.connection.remoteAddress ||
+             req.ip;
+  const userAgent = req.headers['user-agent'];
+
+  try {
+    await connectDB();
+    await ActivityLog.create({
+      ip,
+      userAgent,
+      action: action || 'user_action',
+      message,
+      sessionId: userSessionId || 'unknown',
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Activity logging error:', error);
+    res.status(500).json({ error: 'Failed to log activity' });
+  }
+});
+
 // Endpoint to get recent activity from database
 app.get('/api/activity', async (req, res) => {
   try {

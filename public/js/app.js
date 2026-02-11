@@ -197,6 +197,16 @@ function addActivityLog(message, type = 'info') {
   while (log.children.length > 20) {
     log.removeChild(log.lastChild);
   }
+
+  // Save to database
+  fetch('/api/activity', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: `[${time}] ${message}`,
+      action: type,
+    }),
+  }).catch(error => console.error('Failed to save activity log:', error));
 }
 
 // Override sendMessage to include dashboard tracking
@@ -352,6 +362,9 @@ async function loadRecentActivity() {
             message = `[${time}] 📍 User connected: ${activity.ip}`;
           } else if (activity.action === 'message') {
             message = `[${time}] 💬 Message from ${activity.ip}`;
+          } else if (activity.message) {
+            // Show custom activity messages (system, user actions, etc.)
+            message = activity.message;
           }
 
           if (message) {
