@@ -310,11 +310,27 @@ document.getElementById('test-connection')?.addEventListener('click', async () =
   }
 });
 
+// Get and display user IP address
+async function getUserIP() {
+  try {
+    const res = await fetch('/api/ip');
+    const data = await res.json();
+    if (data.ip) {
+      addActivityLog(`User connected from IP: ${data.ip}`, 'system');
+      return data.ip;
+    }
+  } catch (error) {
+    console.error('Failed to get IP:', error);
+  }
+  return null;
+}
+
 // Initialize dashboard
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   updateStats();
   setInterval(updateStats, 5000); // Update every 5 seconds
   addActivityLog('Dashboard initialized', 'system');
+  await getUserIP(); // Get and log user IP
   addActivityLog('System ready', 'system');
 });
 

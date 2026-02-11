@@ -12,6 +12,17 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
+// Endpoint to get user's IP address
+app.get('/api/ip', (req, res) => {
+  // Get IP from headers (works with proxies like Vercel)
+  const ip = req.headers['x-forwarded-for'] ||
+             req.headers['x-real-ip'] ||
+             req.connection.remoteAddress ||
+             req.ip;
+
+  res.json({ ip: ip });
+});
+
 // n8n webhook integration
 const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
 
