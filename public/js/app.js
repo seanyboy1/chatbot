@@ -359,8 +359,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Initialize: show system card by default on mobile
-  if (window.innerWidth <= 1200) {
-    systemCard?.classList.add('active');
-  }
+  // Initialize: show system card by default
+  systemCard?.classList.add('active');
 });
