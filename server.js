@@ -12,6 +12,35 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+
+// Middleware to log every page visit
+app.use(async (req, res, next) => {
+  // Only log HTML page requests (not CSS, JS, images, API calls)
+  if (req.method === 'GET' && req.path === '/' && !req.path.startsWith('/api')) {
+    const ip = req.headers['x-forwarded-for'] ||
+               req.headers['x-real-ip'] ||
+               req.connection.remoteAddress ||
+               req.ip;
+    const userAgent = req.headers['user-agent'];
+
+    // Log page visit to database
+    try {
+      await connectDB();
+      await ActivityLog.create({
+        ip,
+        userAgent,
+        action: 'page_visit',
+        sessionId: 'pending',
+        timestamp: new Date(),
+      });
+    } catch (error) {
+      // Silent fail - don't break the page load
+      console.error('Page visit logging error:', error);
+    }
+  }
+  next();
+});
+
 app.use(express.static(join(__dirname, 'public')));
 
 // Endpoint to get user's IP address
