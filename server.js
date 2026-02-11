@@ -2,6 +2,8 @@ import 'dotenv/config';
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { connectDB, ActivityLog, Session } from './db.js';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -13,14 +15,46 @@ app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
 // Endpoint to get user's IP address
-app.get('/api/ip', (req, res) => {
+app.get('/api/ip', async (req, res) => {
   // Get IP from headers (works with proxies like Vercel)
   const ip = req.headers['x-forwarded-for'] ||
              req.headers['x-real-ip'] ||
              req.connection.remoteAddress ||
              req.ip;
 
-  res.json({ ip: ip });
+  const userAgent = req.headers['user-agent'];
+  const sessionId = crypto.randomBytes(16).toString('hex');
+
+  // Log to database
+  try {
+    await connectDB();
+
+    // Log connection activity
+    await ActivityLog.create({
+      ip,
+      userAgent,
+      action: 'connect',
+      sessionId,
+    });
+
+    // Create or update session
+    await Session.findOneAndUpdate(
+      { ip },
+      {
+        ip,
+        userAgent,
+        lastSeen: new Date(),
+        sessionId,
+        $inc: { messageCount: 0 },
+        $setOnInsert: { firstSeen: new Date() },
+      },
+      { upsert: true, new: true }
+    );
+  } catch (error) {
+    console.error('Database logging error:', error);
+  }
+
+  res.json({ ip, sessionId });
 });
 
 // n8n webhook integration
@@ -34,11 +68,18 @@ if (!N8N_WEBHOOK_URL) {
 }
 
 app.post('/api/chat', async (req, res) => {
-  const { message } = req.body;
+  const { message, sessionId } = req.body;
 
   if (!message) {
     return res.status(400).json({ error: 'Message is required' });
   }
+
+  // Get user info for logging
+  const ip = req.headers['x-forwarded-for'] ||
+             req.headers['x-real-ip'] ||
+             req.connection.remoteAddress ||
+             req.ip;
+  const userAgent = req.headers['user-agent'];
 
   try {
     // Forward message to n8n webhook using GET request with query parameter
@@ -73,6 +114,27 @@ app.post('/api/chat', async (req, res) => {
         // If not JSON, use the raw text
         reply = responseText;
       }
+    }
+
+    // Log message to database
+    try {
+      await connectDB();
+      await ActivityLog.create({
+        ip,
+        userAgent,
+        action: 'message',
+        message,
+        response: reply,
+        sessionId: sessionId || 'unknown',
+      });
+
+      // Update session message count
+      await Session.findOneAndUpdate(
+        { ip },
+        { $inc: { messageCount: 1 }, lastSeen: new Date() }
+      );
+    } catch (dbError) {
+      console.error('Database logging error:', dbError);
     }
 
     res.json({ reply });

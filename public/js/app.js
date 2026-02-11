@@ -115,7 +115,7 @@ async function sendMessage() {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text }),
+      body: JSON.stringify({ message: text, sessionId: userSessionId }),
     });
 
     const data = await res.json();
@@ -224,7 +224,7 @@ sendMessage = async function() {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text }),
+      body: JSON.stringify({ message: text, sessionId: userSessionId }),
     });
 
     const data = await res.json();
@@ -310,12 +310,16 @@ document.getElementById('test-connection')?.addEventListener('click', async () =
   }
 });
 
+// Store session ID globally
+let userSessionId = null;
+
 // Get and display user IP address
 async function getUserIP() {
   try {
     const res = await fetch('/api/ip');
     const data = await res.json();
     if (data.ip) {
+      userSessionId = data.sessionId; // Store session ID
       addActivityLog(`User connected from IP: ${data.ip}`, 'system');
       return data.ip;
     }
