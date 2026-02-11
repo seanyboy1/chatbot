@@ -17,7 +17,7 @@ let drops = Array(columns).fill(1);
 function drawRain() {
   ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#00ff41';
+  ctx.fillStyle = '#5DADE2';
   ctx.font = `${fontSize}px monospace`;
 
   for (let i = 0; i < drops.length; i++) {
