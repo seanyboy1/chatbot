@@ -346,38 +346,41 @@ async function loadRecentActivity() {
     const data = await res.json();
 
     if (data.activity && data.activity.length > 0) {
-      // Clear default activity items first
       const activityLog = document.getElementById('activity-log');
       if (activityLog) {
+        // Clear and rebuild from database (ensures persistence across sessions)
         activityLog.innerHTML = '';
 
-        // Add recent activity from database
+        // Add recent activity from database (newest first)
         data.activity.forEach(activity => {
           const time = new Date(activity.timestamp).toLocaleTimeString();
           let message = '';
 
           if (activity.action === 'page_visit') {
-            message = `[${time}] 🌐 Visitor from ${activity.ip}`;
+            message = `🌐 Visitor from ${activity.ip}`;
           } else if (activity.action === 'connect') {
-            message = `[${time}] 📍 User connected: ${activity.ip}`;
+            message = `📍 User connected: ${activity.ip}`;
           } else if (activity.action === 'message') {
-            message = `[${time}] 💬 Message from ${activity.ip}`;
+            message = `💬 Message from ${activity.ip}`;
           } else if (activity.message) {
-            // Show custom activity messages (system, user actions, etc.)
-            message = activity.message;
+            // Show custom activity messages (already has timestamp from database)
+            message = activity.message.replace(/^\[\d{1,2}:\d{2}:\d{2}[^\]]*\]\s*/, ''); // Remove old timestamp
           }
 
           if (message) {
             const item = document.createElement('div');
             item.className = 'activity-item';
-            item.textContent = message;
+            item.textContent = `[${time}] ${message}`;
             activityLog.appendChild(item);
           }
         });
 
-        // Add stats
+        // Add stats at bottom
         if (data.stats && data.stats.uniqueVisitors24h > 0) {
-          addActivityLog(`📊 ${data.stats.uniqueVisitors24h} unique visitors (24h)`, 'system');
+          const statsItem = document.createElement('div');
+          statsItem.className = 'activity-item';
+          statsItem.textContent = `📊 ${data.stats.uniqueVisitors24h} unique visitors (24h)`;
+          activityLog.appendChild(statsItem);
         }
       }
     }
@@ -390,9 +393,13 @@ async function loadRecentActivity() {
 document.addEventListener('DOMContentLoaded', async () => {
   updateStats();
   setInterval(updateStats, 5000); // Update every 5 seconds
+
+  // Load activity from database FIRST (this shows all previous sessions)
+  await loadRecentActivity();
+
+  // Then add current session logs
   addActivityLog('Dashboard initialized', 'system');
   await getUserIP(); // Get and log user IP
-  await loadRecentActivity(); // Load recent activity from database
   addActivityLog('System ready', 'system');
 
   // Refresh activity every 30 seconds
