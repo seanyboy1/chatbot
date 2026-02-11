@@ -403,9 +403,9 @@ body {
 /* Dashboard Grid Container */
 .dashboard-container {
   display: grid;
-  grid-template-columns: 260px 1fr 260px;
+  grid-template-columns: 1fr;
   gap: 20px;
-  padding: 80px 20px 20px;
+  padding: 120px 20px 20px;
   height: 100vh;
   max-width: 1920px;
   margin: 0 auto;
@@ -696,7 +696,7 @@ body {
 
 /* Mobile Tab Navigation */
 .mobile-tabs {
-  display: none;
+  display: flex;
   position: fixed;
   top: 60px;
   left: 0;
@@ -735,44 +735,49 @@ body {
   text-shadow: 0 0 8px var(--blue-glow);
 }
 
+/* Tab behavior for all screen sizes */
+.dashboard-container {
+  padding-top: 120px; /* Account for nav + tabs */
+  grid-template-rows: auto 1fr;
+  grid-template-columns: 1fr;
+}
+
+/* Terminal always visible at bottom */
+.dashboard-main {
+  display: flex !important;
+  order: 2;
+}
+
+/* Tab content area for cards */
+.sidebar-left,
+.sidebar-right {
+  order: 1;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Hide all cards by default */
+.stats-card,
+.activity-card,
+.actions-card {
+  display: none;
+  min-width: 100%;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Show cards based on active tab */
+.stats-card.active,
+.activity-card.active,
+.actions-card.active {
+  display: block;
+}
+
 @media (max-width: 1200px) {
-  .mobile-tabs {
-    display: flex;
-  }
-
-  .dashboard-container {
-    padding-top: 120px; /* Account for nav + tabs */
-    grid-template-rows: auto 1fr;
-  }
-
-  /* Terminal always visible at bottom */
-  .dashboard-main {
-    display: flex !important;
-    order: 2;
-  }
-
-  /* Tab content area for cards */
-  .sidebar-left,
-  .sidebar-right {
-    order: 1;
-    flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  /* Hide all cards by default */
   .stats-card,
   .activity-card,
   .actions-card {
-    display: none;
-    min-width: 100%;
-    width: 100%;
+    max-width: 100%;
   }
-
-  /* Show cards based on active tab */
-  .stats-card.active,
-  .activity-card.active,
-  .actions-card.active {
-    display: block;
-  }
-}
