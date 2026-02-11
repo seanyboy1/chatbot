@@ -43,6 +43,35 @@ app.use(async (req, res, next) => {
 
 app.use(express.static(join(__dirname, 'public')));
 
+// Endpoint to get recent activity from database
+app.get('/api/activity', async (req, res) => {
+  try {
+    await connectDB();
+
+    // Get last 20 activity logs
+    const recentActivity = await ActivityLog.find()
+      .sort({ timestamp: -1 })
+      .limit(20)
+      .select('ip action timestamp message');
+
+    // Get unique visitor count (last 24 hours)
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const uniqueVisitors = await Session.countDocuments({
+      lastSeen: { $gte: oneDayAgo }
+    });
+
+    res.json({
+      activity: recentActivity,
+      stats: {
+        uniqueVisitors24h: uniqueVisitors
+      }
+    });
+  } catch (error) {
+    console.error('Activity fetch error:', error);
+    res.json({ activity: [], stats: { uniqueVisitors24h: 0 } });
+  }
+});
+
 // Endpoint to get user's IP address
 app.get('/api/ip', async (req, res) => {
   // Get IP from headers (works with proxies like Vercel)

@@ -329,13 +329,61 @@ async function getUserIP() {
   return null;
 }
 
+// Load recent activity from database
+async function loadRecentActivity() {
+  try {
+    const res = await fetch('/api/activity');
+    const data = await res.json();
+
+    if (data.activity && data.activity.length > 0) {
+      // Clear default activity items first
+      const activityLog = document.getElementById('activity-log');
+      if (activityLog) {
+        activityLog.innerHTML = '';
+
+        // Add recent activity from database
+        data.activity.forEach(activity => {
+          const time = new Date(activity.timestamp).toLocaleTimeString();
+          let message = '';
+
+          if (activity.action === 'page_visit') {
+            message = `[${time}] 🌐 Visitor from ${activity.ip}`;
+          } else if (activity.action === 'connect') {
+            message = `[${time}] 📍 User connected: ${activity.ip}`;
+          } else if (activity.action === 'message') {
+            message = `[${time}] 💬 Message from ${activity.ip}`;
+          }
+
+          if (message) {
+            const item = document.createElement('div');
+            item.className = 'activity-item';
+            item.textContent = message;
+            activityLog.appendChild(item);
+          }
+        });
+
+        // Add stats
+        if (data.stats && data.stats.uniqueVisitors24h > 0) {
+          addActivityLog(`📊 ${data.stats.uniqueVisitors24h} unique visitors (24h)`, 'system');
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load activity:', error);
+  }
+}
+
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', async () => {
   updateStats();
   setInterval(updateStats, 5000); // Update every 5 seconds
   addActivityLog('Dashboard initialized', 'system');
   await getUserIP(); // Get and log user IP
+  await loadRecentActivity(); // Load recent activity from database
   addActivityLog('System ready', 'system');
+
+  // Refresh activity every 30 seconds
+  setInterval(loadRecentActivity, 30000);
 });
 
 // ══════════════════════════════════════════════════════════
