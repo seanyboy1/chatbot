@@ -28,7 +28,7 @@
   <!-- Dashboard Grid -->
   <div class="dashboard-container">
 
-    <!-- Left Sidebar -->
+    <!-- Cards Container -->
     <aside class="sidebar-left">
       <div class="stats-card">
         <h3>System Status</h3>
@@ -51,6 +51,21 @@
         <div class="stat-row">
           <span>Avg Response</span>
           <span class="stat-value" id="avg-response">--</span>
+        </div>
+      </div>
+
+      <div class="actions-card">
+        <h3>Quick Actions</h3>
+        <button class="action-btn" id="clear-chat">Clear Chat</button>
+        <button class="action-btn" id="export-chat">Export</button>
+        <button class="action-btn" id="test-connection">Test Connection</button>
+      </div>
+
+      <div class="activity-card">
+        <h3>Recent Activity</h3>
+        <div id="activity-log" class="activity-list">
+          <div class="activity-item">[System] Dashboard loaded</div>
+          <div class="activity-item">[System] Awaiting user interaction</div>
         </div>
       </div>
     </aside>
@@ -96,23 +111,6 @@
       </div>
     </main>
 
-    <!-- Right Sidebar -->
-    <aside class="sidebar-right">
-      <div class="actions-card">
-        <h3>Quick Actions</h3>
-        <button class="action-btn" id="clear-chat">Clear Chat</button>
-        <button class="action-btn" id="export-chat">Export</button>
-        <button class="action-btn" id="test-connection">Test Connection</button>
-      </div>
-
-      <div class="activity-card">
-        <h3>Recent Activity</h3>
-        <div id="activity-log" class="activity-list">
-          <div class="activity-item">[System] Dashboard loaded</div>
-          <div class="activity-item">[System] Awaiting user interaction</div>
-        </div>
-      </div>
-    </aside>
 
   </div>
 
