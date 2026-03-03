@@ -1,0 +1,37 @@
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Server Rack Base -->
+  <rect x="6" y="8" width="36" height="32" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+
+  <!-- Server Sections -->
+  <line x1="6" y1="18" x2="42" y2="18" stroke="currentColor" stroke-width="1.5"/>
+  <line x1="6" y1="28" x2="42" y2="28" stroke="currentColor" stroke-width="1.5"/>
+
+  <!-- Network Ports (Top Section) -->
+  <rect class="network-port" x="10" y="12" width="4" height="3" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+  <rect class="network-port" x="16" y="12" width="4" height="3" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+  <rect class="network-port" x="22" y="12" width="4" height="3" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+  <rect class="network-port" x="28" y="12" width="4" height="3" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+  <rect class="network-port" x="34" y="12" width="4" height="3" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+
+  <!-- Status LEDs (Middle Section) -->
+  <circle class="status-led" cx="12" cy="23" r="1.5" fill="currentColor" opacity="0.8"/>
+  <circle class="status-led" cx="18" cy="23" r="1.5" fill="currentColor" opacity="0.8"/>
+  <circle class="status-led" cx="24" cy="23" r="1.5" fill="currentColor" opacity="0.8"/>
+  <circle class="status-led" cx="30" cy="23" r="1.5" fill="currentColor" opacity="0.8"/>
+  <circle class="status-led" cx="36" cy="23" r="1.5" fill="currentColor" opacity="0.8"/>
+
+  <!-- Firewall Shield (Bottom Section) -->
+  <path class="firewall-shield" d="M 14 32 L 24 32 L 24 36 L 19 38 L 14 36 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+  <line x1="19" y1="32" x2="19" y2="38" stroke="currentColor" stroke-width="1"/>
+  <line x1="16.5" y1="34" x2="21.5" y2="34" stroke="currentColor" stroke-width="1"/>
+
+  <!-- Data Flow Indicators -->
+  <path class="data-flow" d="M 28 33 L 32 33 L 30 35 M 32 33 L 30 31" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+  <path class="data-flow" d="M 34 35 L 38 35 L 36 37 M 38 35 L 36 33" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+
+  <!-- Corner Brackets (Technical Detail) -->
+  <path d="M 6 10 L 6 8 L 8 8" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+  <path d="M 42 10 L 42 8 L 40 8" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+  <path d="M 6 38 L 6 40 L 8 40" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+  <path d="M 42 38 L 42 40 L 40 40" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+</svg>

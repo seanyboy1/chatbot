@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLUE-NET - SUPPORT CHAT</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <canvas id="matrix-rain"></canvas>
+
+  <nav class="site-nav">
+    <a href="/" class="site-nav-logo">
+      <svg viewBox="0 0 60 20" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="4" width="56" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="6" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+        <rect x="11" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+        <rect x="16" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+        <rect x="21" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+        <circle class="led-green" cx="7.5" cy="13" r="0.8" fill="#27c93f"/>
+        <circle class="led-yellow" cx="12.5" cy="13" r="0.8" fill="#ffbd2e"/>
+        <circle class="led-green" cx="17.5" cy="13" r="0.8" fill="#27c93f"/>
+        <circle class="led-yellow" cx="22.5" cy="13" r="0.8" fill="#ffbd2e"/>
+        <circle class="led-power" cx="52" cy="10" r="1.2" fill="currentColor"/>
+      </svg>
+      <span class="site-nav-logo-text">BLUE-NET</span>
+    </a>
+    <div class="site-nav-tabs">
+      <a href="/" class="site-nav-tab">HOME</a>
+      <a href="/chat" class="site-nav-tab active">CHAT</a>
+      <a href="/contact" class="site-nav-tab">CONTACT</a>
+    </div>
+  </nav>
+
+  <main style="display:flex; align-items:center; justify-content:center; height:calc(100vh - 60px); margin-top:60px; padding:20px;">
+    <div class="terminal-container chat-terminal">
+      <div class="terminal-header">
+        <div class="terminal-dots">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+        </div>
+        <span class="terminal-title">BLUE-NET - SUPPORT</span>
+        <div class="terminal-status">
+          <span class="status-indicator"></span>
+          <span>ONLINE</span>
+        </div>
+      </div>
+      <div class="terminal-body" id="chat-window">
+        <div class="boot-sequence">
+          <p>BLUE-NET SUPPORT TERMINAL v2.0</p>
+          <p>INITIALIZING AI SUPPORT MODULE...</p>
+          <p>CONNECTION ESTABLISHED</p>
+          <p class="separator">────────────────────────────────────────</p>
+          <p>Welcome! How can I help you today?</p>
+        </div>
+      </div>
+      <div class="terminal-input-area">
+        <div class="input-row">
+          <span class="prompt-symbol">›</span>
+          <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" spellcheck="false"/>
+          <button id="send-btn">SEND</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initMatrixRain } from '/js/matrix-rain.js';
+    import { initTerminalChat } from '/js/shared-terminal.js';
+
+    const rain = initMatrixRain('matrix-rain');
+    if (rain) rain.start();
+
+    initTerminalChat({
+      chatWindowId: 'chat-window',
+      userInputId: 'user-input',
+      sendBtnId: 'send-btn',
+      context: 'customer'
+    });
+
+    document.getElementById('user-input')?.focus();
+  </script>
+</body>
+</html>

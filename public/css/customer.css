@@ -1,0 +1,957 @@
+/* Customer Page Styles - Extends base style.css */
+
+/* Logo Splash Screen */
+.logo-splash-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 10, 0.65);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.8s ease-out;
+}
+
+.logo-splash-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+
+/* Rack part groups — each fades in individually via JS */
+.rack-rails-group,
+.switch-group,
+.firewall-group {
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+
+.rack-rails-group.show,
+.switch-group.show,
+.firewall-group.show {
+  opacity: 1;
+}
+
+/* Screw animation */
+.screw-head {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+}
+
+.switch-group.screwing .screw-head,
+.firewall-group.screwing .screw-head {
+  animation: screwIn 0.8s ease-in-out forwards;
+}
+
+.switch-group.screwing .sw-screw-2,
+.firewall-group.screwing .fw-screw-2 { animation-delay: 0.35s; }
+.switch-group.screwing .sw-screw-3,
+.firewall-group.screwing .fw-screw-3 { animation-delay: 0.7s; }
+.switch-group.screwing .sw-screw-4,
+.firewall-group.screwing .fw-screw-4 { animation-delay: 1.05s; }
+
+@keyframes screwIn {
+  0%   { opacity: 0; transform: rotate(0deg); }
+  15%  { opacity: 1; }
+  85%  { transform: rotate(540deg); opacity: 1; }
+  100% { transform: rotate(540deg); opacity: 0.75; }
+}
+
+.rack-icon {
+  width: 560px;
+  height: auto;
+  color: var(--blue);
+  filter: drop-shadow(0 0 20px var(--blue-glow));
+}
+
+.switch-brand {
+  text-shadow: 0 0 10px var(--blue-glow);
+  letter-spacing: 1px;
+  animation: brandGlow 2s ease-in-out infinite;
+}
+
+@keyframes brandGlow {
+  0%, 100% {
+    text-shadow: 0 0 10px var(--blue-glow);
+  }
+  50% {
+    text-shadow: 0 0 20px var(--blue-glow), 0 0 30px var(--blue-glow);
+  }
+}
+
+/* Pre-emerge connection status (shown before logo loads) */
+.pre-connection-status {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  color: var(--blue-dim);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 10000;
+  text-shadow: 0 0 10px var(--blue-glow);
+}
+
+/* Connection Status */
+.connection-status {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  color: var(--blue-dim);
+  letter-spacing: 2px;
+  opacity: 0;
+  position: absolute;
+  transition: opacity 0.3s ease;
+}
+
+.status-text {
+  animation: statusBlink 1.5s ease-in-out infinite;
+}
+
+@keyframes statusBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+
+.splash-code-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 48px;
+  font-weight: bold;
+  letter-spacing: 8px;
+  color: var(--blue);
+  text-shadow:
+    0 0 20px var(--blue-glow),
+    0 0 40px var(--blue-glow),
+    0 0 60px var(--blue-glow);
+}
+
+.code-prompt {
+  color: var(--blue-dim);
+  font-size: 40px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.splash-logo-text {
+  display: inline-block;
+  min-width: 20px;
+  text-align: left;
+}
+
+.cursor-blink {
+  color: var(--blue);
+  animation: blink 0.7s step-end infinite;
+  font-weight: normal;
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+/* Yellow cable data packets */
+.data-pkt-yellow {
+  opacity: 0;
+  filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.9));
+}
+
+.rack-icon.cables-active .data-pkt-y-down-1 {
+  animation: pktYFade 1.4s ease-in-out 0.5s infinite;
+}
+.rack-icon.cables-active .data-pkt-y-up-1 {
+  animation: pktYFade 1.4s ease-in-out 1.2s infinite;
+}
+.rack-icon.cables-active .data-pkt-y-down-2 {
+  animation: pktYFade 1.4s ease-in-out 1.0s infinite;
+}
+.rack-icon.cables-active .data-pkt-y-up-2 {
+  animation: pktYFade 1.4s ease-in-out 1.7s infinite;
+}
+
+@keyframes pktYFade {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Red cable return packets (box → firewall) */
+.fw-cable-packet-return {
+  opacity: 0;
+  filter: drop-shadow(0 0 4px rgba(255, 0, 0, 0.9));
+}
+
+.fw-cables-container.active .fw-cable-return-left {
+  animation: fwReturnLeft 1.8s ease-in-out 0.9s infinite;
+}
+
+.fw-cables-container.active .fw-cable-return-right {
+  animation: fwReturnRight 1.8s ease-in-out 1.6s infinite;
+}
+
+@keyframes fwReturnLeft {
+  0%   { cx: 0;  cy: 250; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { cx: 99; cy: 0;   opacity: 1; }
+  100% { cx: 99; cy: 0;   opacity: 0; }
+}
+
+@keyframes fwReturnRight {
+  0%   { cx: 99; cy: 250; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { cx: 0;  cy: 0;   opacity: 1; }
+  100% { cx: 0;  cy: 0;   opacity: 0; }
+}
+
+/* Default: ports dim until cables connect */
+.rack-icon .network-port,
+.rack-icon .network-port-active,
+.rack-icon .fw-lan-port,
+.rack-icon .fw-wan-port {
+  stroke: #2a2a2a;
+}
+.rack-icon .fw-lan-label,
+.rack-icon .fw-wan-label {
+  fill: #2a2a2a;
+  opacity: 1;
+}
+
+/* Connected: restore proper port colors */
+.rack-icon.leds-active .network-port {
+  stroke: currentColor;
+  transition: stroke 0.4s ease;
+}
+.rack-icon.leds-active .network-port-active {
+  stroke: white;
+  transition: stroke 0.4s ease;
+}
+.rack-icon.leds-active .fw-lan-port {
+  stroke: currentColor;
+  transition: stroke 0.4s ease;
+}
+.rack-icon.leds-active .fw-lan-label {
+  fill: currentColor;
+  opacity: 0.7;
+  transition: fill 0.4s ease;
+}
+.rack-icon.leds-active .fw-wan-port {
+  stroke: #FF4500;
+  transition: stroke 0.4s ease;
+}
+.rack-icon.leds-active .fw-wan-label {
+  fill: #FF4500;
+  opacity: 0.9;
+  transition: fill 0.4s ease;
+}
+
+/* Default: all rack LEDs solid red until cables connect */
+.rack-icon .led-green,
+.rack-icon .led-yellow,
+.rack-icon .led-power,
+.rack-icon .led-lan,
+.rack-icon .led-wan {
+  fill: #FF3333;
+  filter: drop-shadow(0 0 3px rgba(255, 50, 50, 0.7));
+  animation: none;
+}
+
+/* LAN / WAN status LED flash animations — activate when cables connect */
+.rack-icon.leds-active .led-lan {
+  animation: flashLan 1.2s ease-in-out infinite;
+}
+.rack-icon.leds-active .led-lan-2 {
+  animation-delay: 0.4s;
+}
+.rack-icon.leds-active .led-wan {
+  animation: flashWan 1.8s ease-in-out infinite;
+}
+.rack-icon.leds-active .led-wan-2 {
+  animation-delay: 0.6s;
+}
+
+/* Switch port LEDs restore proper colors */
+.rack-icon.leds-active .led-green {
+  fill: #27c93f;
+  filter: drop-shadow(0 0 2px #27c93f);
+}
+.rack-icon.leds-active .led-yellow {
+  fill: #ffbd2e;
+  filter: drop-shadow(0 0 2px #ffbd2e);
+}
+.rack-icon.leds-active .led-power {
+  fill: currentColor;
+  filter: none;
+}
+
+@keyframes flashLan {
+  0%   { fill: #27c93f; filter: drop-shadow(0 0 3px #27c93f); }
+  49%  { fill: #27c93f; filter: drop-shadow(0 0 3px #27c93f); }
+  50%  { fill: #FFE000; filter: drop-shadow(0 0 3px #FFE000); }
+  99%  { fill: #FFE000; filter: drop-shadow(0 0 3px #FFE000); }
+  100% { fill: #27c93f; filter: drop-shadow(0 0 3px #27c93f); }
+}
+
+@keyframes flashWan {
+  0%   { fill: #ff5f56; filter: drop-shadow(0 0 3px #ff5f56); }
+  49%  { fill: #ff5f56; filter: drop-shadow(0 0 3px #ff5f56); }
+  50%  { fill: #27c93f; filter: drop-shadow(0 0 3px #27c93f); }
+  99%  { fill: #27c93f; filter: drop-shadow(0 0 3px #27c93f); }
+  100% { fill: #ff5f56; filter: drop-shadow(0 0 3px #ff5f56); }
+}
+
+/* Patch cable animation (yellow, switch → firewall) */
+.patch-cable {
+  stroke-dasharray: 52;
+  stroke-dashoffset: 52;
+}
+
+.rack-icon.cables-active .patch-cable-1 {
+  animation: drawPatchCable 0.5s ease-out 0s forwards;
+}
+
+.rack-icon.cables-active .patch-cable-2 {
+  animation: drawPatchCable 0.5s ease-out 0.6s forwards;
+}
+
+@keyframes drawPatchCable {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Red Cables from Firewall to Option Boxes */
+.fw-cables-container {
+  position: relative;
+  width: 840px;
+  height: 250px;
+  opacity: 0;
+  margin-top: -68px;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.fw-cables-container.active {
+  opacity: 1;
+}
+
+.fw-cable {
+  height: 250px;
+  position: absolute;
+  top: 0;
+}
+
+.fw-cable-left {
+  left: 291px;
+  width: 99px;
+}
+
+.fw-cable-right {
+  left: 450px;
+  width: 99px;
+}
+
+.fw-cable-path {
+  stroke-dasharray: 320;
+  stroke-dashoffset: 320;
+  stroke-linecap: round;
+}
+
+.fw-cables-container.active .fw-cable-left .fw-cable-path {
+  animation: drawFwCable 0.7s ease-out 0s forwards;
+}
+
+.fw-cables-container.active .fw-cable-right .fw-cable-path {
+  animation: drawFwCable 0.7s ease-out 0.7s forwards;
+}
+
+@keyframes drawFwCable {
+  to { stroke-dashoffset: 0; }
+}
+
+.fw-cable-packet {
+  opacity: 0;
+  filter: drop-shadow(0 0 4px rgba(255, 0, 0, 0.9));
+}
+
+.fw-cables-container.active .fw-cable-left .fw-cable-packet {
+  animation: fwPacketLeft 1.8s ease-in-out 0.6s infinite;
+}
+
+.fw-cables-container.active .fw-cable-right .fw-cable-packet {
+  animation: fwPacketRight 1.8s ease-in-out 0.6s infinite;
+}
+
+@keyframes fwPacketLeft {
+  0%   { cx: 99; cy: 0;   opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { cx: 0;  cy: 250; opacity: 1; }
+  100% { cx: 0;  cy: 250; opacity: 0; }
+}
+
+@keyframes fwPacketRight {
+  0%   { cx: 0;  cy: 0;   opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { cx: 99; cy: 250; opacity: 1; }
+  100% { cx: 99; cy: 250; opacity: 0; }
+}
+
+.cable-path {
+  stroke: #FF4500;
+  filter: drop-shadow(0 0 8px rgba(255, 69, 0, 0.6));
+  stroke-dasharray: 150;
+  stroke-dashoffset: 150;
+  stroke-linecap: round;
+}
+
+.network-cables-container.active .cable-path {
+  animation: drawStraightCable 1.2s ease-out forwards;
+}
+
+@keyframes drawStraightCable {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.cable-packet {
+  opacity: 0;
+  fill: #FF4500;
+  filter: drop-shadow(0 0 4px rgba(255, 69, 0, 0.8));
+}
+
+.network-cables-container.active .cable-left .cable-packet {
+  animation: angledPacketFlowLeft 2s ease-in-out 0.8s infinite;
+}
+
+.network-cables-container.active .cable-right .cable-packet {
+  animation: angledPacketFlowRight 2s ease-in-out 0.8s infinite;
+}
+
+@keyframes angledPacketFlowLeft {
+  0% {
+    cx: 67;
+    cy: 0;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    cx: 0;
+    cy: 90;
+    opacity: 1;
+  }
+  100% {
+    cx: 0;
+    cy: 90;
+    opacity: 0;
+  }
+}
+
+@keyframes angledPacketFlowRight {
+  0% {
+    cx: 69;
+    cy: 0;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    cx: 0;
+    cy: 90;
+    opacity: 1;
+  }
+  100% {
+    cx: 0;
+    cy: 90;
+    opacity: 0;
+  }
+}
+
+.cable-connector {
+  opacity: 0;
+}
+
+.network-cables-container.active .cable-connector {
+  animation: fadeInConnector 0.3s ease-out 1.0s forwards;
+}
+
+.cable-connector-top {
+  opacity: 1;
+}
+
+@keyframes fadeInConnector {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dataOutline {
+  0%, 100% {
+    opacity: 0;
+  }
+  10%, 90% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Splash Options - Positioned under fw cables */
+.splash-options {
+  position: relative;
+  width: 840px;
+  display: block;
+  margin-top: 0;
+  opacity: 0;
+  padding: 0;
+  height: 200px;
+}
+
+/* Position boxes side by side */
+.splash-options .splash-option-box:first-child {
+  left: 191px; /* Start Chat box — aligned under left cable bottom */
+}
+
+.splash-options .splash-option-box:last-child {
+  left: 449px; /* Contact Us box — aligned under right cable bottom */
+}
+
+.splash-options.show {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes slideUpFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.splash-option-box {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.splash-option-box.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.splash-option-box.cable-connected {
+  border-color: #FF4444;
+  box-shadow: 0 0 12px rgba(255, 60, 60, 0.5), inset 0 0 10px rgba(255, 60, 60, 0.05);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.splash-option-box {
+  background: rgba(13, 13, 13, 0.8);
+  border: 2px solid var(--blue-dark);
+  border-radius: 8px;
+  padding: 16px 24px;
+  width: 200px;
+  height: 180px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: absolute;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.splash-option-box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  pointer-events: none;
+}
+
+.splash-option-box::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 8px;
+  padding: 2px;
+  background: linear-gradient(90deg,
+    #FF4500 0%,
+    #FF4500 25%,
+    #FF4500 50%,
+    #FF4500 75%,
+    #FF4500 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  animation: dataOutline 2s ease-in-out 1.8s infinite;
+}
+
+.splash-option-box:hover {
+  border-color: var(--blue);
+  background: rgba(93, 173, 226, 0.1);
+  transform: translateY(-5px);
+  box-shadow:
+    0 0 30px var(--blue-glow),
+    inset 0 0 20px rgba(93, 173, 226, 0.1);
+}
+
+.splash-option-box:hover::after {
+  left: 100%;
+}
+
+.splash-option-box:active {
+  transform: translateY(-3px);
+}
+
+.option-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--blue);
+  filter: drop-shadow(0 0 10px var(--blue-glow));
+  transition: all 0.3s ease;
+}
+
+.splash-option-box:hover .option-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 20px var(--blue-glow));
+}
+
+.option-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.option-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: var(--blue);
+  text-shadow: 0 0 10px var(--blue-glow);
+  position: relative;
+  z-index: 1;
+}
+
+.option-description {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  color: var(--blue-dim);
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Data running along box outline */
+.box-border-data {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  pointer-events: none;
+  z-index: 3;
+  overflow: visible;
+  opacity: 0;
+}
+
+/* 3 evenly-spaced glowing segments, perimeter ~752px */
+.border-data-path {
+  fill: none;
+  stroke: #FF4444;
+  stroke-width: 2.5;
+  stroke-dasharray: 25 225 25 225 25 225;
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 4px rgba(255, 60, 60, 0.9)) drop-shadow(0 0 8px rgba(255, 60, 60, 0.5));
+}
+
+.splash-option-box.cable-connected .box-border-data {
+  opacity: 1;
+  animation: boxDataFadeIn 0.4s ease forwards;
+}
+
+.splash-option-box.cable-connected .border-data-path {
+  animation: runBorder 2s linear 0.4s infinite;
+}
+
+@keyframes boxDataFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes runBorder {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -752; }
+}
+
+/* Responsive splash screen */
+@media (max-width: 768px) {
+  .splash-logo-icon {
+    width: 280px;
+    height: 84px;
+  }
+
+  .splash-code-container {
+    font-size: 32px;
+    letter-spacing: 6px;
+  }
+
+  .code-prompt {
+    font-size: 28px;
+  }
+
+  .splash-options {
+    flex-direction: column;
+    gap: 30px;
+    margin-top: 0;
+  }
+
+  .network-cables-container {
+    width: 100%;
+    height: 100px;
+    justify-content: space-around;
+  }
+
+  .cable-left {
+    left: 25%;
+  }
+
+  .cable-right {
+    right: 25%;
+  }
+
+  .splash-option-box {
+    min-width: 200px;
+    padding: 24px 32px;
+  }
+
+  .option-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .option-label {
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+
+  .option-description {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .splash-logo-icon {
+    width: 240px;
+    height: 72px;
+  }
+
+  .splash-code-container {
+    font-size: 24px;
+    letter-spacing: 4px;
+  }
+
+  .code-prompt {
+    font-size: 20px;
+  }
+
+  .splash-options {
+    margin-top: 0;
+    gap: 20px;
+    flex-direction: column;
+  }
+
+  .network-cables-container {
+    width: 100%;
+    height: 80px;
+    justify-content: space-around;
+  }
+
+  .cable-left {
+    left: 20%;
+  }
+
+  .cable-right {
+    right: 20%;
+  }
+
+  .network-cable {
+    height: 80px;
+  }
+
+  .splash-option-box {
+    min-width: 180px;
+    padding: 20px 24px;
+  }
+
+  .option-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .option-label {
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+
+  .option-description {
+    font-size: 10px;
+  }
+}
+
+
+/* Bigger logo in customer nav */
+.customer-nav .logo-icon {
+  width: 120px;
+  height: 36px;
+}
+
+/* Customer Navigation */
+.customer-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: rgba(13, 13, 13, 0.98);
+  border-bottom: 1px solid var(--blue-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(93, 173, 226, 0.1);
+}
+
+.customer-nav .nav-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.customer-nav .support-label {
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: var(--blue-dim);
+  opacity: 0.6;
+}
+
+.customer-nav .nav-link {
+  font-size: 13px;
+  color: var(--blue-dim);
+  text-decoration: none;
+  padding: 8px 20px;
+  border: 1px solid var(--blue-dark);
+  border-radius: 4px;
+  transition: all 0.2s;
+  letter-spacing: 1px;
+}
+
+.customer-nav .nav-link:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+  background: rgba(93, 173, 226, 0.1);
+  box-shadow: 0 0 10px var(--blue-glow);
+}
+
+/* Customer Main Content */
+.customer-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 80px 20px 20px;
+}
+
+.customer-main .terminal-container {
+  width: 100%;
+  max-width: 900px;
+  height: 85vh;
+  max-height: 700px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .customer-nav {
+    padding: 0 20px;
+  }
+
+  .customer-nav .nav-brand {
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+
+  .customer-nav .nav-link {
+    font-size: 11px;
+    padding: 6px 14px;
+  }
+
+  .customer-main {
+    padding: 70px 16px 16px;
+  }
+
+  .customer-main .terminal-container {
+    height: 90vh;
+    max-height: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .customer-nav .support-label {
+    display: none;
+  }
+
+  .customer-nav .nav-link {
+    font-size: 10px;
+    padding: 5px 12px;
+  }
+
+  .customer-main {
+    padding: 65px 10px 10px;
+  }
+
+  .customer-main .terminal-container {
+    height: 92vh;
+  }
+}

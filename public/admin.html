@@ -4,14 +4,45 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BLUE-NET - ADMIN PANEL</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/logo.css">
 </head>
 <body>
   <canvas id="matrix-rain"></canvas>
 
   <!-- Top Navigation -->
   <nav class="dashboard-nav">
-    <div class="nav-brand">BLUE-NET - ADMIN PANEL</div>
+    <div class="nav-left">
+      <a href="/" class="logo-container">
+        <svg class="logo-icon" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
+          <!-- Switch Body -->
+          <rect class="network-line" x="2" y="8" width="56" height="14" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <!-- Ports -->
+          <rect class="network-port" x="6" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="network-port" x="10" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="network-port" x="14" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="network-port" x="18" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="network-port" x="22" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="network-port" x="26" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="network-port" x="30" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="network-port" x="34" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <!-- LEDs -->
+          <circle class="led-green" cx="7.5" cy="17" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="11.5" cy="17" r="1" fill="#ffbd2e"/>
+          <circle class="led-green" cx="15.5" cy="17" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="19.5" cy="17" r="1" fill="#ffbd2e"/>
+          <circle class="led-green" cx="23.5" cy="17" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="27.5" cy="17" r="1" fill="#ffbd2e"/>
+          <circle class="led-green" cx="31.5" cy="17" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="35.5" cy="17" r="1" fill="#ffbd2e"/>
+          <!-- Power LED -->
+          <circle class="led-power" cx="52" cy="15" r="1.5" fill="currentColor"/>
+        </svg>
+        <span class="logo-text" data-text="BLUE-NET">BLUE-NET</span>
+      </a>
+      <span class="admin-label">ADMIN PANEL</span>
+    </div>
     <div class="nav-status">
       <span class="status-dot"></span> ONLINE
     </div>

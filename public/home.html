@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLUE-NET - AI Support Assistant</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/home.css">
+  <link rel="stylesheet" href="/css/logo.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <canvas id="matrix-rain"></canvas>
+
+  <!-- Navigation -->
+  <nav class="home-nav">
+    <a href="/" class="logo-container">
+      <svg class="logo-icon" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
+        <!-- Switch Body -->
+        <rect class="network-line" x="2" y="8" width="56" height="14" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <!-- Ports -->
+        <rect class="network-port" x="6" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+        <rect class="network-port" x="10" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+        <rect class="network-port" x="14" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+        <rect class="network-port" x="18" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+        <rect class="network-port" x="22" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+        <rect class="network-port" x="26" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+        <rect class="network-port" x="30" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+        <rect class="network-port" x="34" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+        <!-- LEDs -->
+        <circle class="led-green" cx="7.5" cy="17" r="1" fill="#27c93f"/>
+        <circle class="led-yellow" cx="11.5" cy="17" r="1" fill="#ffbd2e"/>
+        <circle class="led-green" cx="15.5" cy="17" r="1" fill="#27c93f"/>
+        <circle class="led-yellow" cx="19.5" cy="17" r="1" fill="#ffbd2e"/>
+        <circle class="led-green" cx="23.5" cy="17" r="1" fill="#27c93f"/>
+        <circle class="led-yellow" cx="27.5" cy="17" r="1" fill="#ffbd2e"/>
+        <circle class="led-green" cx="31.5" cy="17" r="1" fill="#27c93f"/>
+        <circle class="led-yellow" cx="35.5" cy="17" r="1" fill="#ffbd2e"/>
+        <!-- Power LED -->
+        <circle class="led-power" cx="52" cy="15" r="1.5" fill="currentColor"/>
+      </svg>
+      <span class="logo-text" data-text="BLUE-NET">BLUE-NET</span>
+    </a>
+    <a href="/admin" class="nav-link">Admin Portal</a>
+  </nav>
+
+  <!-- Hero Section -->
+  <main class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">Welcome to BLUE-NET</h1>
+      <p class="hero-tagline">AI-Powered Support Assistant</p>
+      <p class="hero-description">
+        Get instant answers to your questions with our advanced AI chatbot.
+        Whether you need technical support, product information, or general help,
+        we're here 24/7 to assist you.
+      </p>
+      <a href="/" class="cta-button">Start Chat</a>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2025 BLUE-NET. All rights reserved.</p>
+  </footer>
+
+  <script type="module">
+    import { initMatrixRain } from '/js/matrix-rain.js';
+
+    // Initialize Matrix rain animation
+    const rain = initMatrixRain('matrix-rain');
+    if (rain) {
+      rain.start();
+    }
+  </script>
+</body>
+</html>

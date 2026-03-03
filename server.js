@@ -16,36 +16,58 @@ app.use(express.json());
 // Middleware to log every page visit
 app.use(async (req, res, next) => {
   // Only log HTML page requests (not CSS, JS, images, API calls)
-  if (req.method === 'GET' && req.path === '/' && !req.path.startsWith('/api')) {
+  const pagePaths = ['/', '/home', '/admin'];
+  if (req.method === 'GET' && pagePaths.includes(req.path)) {
     const ip = req.headers['x-forwarded-for'] ||
                req.headers['x-real-ip'] ||
                req.connection.remoteAddress ||
                req.ip;
     const userAgent = req.headers['user-agent'];
 
-    // Log page visit to database
-    try {
-      await connectDB();
-      await ActivityLog.create({
-        ip,
-        userAgent,
-        action: 'page_visit',
-        sessionId: 'pending',
-        timestamp: new Date(),
-      });
-    } catch (error) {
-      // Silent fail - don't break the page load
-      console.error('Page visit logging error:', error);
-    }
+    // Determine userType based on route
+    let userType = 'customer'; // Main page is customer page
+    if (req.path === '/home') userType = 'visitor';
+    if (req.path === '/admin') userType = 'admin';
+
+    // Log page visit in the background — don't block the page load
+    connectDB().then(() => ActivityLog.create({
+      ip,
+      userAgent,
+      action: 'page_visit',
+      sessionId: 'pending',
+      timestamp: new Date(),
+      userType,
+    })).catch(err => console.error('Page visit logging error:', err));
   }
   next();
+});
+
+// Page routes (before static middleware)
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'customer.html'));
+});
+
+app.get('/home', (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'home.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'admin.html'));
+});
+
+app.get('/chat', (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'chat.html'));
+});
+
+app.get('/contact', (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'contact.html'));
 });
 
 app.use(express.static(join(__dirname, 'public')));
 
 // Endpoint to save activity log entry
 app.post('/api/activity', async (req, res) => {
-  const { message, action } = req.body;
+  const { message, action, context } = req.body;
 
   if (!message) {
     return res.status(400).json({ error: 'Message is required' });
@@ -57,6 +79,11 @@ app.post('/api/activity', async (req, res) => {
              req.ip;
   const userAgent = req.headers['user-agent'];
 
+  // Determine userType from context
+  let userType = 'visitor';
+  if (context === 'admin') userType = 'admin';
+  if (context === 'customer') userType = 'customer';
+
   try {
     await connectDB();
     await ActivityLog.create({
@@ -64,7 +91,8 @@ app.post('/api/activity', async (req, res) => {
       userAgent,
       action: action || 'user_action',
       message,
-      sessionId: userSessionId || 'unknown',
+      sessionId: req.body.sessionId || 'unknown',
+      userType,
     });
 
     res.json({ success: true });
@@ -79,11 +107,15 @@ app.get('/api/activity', async (req, res) => {
   try {
     await connectDB();
 
+    // Optional filter by userType
+    const { userType } = req.query;
+    const filter = userType ? { userType } : {};
+
     // Get last 20 activity logs
-    const recentActivity = await ActivityLog.find()
+    const recentActivity = await ActivityLog.find(filter)
       .sort({ timestamp: -1 })
       .limit(20)
-      .select('ip action timestamp message');
+      .select('ip action timestamp message userType');
 
     // Get unique visitor count (last 24 hours)
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -113,6 +145,12 @@ app.get('/api/ip', async (req, res) => {
 
   const userAgent = req.headers['user-agent'];
   const sessionId = crypto.randomBytes(16).toString('hex');
+  const { context } = req.query; // Get context (admin/customer)
+
+  // Determine userType from context
+  let userType = 'visitor';
+  if (context === 'admin') userType = 'admin';
+  if (context === 'customer') userType = 'customer';
 
   // Log to database
   try {
@@ -124,6 +162,7 @@ app.get('/api/ip', async (req, res) => {
       userAgent,
       action: 'connect',
       sessionId,
+      userType,
     });
 
     // Create or update session
@@ -157,7 +196,7 @@ if (!N8N_WEBHOOK_URL) {
 }
 
 app.post('/api/chat', async (req, res) => {
-  const { message, sessionId } = req.body;
+  const { message, sessionId, context } = req.body;
 
   if (!message) {
     return res.status(400).json({ error: 'Message is required' });
@@ -170,9 +209,17 @@ app.post('/api/chat', async (req, res) => {
              req.ip;
   const userAgent = req.headers['user-agent'];
 
+  // Determine userType from context
+  let userType = 'visitor';
+  if (context === 'admin') userType = 'admin';
+  if (context === 'customer') userType = 'customer';
+
   try {
-    // Forward message to n8n webhook using GET request with query parameter
-    const webhookUrl = `${N8N_WEBHOOK_URL}?message=${encodeURIComponent(message)}`;
+    // Forward message to n8n webhook using GET request with query parameters
+    let webhookUrl = `${N8N_WEBHOOK_URL}?message=${encodeURIComponent(message)}`;
+    if (context) {
+      webhookUrl += `&context=${encodeURIComponent(context)}`;
+    }
     const response = await fetch(webhookUrl, {
       method: 'GET',
       signal: AbortSignal.timeout(30000), // 30 second timeout
@@ -215,6 +262,7 @@ app.post('/api/chat', async (req, res) => {
         message,
         response: reply,
         sessionId: sessionId || 'unknown',
+        userType,
       });
 
       // Update session message count

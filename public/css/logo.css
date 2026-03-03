@@ -1,0 +1,233 @@
+/* BLUE-NET Logo Styles and Animations */
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.3s ease;
+}
+
+.logo-container:hover {
+  transform: scale(1.05);
+}
+
+/* Logo Icon SVG */
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+/* Network lines animation */
+.network-line {
+  stroke: var(--blue);
+  stroke-width: 1.5;
+  fill: none;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: drawLine 2s ease-out forwards;
+  opacity: 0.6;
+}
+
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+/* Network nodes animation */
+.network-node {
+  fill: var(--blue);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    r: 3;
+  }
+  50% {
+    opacity: 0.5;
+    r: 2;
+  }
+}
+
+/* LED Blinking Animations */
+.led-green {
+  animation: blinkGreen 1.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 3px #27c93f);
+}
+
+.led-yellow {
+  animation: blinkYellow 2s ease-in-out infinite;
+  animation-delay: 0.5s;
+  filter: drop-shadow(0 0 3px #ffbd2e);
+}
+
+.led-power {
+  animation: powerFlash 1s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px #ff5f56);
+}
+
+@keyframes powerFlash {
+  0%, 100% {
+    fill: #ff5f56;
+    opacity: 1;
+  }
+  50% {
+    fill: #ff2e1f;
+    opacity: 0.4;
+  }
+}
+
+@keyframes blinkGreen {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes blinkYellow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/* Data flow particles */
+.data-particle {
+  fill: var(--blue);
+  opacity: 0;
+  animation: dataFlow 3s ease-in-out infinite;
+}
+
+.data-particle:nth-child(2) { animation-delay: 0.5s; }
+.data-particle:nth-child(3) { animation-delay: 1s; }
+.data-particle:nth-child(4) { animation-delay: 1.5s; }
+
+@keyframes dataFlow {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px) translateY(-10px);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(10px) translateY(10px);
+  }
+}
+
+/* Logo Text */
+.logo-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  color: var(--blue);
+  text-shadow: 0 0 15px var(--blue-glow);
+  position: relative;
+}
+
+/* Logo reveal animation (for customer page) */
+.logo-revealing {
+  animation: popOut 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  text-shadow:
+    0 0 20px var(--blue-glow),
+    0 0 40px var(--blue-glow),
+    0 0 60px var(--blue-glow);
+}
+
+@keyframes popOut {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.logo-revealed {
+  animation: finalGlow 1s ease-out forwards;
+}
+
+@keyframes finalGlow {
+  0% {
+    text-shadow:
+      0 0 20px var(--blue-glow),
+      0 0 40px var(--blue-glow),
+      0 0 60px var(--blue-glow);
+  }
+  100% {
+    text-shadow: 0 0 15px var(--blue-glow);
+  }
+}
+
+/* Data stream effect behind text */
+.logo-text::before {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--blue-dim);
+  opacity: 0.3;
+  z-index: -1;
+  animation: dataStream 0.3s infinite;
+}
+
+@keyframes dataStream {
+  0%, 100% {
+    transform: translateX(0) translateY(0);
+  }
+  25% {
+    transform: translateX(2px) translateY(-1px);
+  }
+  50% {
+    transform: translateX(-1px) translateY(1px);
+  }
+  75% {
+    transform: translateX(1px) translateY(-1px);
+  }
+}
+
+/* Responsive sizing */
+@media (max-width: 768px) {
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .logo-text {
+    font-size: 18px;
+    letter-spacing: 3px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .logo-text {
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+
+  .logo-container {
+    gap: 8px;
+  }
+}

@@ -1,160 +1,18 @@
-// ── Matrix rain effect ──
-const canvas = document.getElementById('matrix-rain');
-const ctx = canvas.getContext('2d');
-
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
-const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF';
-const fontSize = 14;
-let columns = Math.floor(canvas.width / fontSize);
-let drops = Array(columns).fill(1);
-
-function drawRain() {
-  ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#40C4FF';
-  ctx.font = `${fontSize}px monospace`;
-
-  for (let i = 0; i < drops.length; i++) {
-    const char = chars[Math.floor(Math.random() * chars.length)];
-    ctx.fillText(char, i * fontSize, drops[i] * fontSize);
-
-    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-      drops[i] = 0;
-    }
-    drops[i]++;
-  }
-}
-
-setInterval(drawRain, 50);
-
-window.addEventListener('resize', () => {
-  columns = Math.floor(canvas.width / fontSize);
-  drops = Array(columns).fill(1);
-});
-
-// ── Chat logic ──
-const chatWindow = document.getElementById('chat-window');
-const userInput = document.getElementById('user-input');
-const sendBtn = document.getElementById('send-btn');
-
-function appendMessage(text, type) {
-  const msg = document.createElement('div');
-  msg.classList.add('message', type);
-
-  // Format the message with basic markdown-style parsing
-  if (type === 'bot') {
-    msg.innerHTML = formatBotMessage(text);
-  } else {
-    msg.textContent = text;
-  }
-
-  chatWindow.appendChild(msg);
-  chatWindow.scrollTop = chatWindow.scrollHeight;
-  return msg;
-}
-
-function formatBotMessage(text) {
-  // Convert markdown-style formatting to HTML
-  let formatted = text
-    // Bold: **text** or __text__
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/__(.+?)__/g, '<strong>$1</strong>')
-    // Code blocks: ```code```
-    .replace(/```(.+?)```/gs, '<pre><code>$1</code></pre>')
-    // Inline code: `code`
-    .replace(/`(.+?)`/g, '<code>$1</code>')
-    // Lists: - item or * item
-    .replace(/^[\-\*] (.+)$/gm, '<li>$1</li>')
-    // Numbered lists: 1. item
-    .replace(/^\d+\.\s(.+)$/gm, '<li>$1</li>')
-    // Headers: ## Header
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    // Paragraphs: double newline
-    .split('\n\n').map(para => {
-      if (para.includes('<li>')) {
-        return '<ul>' + para + '</ul>';
-      }
-      if (para.startsWith('<h') || para.startsWith('<pre>')) {
-        return para;
-      }
-      return para ? '<p>' + para.replace(/\n/g, '<br>') + '</p>' : '';
-    }).join('');
-
-  return formatted;
-}
-
-function showTypingIndicator() {
-  const msg = document.createElement('div');
-  msg.classList.add('message', 'bot', 'typing');
-  msg.textContent = '';
-  chatWindow.appendChild(msg);
-  chatWindow.scrollTop = chatWindow.scrollHeight;
-  return msg;
-}
-
-async function sendMessage() {
-  const text = userInput.value.trim();
-  if (!text) return;
-
-  appendMessage(text, 'user');
-  userInput.value = '';
-  userInput.disabled = true;
-  sendBtn.disabled = true;
-
-  const typing = showTypingIndicator();
-
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text, sessionId: userSessionId }),
-    });
-
-    const data = await res.json();
-    typing.remove();
-    appendMessage(data.reply, 'bot');
-  } catch {
-    typing.remove();
-    appendMessage('ERROR: CONNECTION LOST. RETRANSMIT.', 'bot');
-  } finally {
-    userInput.disabled = false;
-    sendBtn.disabled = false;
-    userInput.focus();
-  }
-}
-
-sendBtn.addEventListener('click', sendMessage);
-userInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') sendMessage();
-});
-
-// Boot sequence animation
-document.addEventListener('DOMContentLoaded', () => {
-  const bootLines = document.querySelectorAll('.boot-sequence p');
-  bootLines.forEach((line, i) => {
-    line.style.opacity = '0';
-    setTimeout(() => {
-      line.style.opacity = '1';
-    }, i * 400);
-  });
-
-  // Scroll chat window to bottom on load
-  setTimeout(() => {
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-    userInput.focus();
-  }, bootLines.length * 400);
-});
+// Admin Dashboard Logic
+import { initMatrixRain } from './matrix-rain.js';
+import { initTerminalChat } from './shared-terminal.js';
 
 // ══════════════════════════════════════════════════════════
-// DASHBOARD FUNCTIONALITY
+// MATRIX RAIN ANIMATION
+// ══════════════════════════════════════════════════════════
+
+const rain = initMatrixRain('matrix-rain');
+if (rain) {
+  rain.start();
+}
+
+// ══════════════════════════════════════════════════════════
+// DASHBOARD STATE
 // ══════════════════════════════════════════════════════════
 
 let messageCount = 0;
@@ -205,61 +63,56 @@ function addActivityLog(message, type = 'info') {
     body: JSON.stringify({
       message: `[${time}] ${message}`,
       action: type,
+      context: 'admin'
     }),
   }).catch(error => console.error('Failed to save activity log:', error));
 }
 
-// Override sendMessage to include dashboard tracking
-const originalSendMessage = sendMessage;
-sendMessage = async function() {
-  const text = userInput.value.trim();
-  if (!text) return;
+// ══════════════════════════════════════════════════════════
+// TERMINAL CHAT INITIALIZATION
+// ══════════════════════════════════════════════════════════
 
-  messageCount++;
-  const sendTime = Date.now();
-
-  // Log activity
-  const shortText = text.length > 30 ? text.substring(0, 30) + '...' : text;
-  addActivityLog(`User: ${shortText}`, 'user');
-
-  // Call original sendMessage
-  appendMessage(text, 'user');
-  userInput.value = '';
-  userInput.disabled = true;
-  sendBtn.disabled = true;
-
-  const typing = showTypingIndicator();
-
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text, sessionId: userSessionId }),
-    });
-
-    const data = await res.json();
-    typing.remove();
-    appendMessage(data.reply, 'bot');
-
-    // Track response time
-    const responseTime = (Date.now() - sendTime) / 1000;
-    responseTimes.push(responseTime);
-    if (responseTimes.length > 10) responseTimes.shift();
-
+const terminal = initTerminalChat({
+  chatWindowId: 'chat-window',
+  userInputId: 'user-input',
+  sendBtnId: 'send-btn',
+  context: 'admin',
+  onMessageSent: (text) => {
+    // Track message sent
+    messageCount++;
+    const shortText = text.length > 30 ? text.substring(0, 30) + '...' : text;
+    addActivityLog(`User: ${shortText}`, 'user');
+  },
+  onMessageReceived: (reply) => {
+    // Track response received
     updateStats();
     addActivityLog('Response received', 'success');
-  } catch {
-    typing.remove();
-    appendMessage('ERROR: CONNECTION LOST. RETRANSMIT.', 'bot');
-    addActivityLog('ERROR: Connection failed', 'error');
-  } finally {
-    userInput.disabled = false;
-    sendBtn.disabled = false;
-    userInput.focus();
   }
-};
+});
 
-// Quick Actions
+// Track response time
+const originalSendMessage = terminal?.sendMessage;
+if (terminal && originalSendMessage) {
+  terminal.sendMessage = async function() {
+    const sendTime = Date.now();
+
+    try {
+      await originalSendMessage.call(this);
+
+      // Calculate response time
+      const responseTime = (Date.now() - sendTime) / 1000;
+      responseTimes.push(responseTime);
+      if (responseTimes.length > 10) responseTimes.shift();
+    } catch (error) {
+      addActivityLog('ERROR: Connection failed', 'error');
+    }
+  };
+}
+
+// ══════════════════════════════════════════════════════════
+// QUICK ACTIONS
+// ══════════════════════════════════════════════════════════
+
 document.getElementById('clear-chat')?.addEventListener('click', () => {
   if (confirm('Clear all chat messages?')) {
     const chatWindow = document.getElementById('chat-window');
@@ -295,7 +148,10 @@ document.getElementById('test-connection')?.addEventListener('click', async () =
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: 'ping' }),
+      body: JSON.stringify({
+        message: 'ping',
+        context: 'admin'
+      }),
     });
 
     if (res.ok) {
@@ -320,26 +176,10 @@ document.getElementById('test-connection')?.addEventListener('click', async () =
   }
 });
 
-// Store session ID globally
-let userSessionId = null;
+// ══════════════════════════════════════════════════════════
+// ACTIVITY LOG LOADING
+// ══════════════════════════════════════════════════════════
 
-// Get and display user IP address
-async function getUserIP() {
-  try {
-    const res = await fetch('/api/ip');
-    const data = await res.json();
-    if (data.ip) {
-      userSessionId = data.sessionId; // Store session ID
-      addActivityLog(`User connected from IP: ${data.ip}`, 'system');
-      return data.ip;
-    }
-  } catch (error) {
-    console.error('Failed to get IP:', error);
-  }
-  return null;
-}
-
-// Load recent activity from database
 async function loadRecentActivity() {
   try {
     const res = await fetch('/api/activity');
@@ -357,11 +197,14 @@ async function loadRecentActivity() {
           let message = '';
 
           if (activity.action === 'page_visit') {
-            message = `🌐 Visitor from ${activity.ip}`;
+            const userTypeLabel = activity.userType === 'admin' ? '👤' : activity.userType === 'customer' ? '💬' : '🌐';
+            message = `${userTypeLabel} ${activity.userType || 'visitor'} from ${activity.ip}`;
           } else if (activity.action === 'connect') {
-            message = `📍 User connected: ${activity.ip}`;
+            const userTypeLabel = activity.userType === 'admin' ? '👤' : '💬';
+            message = `📍 ${activity.userType || 'user'} connected: ${activity.ip}`;
           } else if (activity.action === 'message') {
-            message = `💬 Message from ${activity.ip}`;
+            const userTypeLabel = activity.userType === 'admin' ? '👤' : '💬';
+            message = `${userTypeLabel} Message from ${activity.ip}`;
           } else if (activity.message) {
             // Show custom activity messages (already has timestamp from database)
             message = activity.message.replace(/^\[\d{1,2}:\d{2}:\d{2}[^\]]*\]\s*/, ''); // Remove old timestamp
@@ -389,7 +232,37 @@ async function loadRecentActivity() {
   }
 }
 
-// Initialize dashboard
+// ══════════════════════════════════════════════════════════
+// BOOT SEQUENCE
+// ══════════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  const bootLines = document.querySelectorAll('.boot-sequence p');
+  bootLines.forEach((line, i) => {
+    line.style.opacity = '0';
+    setTimeout(() => {
+      line.style.opacity = '1';
+    }, i * 400);
+  });
+
+  // Scroll chat window to bottom on load
+  const chatWindow = document.getElementById('chat-window');
+  const userInput = document.getElementById('user-input');
+
+  setTimeout(() => {
+    if (chatWindow) {
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+    if (userInput) {
+      userInput.focus();
+    }
+  }, bootLines.length * 400);
+});
+
+// ══════════════════════════════════════════════════════════
+// DASHBOARD INITIALIZATION
+// ══════════════════════════════════════════════════════════
+
 document.addEventListener('DOMContentLoaded', async () => {
   updateStats();
   setInterval(updateStats, 5000); // Update every 5 seconds
@@ -399,7 +272,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Then add current session logs
   addActivityLog('Dashboard initialized', 'system');
-  await getUserIP(); // Get and log user IP
+
+  // Get session ID (already handled by shared-terminal.js)
+  if (terminal) {
+    const sessionId = terminal.getSessionId();
+    if (sessionId) {
+      addActivityLog(`Session ID: ${sessionId.substring(0, 8)}...`, 'system');
+    }
+  }
+
   addActivityLog('System ready', 'system');
 
   // Refresh activity every 30 seconds

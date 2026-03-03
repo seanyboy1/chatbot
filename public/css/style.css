@@ -36,6 +36,91 @@ body {
   opacity: 0.18;
 }
 
+/* ── Site Nav ── */
+.site-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: rgba(13, 13, 13, 0.97);
+  border-bottom: 1px solid var(--blue-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  z-index: 200;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 2px 16px rgba(93, 173, 226, 0.1);
+}
+
+.site-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--blue);
+}
+
+.site-nav-logo svg {
+  width: 56px;
+  height: 18px;
+  color: var(--blue);
+  filter: drop-shadow(0 0 6px var(--blue-glow));
+}
+
+.site-nav-logo-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  color: var(--blue);
+  text-shadow: 0 0 12px var(--blue-glow);
+}
+
+.site-nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.site-nav-tab {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--blue-dim);
+  text-decoration: none;
+  padding: 8px 18px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.site-nav-tab:hover {
+  color: var(--blue);
+  border-color: var(--blue-dark);
+  background: rgba(93, 173, 226, 0.06);
+}
+
+.site-nav-tab.active {
+  color: var(--blue);
+  border-color: var(--blue-dark);
+  background: rgba(93, 173, 226, 0.1);
+  box-shadow: 0 0 8px var(--blue-glow);
+}
+
+.site-nav + main,
+.site-nav ~ main {
+  padding-top: 60px;
+}
+
+/* ── Chat page terminal size ── */
+.chat-terminal {
+  width: 640px;
+  max-width: 92vw;
+  height: 55vh;
+}
+
 /* ── Terminal container ── */
 .terminal-container {
   position: relative;
@@ -170,7 +255,7 @@ body {
 }
 
 .message.user {
-  color: var(--blue);
+  color: #ffffff;
 }
 
 .message.user::before {
@@ -309,10 +394,10 @@ body {
   background: transparent;
   border: none;
   outline: none;
-  color: var(--blue);
+  color: #ffffff;
   font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 15px;
-  caret-color: var(--blue);
+  caret-color: #ffffff;
   letter-spacing: 0.5px;
 }
 
@@ -372,6 +457,20 @@ body {
   z-index: 100;
   backdrop-filter: blur(10px);
   box-shadow: 0 2px 10px rgba(93, 173, 226, 0.1);
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-label {
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: var(--blue-dim);
+  opacity: 0.6;
 }
 
 .nav-brand {
@@ -638,6 +737,10 @@ body {
     padding: 0 16px;
   }
 
+  .admin-label {
+    font-size: 11px;
+  }
+
   .nav-brand {
     font-size: 13px;
     letter-spacing: 2px;
@@ -664,6 +767,10 @@ body {
 }
 
 @media (max-width: 480px) {
+  .admin-label {
+    display: none;
+  }
+
   .nav-brand {
     font-size: 11px;
     letter-spacing: 1px;

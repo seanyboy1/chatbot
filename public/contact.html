@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLUE-NET - CONTACT</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .contact-page {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .contact-card {
+      background: var(--bg-terminal);
+      border: 1px solid var(--blue-dark);
+      border-radius: 4px;
+      padding: 48px 56px;
+      max-width: 560px;
+      width: 100%;
+      box-shadow: 0 0 15px var(--blue-glow), inset 0 0 30px rgba(0,0,0,0.5);
+      position: relative;
+      z-index: 1;
+    }
+
+    .contact-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.1) 2px,
+        rgba(0,0,0,0.1) 4px
+      );
+      pointer-events: none;
+      border-radius: 4px;
+    }
+
+    .contact-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 28px;
+      font-weight: bold;
+      letter-spacing: 6px;
+      color: var(--blue);
+      text-shadow: 0 0 15px var(--blue-glow);
+      margin-bottom: 8px;
+    }
+
+    .contact-subtitle {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      color: var(--blue-dark);
+      letter-spacing: 3px;
+      margin-bottom: 40px;
+    }
+
+    .contact-divider {
+      border: none;
+      border-top: 1px solid var(--blue-dark);
+      margin-bottom: 36px;
+    }
+
+    .contact-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .contact-row-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 2px;
+      color: var(--blue-dim);
+      min-width: 80px;
+      padding-top: 2px;
+    }
+
+    .contact-row-value {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 16px;
+      color: var(--blue);
+      text-shadow: 0 0 8px var(--blue-glow);
+    }
+
+    .contact-row-note {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--blue-dark);
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
+    .contact-back {
+      display: inline-block;
+      margin-top: 40px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: var(--blue-dim);
+      text-decoration: none;
+      border: 1px solid var(--blue-dark);
+      padding: 10px 24px;
+      border-radius: 2px;
+      transition: all 0.2s;
+    }
+
+    .contact-back:hover {
+      color: var(--blue);
+      border-color: var(--blue);
+      box-shadow: 0 0 10px var(--blue-glow);
+      background: rgba(93,173,226,0.05);
+    }
+
+    @media (max-width: 480px) {
+      .contact-card {
+        padding: 32px 24px;
+      }
+      .contact-title {
+        font-size: 22px;
+        letter-spacing: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrix-rain"></canvas>
+
+  <nav class="site-nav">
+    <a href="/" class="site-nav-logo">
+      <svg viewBox="0 0 60 20" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="4" width="56" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="6" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+        <rect x="11" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+        <rect x="16" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+        <rect x="21" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+        <circle class="led-green" cx="7.5" cy="13" r="0.8" fill="#27c93f"/>
+        <circle class="led-yellow" cx="12.5" cy="13" r="0.8" fill="#ffbd2e"/>
+        <circle class="led-green" cx="17.5" cy="13" r="0.8" fill="#27c93f"/>
+        <circle class="led-yellow" cx="22.5" cy="13" r="0.8" fill="#ffbd2e"/>
+        <circle class="led-power" cx="52" cy="10" r="1.2" fill="currentColor"/>
+      </svg>
+      <span class="site-nav-logo-text">BLUE-NET</span>
+    </a>
+    <div class="site-nav-tabs">
+      <a href="/" class="site-nav-tab">HOME</a>
+      <a href="/chat" class="site-nav-tab">CHAT</a>
+      <a href="/contact" class="site-nav-tab active">CONTACT</a>
+    </div>
+  </nav>
+
+  <main class="contact-page">
+    <div class="contact-card">
+      <div class="contact-title">CONTACT US</div>
+      <div class="contact-subtitle">BLUE-NET SUPPORT SERVICES</div>
+      <hr class="contact-divider">
+
+      <div class="contact-row">
+        <div class="contact-row-label">EMAIL</div>
+        <div>
+          <div class="contact-row-value">support@bluenet.com</div>
+          <div class="contact-row-note">Response within 2 business hours</div>
+        </div>
+      </div>
+
+      <div class="contact-row">
+        <div class="contact-row-label">PHONE</div>
+        <div>
+          <div class="contact-row-value">+1 (555) 123-4567</div>
+          <div class="contact-row-note">Mon – Fri, 8AM – 6PM EST</div>
+        </div>
+      </div>
+
+      <div class="contact-row">
+        <div class="contact-row-label">SUPPORT</div>
+        <div>
+          <div class="contact-row-value">24 / 7 AI CHAT</div>
+          <div class="contact-row-note">Instant responses via our AI assistant</div>
+        </div>
+      </div>
+
+      <div class="contact-row">
+        <div class="contact-row-label">ADDRESS</div>
+        <div>
+          <div class="contact-row-value">123 Network Ave</div>
+          <div class="contact-row-note">San Francisco, CA 94105</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script type="module">
+    import { initMatrixRain } from '/js/matrix-rain.js';
+    const rain = initMatrixRain('matrix-rain');
+    if (rain) rain.start();
+  </script>
+</body>
+</html>

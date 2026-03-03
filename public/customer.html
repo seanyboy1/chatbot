@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLUE-NET - SUPPORT</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/customer.css">
+  <link rel="stylesheet" href="/css/logo.css">
+</head>
+<body>
+  <canvas id="matrix-rain"></canvas>
+
+  <!-- Logo Splash Screen -->
+  <div id="logo-splash" class="logo-splash-overlay">
+    <!-- Pre-emerge status (shows before logo loads) -->
+    <div class="pre-connection-status" id="pre-connection-status">
+      <span class="status-text">ESTABLISHING CONNECTION...</span>
+    </div>
+
+    <div class="splash-logo-container">
+      <!-- Network Rack (Switch + Firewall integrated) -->
+      <svg class="rack-icon" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- ═══ RACK RAILS ═══ -->
+        <g class="rack-rails-group">
+          <rect x="0" y="0" width="8" height="100" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="292" y="0" width="8" height="100" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <!-- Left rail holes -->
+          <rect x="1.5" y="7" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="12" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="17" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="22" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="27" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="32" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="37" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="55" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="60" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="65" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="70" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="75" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="80" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="85" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="90" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <!-- Right rail holes -->
+          <rect x="293.5" y="7" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="12" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="17" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="22" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="27" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="32" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="37" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="55" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="60" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="65" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="70" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="75" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="80" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="85" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="90" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+        </g>
+
+        <!-- ═══ SWITCH UNIT ═══ -->
+        <g class="switch-group">
+          <rect x="2" y="6" width="6" height="34" fill="currentColor" opacity="0.08" stroke="currentColor" stroke-width="0.5"/>
+          <rect x="292" y="6" width="6" height="34" fill="currentColor" opacity="0.08" stroke="currentColor" stroke-width="0.5"/>
+          <!-- Switch rack bolts -->
+          <circle cx="5" cy="11" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head sw-screw-1"><line x1="3.5" y1="11" x2="6.5" y2="11" stroke="white" stroke-width="0.7"/><line x1="5" y1="9.5" x2="5" y2="12.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="5" cy="35" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head sw-screw-2"><line x1="3.5" y1="35" x2="6.5" y2="35" stroke="white" stroke-width="0.7"/><line x1="5" y1="33.5" x2="5" y2="36.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="295" cy="11" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head sw-screw-3"><line x1="293.5" y1="11" x2="296.5" y2="11" stroke="white" stroke-width="0.7"/><line x1="295" y1="9.5" x2="295" y2="12.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="295" cy="35" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head sw-screw-4"><line x1="293.5" y1="35" x2="296.5" y2="35" stroke="white" stroke-width="0.7"/><line x1="295" y1="33.5" x2="295" y2="36.5" stroke="white" stroke-width="0.7"/></g>
+          <rect x="8" y="4" width="284" height="38" rx="1" fill="rgba(0,0,0,0.3)" stroke="currentColor" stroke-width="1"/>
+          <text class="switch-brand" x="14" y="26" font-size="6" fill="currentColor" font-family="'Share Tech Mono', monospace" font-weight="bold">BLUE-NET</text>
+          <rect class="network-port" x="71" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port network-port-active" x="77" y="10" width="5" height="5" rx="0.5" fill="none" stroke="white" stroke-width="0.8"/>
+          <rect class="network-port" x="83" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port" x="89" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port" x="95" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port" x="101" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port network-port-active" x="107" y="10" width="5" height="5" rx="0.5" fill="none" stroke="white" stroke-width="0.8"/>
+          <rect class="network-port" x="113" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <circle class="led-green" cx="74" cy="21" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="80" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-green" cx="86" cy="21" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="92" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-green" cx="98" cy="21" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="104" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-green" cx="110" cy="21" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="116" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-power" cx="278" cy="23" r="1.5" fill="currentColor"/>
+          <text x="266" y="24" font-size="3.5" fill="currentColor" font-family="monospace">PWR</text>
+          <!-- ═══ BLANK PANEL ═══ -->
+          <rect x="8" y="46" width="284" height="6" fill="none" stroke="currentColor" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.3"/>
+        </g>
+
+        <!-- ═══ PATCH CABLES: curved from switch ports into firewall LAN ports ═══ -->
+        <!-- Cable 1: bows slightly left -->
+        <path class="patch-cable patch-cable-1" d="M 79 15 C 73 28 74 48 80 61" stroke="#B8860B" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path class="patch-cable patch-cable-1" d="M 79 15 C 73 28 74 48 80 61" stroke="#FFD700" stroke-width="2.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 4px rgba(255,215,0,0.7))"/>
+        <path class="patch-cable patch-cable-1" d="M 78.2 15 C 72.2 28 73.2 48 79.2 61" stroke="rgba(255,250,180,0.45)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+        <!-- Cable 2: bows slightly right -->
+        <path class="patch-cable patch-cable-2" d="M 109 15 C 115 28 116 48 110 61" stroke="#B8860B" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path class="patch-cable patch-cable-2" d="M 109 15 C 115 28 116 48 110 61" stroke="#FFD700" stroke-width="2.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 4px rgba(255,215,0,0.7))"/>
+        <path class="patch-cable patch-cable-2" d="M 109.8 15 C 115.8 28 116.8 48 110.8 61" stroke="rgba(255,250,180,0.45)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+        <!-- Data packets on yellow cables (follow bezier path via animateMotion) -->
+        <circle class="data-pkt-yellow data-pkt-y-down-1" cx="0" cy="0" r="1.5" fill="#FFD700">
+          <animateMotion dur="1.4s" begin="0.5s" repeatCount="indefinite" path="M 79 15 C 73 28 74 48 80 61"/>
+        </circle>
+        <circle class="data-pkt-yellow data-pkt-y-up-1" cx="0" cy="0" r="1.5" fill="#FFD700">
+          <animateMotion dur="1.4s" begin="1.2s" repeatCount="indefinite" path="M 80 61 C 74 48 73 28 79 15"/>
+        </circle>
+        <circle class="data-pkt-yellow data-pkt-y-down-2" cx="0" cy="0" r="1.5" fill="#FFD700">
+          <animateMotion dur="1.4s" begin="1.0s" repeatCount="indefinite" path="M 109 15 C 115 28 116 48 110 61"/>
+        </circle>
+        <circle class="data-pkt-yellow data-pkt-y-up-2" cx="0" cy="0" r="1.5" fill="#FFD700">
+          <animateMotion dur="1.4s" begin="1.7s" repeatCount="indefinite" path="M 110 61 C 116 48 115 28 109 15"/>
+        </circle>
+
+        <!-- ═══ FIREWALL UNIT ═══ -->
+        <g class="firewall-group">
+          <rect x="2" y="56" width="6" height="36" fill="currentColor" opacity="0.08" stroke="currentColor" stroke-width="0.5"/>
+          <rect x="292" y="56" width="6" height="36" fill="currentColor" opacity="0.08" stroke="currentColor" stroke-width="0.5"/>
+          <rect x="8" y="54" width="284" height="40" rx="1" fill="rgba(0,0,0,0.3)" stroke="currentColor" stroke-width="1"/>
+          <!-- Firewall rack bolts -->
+          <circle cx="5" cy="61" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head fw-screw-1"><line x1="3.5" y1="61" x2="6.5" y2="61" stroke="white" stroke-width="0.7"/><line x1="5" y1="59.5" x2="5" y2="62.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="5" cy="86" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head fw-screw-2"><line x1="3.5" y1="86" x2="6.5" y2="86" stroke="white" stroke-width="0.7"/><line x1="5" y1="84.5" x2="5" y2="87.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="295" cy="61" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head fw-screw-3"><line x1="293.5" y1="61" x2="296.5" y2="61" stroke="white" stroke-width="0.7"/><line x1="295" y1="59.5" x2="295" y2="62.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="295" cy="86" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head fw-screw-4"><line x1="293.5" y1="86" x2="296.5" y2="86" stroke="white" stroke-width="0.7"/><line x1="295" y1="84.5" x2="295" y2="87.5" stroke="white" stroke-width="0.7"/></g>
+          <text x="14" y="76" font-size="6" fill="currentColor" font-family="'Share Tech Mono', monospace" font-weight="bold">FIREWALL</text>
+          <!-- LAN Ports -->
+          <rect class="fw-lan-port" x="76" y="61" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="fw-lan-port" x="106" y="61" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+          <text class="fw-lan-label" x="73" y="73" font-size="4.5" fill="currentColor" font-family="monospace" opacity="0.7">LAN1</text>
+          <text class="fw-lan-label" x="103" y="73" font-size="4.5" fill="currentColor" font-family="monospace" opacity="0.7">LAN2</text>
+          <!-- WAN Ports -->
+          <rect class="fw-wan-port" x="130" y="61" width="8" height="5" rx="0.5" fill="none" stroke="#FF4500" stroke-width="1"/>
+          <rect class="fw-wan-port" x="162" y="61" width="8" height="5" rx="0.5" fill="none" stroke="#FF4500" stroke-width="1"/>
+          <text class="fw-wan-label" x="127" y="73" font-size="4.5" fill="#FF4500" font-family="monospace" opacity="0.9">WAN1</text>
+          <text class="fw-wan-label" x="159" y="73" font-size="4.5" fill="#FF4500" font-family="monospace" opacity="0.9">WAN2</text>
+          <!-- Status LEDs -->
+          <circle class="led-lan" cx="80" cy="82" r="1.5" fill="#27c93f"/>
+          <circle class="led-lan led-lan-2" cx="110" cy="82" r="1.5" fill="#27c93f"/>
+          <circle class="led-wan" cx="134" cy="82" r="1.5" fill="#ff5f56"/>
+          <circle class="led-wan led-wan-2" cx="166" cy="82" r="1.5" fill="#ff5f56"/>
+          <circle class="led-power" cx="278" cy="74" r="1.5" fill="currentColor"/>
+          <text x="266" y="75" font-size="3.5" fill="currentColor" font-family="monospace">PWR</text>
+        </g>
+      </svg>
+
+      <!-- Red cables from Firewall WAN ports down to option boxes -->
+      <div class="fw-cables-container">
+        <svg class="fw-cable fw-cable-left" viewBox="0 0 99 250" xmlns="http://www.w3.org/2000/svg">
+          <!-- Shadow/body -->
+          <path class="fw-cable-path" d="M 99 0 C 78 70 22 165 0 250" stroke="#8B0000" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <!-- Main color -->
+          <path class="fw-cable-path" d="M 99 0 C 78 70 22 165 0 250" stroke="#FF0000" stroke-width="3.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 5px rgba(255,0,0,0.7))"/>
+          <!-- Highlight -->
+          <path class="fw-cable-path" d="M 98.5 0 C 77.5 70 21.5 165 -0.5 250" stroke="rgba(255,180,180,0.4)" stroke-width="1" fill="none" stroke-linecap="round"/>
+          <circle class="fw-cable-packet" cx="99" cy="0" r="3" fill="#FF0000"/>
+          <circle class="fw-cable-packet-return fw-cable-return-left" cx="0" cy="250" r="3" fill="#FF0000"/>
+        </svg>
+        <svg class="fw-cable fw-cable-right" viewBox="0 0 99 250" xmlns="http://www.w3.org/2000/svg">
+          <!-- Shadow/body -->
+          <path class="fw-cable-path" d="M 0 0 C 22 70 78 165 99 250" stroke="#8B0000" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <!-- Main color -->
+          <path class="fw-cable-path" d="M 0 0 C 22 70 78 165 99 250" stroke="#FF0000" stroke-width="3.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 5px rgba(255,0,0,0.7))"/>
+          <!-- Highlight -->
+          <path class="fw-cable-path" d="M 0.5 0 C 22.5 70 78.5 165 99.5 250" stroke="rgba(255,180,180,0.4)" stroke-width="1" fill="none" stroke-linecap="round"/>
+          <circle class="fw-cable-packet" cx="0" cy="0" r="3" fill="#FF0000"/>
+          <circle class="fw-cable-packet-return fw-cable-return-right" cx="99" cy="250" r="3" fill="#FF0000"/>
+        </svg>
+      </div>
+
+      <!-- Connection Status -->
+      <div class="connection-status">
+        <span class="status-text">ESTABLISHING CONNECTION...</span>
+      </div>
+
+      <!-- Option Boxes -->
+      <div class="splash-options" id="splash-options">
+        <button class="splash-option-box" id="option-chat">
+          <svg class="box-border-data" viewBox="0 0 200 180" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <rect class="border-data-path" x="1" y="1" width="198" height="178" rx="7"/>
+          </svg>
+          <div class="option-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="none" stroke="currentColor" stroke-width="2"/>
+              <line x1="6" y1="9" x2="18" y2="9" stroke="currentColor" stroke-width="2"/>
+              <line x1="6" y1="13" x2="14" y2="13" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="option-label">START CHAT</div>
+          <div class="option-description">AI Support Assistant</div>
+        </button>
+
+        <button class="splash-option-box" id="option-contact">
+          <svg class="box-border-data" viewBox="0 0 200 180" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <rect class="border-data-path" x="1" y="1" width="198" height="178" rx="7"/>
+          </svg>
+          <div class="option-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M3 7l9 6 9-6" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="option-label">CONTACT US</div>
+          <div class="option-description">Get in Touch</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <script type="module" src="/js/customer.js"></script>
+</body>
+</html>

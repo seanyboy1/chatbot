@@ -1,0 +1,206 @@
+// Customer Page Logic
+import { initMatrixRain } from './matrix-rain.js';
+import { initTerminalChat } from './shared-terminal.js';
+import { codingEffect, initNetworkAnimation } from './logo-animation.js';
+
+// Initialize Matrix rain animation
+const rain = initMatrixRain('matrix-rain');
+if (rain) {
+  rain.start();
+}
+
+// Initialize terminal chat with customer context
+const terminal = initTerminalChat({
+  chatWindowId: 'chat-window',
+  userInputId: 'user-input',
+  sendBtnId: 'send-btn',
+  context: 'customer'
+});
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+// Skippable sleep — resolves early if skipSignal fires
+function skippableSleep(ms, skipSignal) {
+  return new Promise(resolve => {
+    const t = setTimeout(resolve, ms);
+    skipSignal.then(() => { clearTimeout(t); resolve(); });
+  });
+}
+
+// Splash Screen Animation Sequence
+async function playSplashAnimation() {
+  const rackIcon = document.querySelector('.rack-icon');
+  const splashOptions = document.getElementById('splash-options');
+  const fwCablesContainer = document.querySelector('.fw-cables-container');
+  const preStatus = document.getElementById('pre-connection-status');
+  const overlay = document.getElementById('logo-splash');
+
+  // Skip trigger — clicking anywhere on the overlay skips to the end
+  let triggerSkip;
+  const skipSignal = new Promise(resolve => { triggerSkip = resolve; });
+  overlay.addEventListener('click', triggerSkip, { once: true });
+
+  const wait = ms => skippableSleep(ms, skipSignal);
+
+  // Initialize network animation on rack
+  if (rackIcon) initNetworkAnimation(rackIcon);
+
+  // Show "ESTABLISHING CONNECTION..." blinking
+  if (preStatus) preStatus.style.opacity = '1';
+  await wait(1600);
+  if (preStatus) preStatus.style.opacity = '0';
+  await wait(300);
+
+  // 1. Rack rails appear
+  rackIcon.querySelector('.rack-rails-group')?.classList.add('show');
+  await wait(800);
+
+  // 2. Switch unit slides in, then screws drive in slowly
+  const switchGroup = rackIcon.querySelector('.switch-group');
+  switchGroup?.classList.add('show');
+  await wait(300);
+  switchGroup?.classList.add('screwing');
+  await wait(1800);  // wait for all 4 screws to finish
+
+  // 3. Firewall unit slides in, then screws drive in slowly
+  const firewallGroup = rackIcon.querySelector('.firewall-group');
+  firewallGroup?.classList.add('show');
+  await wait(300);
+  firewallGroup?.classList.add('screwing');
+  await wait(1800);  // wait for all 4 screws to finish
+
+  // 4. Boxes appear now that rack is fully built
+  if (splashOptions) splashOptions.classList.add('show');
+  await wait(400);
+  document.getElementById('option-chat')?.classList.add('show');
+  await wait(400);
+  document.getElementById('option-contact')?.classList.add('show');
+  await wait(600);
+
+  // 5. Yellow patch cables draw (switch → firewall)
+  rackIcon.classList.add('cables-active');
+  await wait(1200);
+
+  // 6. Red cables run down from firewall to boxes
+  if (fwCablesContainer) fwCablesContainer.classList.add('active');
+
+  // Left cable finishes at 0.7s — connect chat box
+  await wait(700);
+  document.getElementById('option-chat')?.classList.add('cable-connected');
+
+  // Right cable finishes at another 0.7s — connect contact box
+  await wait(700);
+  document.getElementById('option-contact')?.classList.add('cable-connected');
+
+  // Both cables connected — activate rack LEDs
+  rackIcon.classList.add('leds-active');
+
+  // Wait for user to click an option
+  return new Promise((resolve) => {
+    // Re-attach click to overlay now to handle option selection
+    overlay.removeEventListener('click', triggerSkip);
+
+    document.getElementById('option-chat')?.addEventListener('click', () => resolve('chat'));
+    document.getElementById('option-contact')?.addEventListener('click', () => resolve('contact'));
+  });
+}
+
+async function handleSplashChoice(choice) {
+  const splashOverlay = document.getElementById('logo-splash');
+  splashOverlay.classList.add('fade-out');
+  await sleep(600);
+
+  if (choice === 'chat') {
+    window.location.href = '/chat';
+  } else if (choice === 'contact') {
+    window.location.href = '/contact';
+  }
+}
+
+function showContactModal() {
+  const splashOverlay = document.getElementById('logo-splash');
+  const splashContainer = document.querySelector('.splash-logo-container');
+
+  splashContainer.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+  splashContainer.style.opacity = '0';
+  splashContainer.style.transform = 'scale(0.9)';
+
+  setTimeout(() => {
+    // Reset container so the new content inside is visible
+    splashContainer.style.opacity = '1';
+    splashContainer.style.transform = 'scale(1)';
+
+    splashContainer.innerHTML = `
+      <div class="contact-modal" style="opacity: 0; transform: scale(0.9); transition: all 0.4s ease;">
+        <h2 style="font-family: 'Share Tech Mono', monospace; color: var(--blue); font-size: 36px; margin-bottom: 30px; text-shadow: 0 0 15px var(--blue-glow);">CONTACT US</h2>
+        <div style="font-family: 'Share Tech Mono', monospace; color: var(--blue-dim); font-size: 16px; line-height: 2; text-align: left; max-width: 400px;">
+          <p style="margin: 10px 0;"><span style="color: var(--blue);">Email:</span> support@bluenet.com</p>
+          <p style="margin: 10px 0;"><span style="color: var(--blue);">Phone:</span> +1 (555) 123-4567</p>
+          <p style="margin: 10px 0;"><span style="color: var(--blue);">Hours:</span> 24/7 Support</p>
+        </div>
+        <div style="display: flex; gap: 20px; margin-top: 40px;">
+          <button id="back-to-options" class="splash-option-box" style="padding: 16px 32px; min-width: 150px;">
+            <div class="option-label" style="font-size: 14px;">BACK</div>
+          </button>
+          <button id="start-chat-now" class="splash-option-box" style="padding: 16px 32px; min-width: 150px;">
+            <div class="option-label" style="font-size: 14px;">START CHAT</div>
+          </button>
+        </div>
+      </div>
+    `;
+
+    setTimeout(() => {
+      const modal = splashContainer.querySelector('.contact-modal');
+      if (modal) {
+        modal.style.opacity = '1';
+        modal.style.transform = 'scale(1)';
+      }
+
+      const backBtn = document.getElementById('back-to-options');
+      const chatBtn = document.getElementById('start-chat-now');
+
+      if (backBtn) {
+        backBtn.addEventListener('click', () => {
+          location.reload();
+        });
+      }
+
+      if (chatBtn) {
+        chatBtn.addEventListener('click', async () => {
+          splashOverlay.classList.add('fade-out');
+          await sleep(800);
+          splashOverlay.remove();
+          startBootSequence();
+        });
+      }
+    }, 50);
+  }, 400);
+}
+
+function startBootSequence() {
+  const bootLines = document.querySelectorAll('.boot-sequence p');
+  bootLines.forEach((line, i) => {
+    line.style.opacity = '0';
+    setTimeout(() => {
+      line.style.opacity = '1';
+    }, i * 400);
+  });
+
+  const chatWindow = document.getElementById('chat-window');
+  const userInput = document.getElementById('user-input');
+
+  setTimeout(() => {
+    if (chatWindow) {
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+    if (userInput) {
+      userInput.focus();
+    }
+  }, bootLines.length * 400);
+}
+
+// Start the splash animation when page loads
+document.addEventListener('DOMContentLoaded', async () => {
+  const choice = await playSplashAnimation();
+  await handleSplashChoice(choice);
+});
