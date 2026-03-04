@@ -207,6 +207,17 @@ body {
   50% { opacity: 0.4; box-shadow: none; }
 }
 
+.status-indicator.status-green {
+  background: #27c93f;
+  box-shadow: 0 0 6px rgba(39,201,63,0.9);
+  animation: pulseGreen 1.2s ease-in-out infinite;
+}
+
+@keyframes pulseGreen {
+  0%, 100% { background: #27c93f; box-shadow: 0 0 8px rgba(39,201,63,0.9); }
+  50%       { background: #0d2e13; box-shadow: none; }
+}
+
 /* ── Chat window ── */
 .terminal-body {
   flex: 1;

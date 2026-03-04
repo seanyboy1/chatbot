@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLUE-NET - SECURE ACCESS</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body>
+  <canvas id="matrix-rain"></canvas>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <!-- Terminal header -->
+      <div class="auth-header">
+        <div class="terminal-dots">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+        </div>
+        <div class="auth-badge">SECURE ACCESS</div>
+        <div class="terminal-status">
+          <span class="status-indicator status-green"></span>
+          <span style="color:#FF4500;">ENCRYPTED</span>
+        </div>
+      </div>
+
+      <div class="auth-card-inner">
+        <!-- Logo -->
+        <div class="auth-logo-wrap">
+          <svg viewBox="0 0 60 20" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="4" width="56" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/>
+            <rect x="6" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+            <rect x="11" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+            <rect x="16" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+            <rect x="21" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+            <circle cx="7.5" cy="13" r="0.8" fill="#27c93f"/>
+            <circle cx="12.5" cy="13" r="0.8" fill="#ffbd2e"/>
+            <circle cx="17.5" cy="13" r="0.8" fill="#27c93f"/>
+            <circle cx="22.5" cy="13" r="0.8" fill="#ffbd2e"/>
+            <circle cx="52" cy="10" r="1.2" fill="currentColor"/>
+          </svg>
+          <span class="auth-logo-text">BLUE-NET</span>
+        </div>
+        <div class="auth-tagline">NETWORK SOLUTIONS - CLIENT PORTAL</div>
+
+        <!-- Tabs -->
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">LOGIN</button>
+          <button class="auth-tab" data-tab="register">REGISTER</button>
+        </div>
+
+        <!-- Status -->
+        <div class="auth-status" id="auth-status"></div>
+
+        <!-- Login Form -->
+        <form class="auth-form" id="form-login" autocomplete="on">
+          <div class="auth-field">
+            <label class="auth-label">USERNAME OR EMAIL</label>
+            <div class="auth-input-row">
+              <span class="prompt-symbol">›</span>
+              <input class="auth-input" type="text" id="login-id" placeholder="enter username or email" autocomplete="username" spellcheck="false"/>
+            </div>
+          </div>
+          <div class="auth-field">
+            <label class="auth-label">PASSWORD</label>
+            <div class="auth-input-row">
+              <span class="prompt-symbol">›</span>
+              <input class="auth-input" type="password" id="login-pass" placeholder="enter password" autocomplete="current-password"/>
+            </div>
+          </div>
+          <button type="submit" class="auth-btn" id="login-btn">AUTHENTICATE</button>
+        </form>
+
+        <!-- Register Form -->
+        <form class="auth-form hidden" id="form-register" autocomplete="on">
+          <div class="auth-row-2">
+            <div class="auth-field">
+              <label class="auth-label">FULL NAME</label>
+              <div class="auth-input-row">
+                <span class="prompt-symbol">›</span>
+                <input class="auth-input" type="text" id="reg-name" placeholder="your full name" autocomplete="name"/>
+              </div>
+            </div>
+            <div class="auth-field">
+              <label class="auth-label">USERNAME</label>
+              <div class="auth-input-row">
+                <span class="prompt-symbol">›</span>
+                <input class="auth-input" type="text" id="reg-user" placeholder="choose a username" autocomplete="username" spellcheck="false"/>
+              </div>
+            </div>
+          </div>
+          <div class="auth-field">
+            <label class="auth-label">EMAIL ADDRESS</label>
+            <div class="auth-input-row">
+              <span class="prompt-symbol">›</span>
+              <input class="auth-input" type="email" id="reg-email" placeholder="your@email.com" autocomplete="email"/>
+            </div>
+          </div>
+          <div class="auth-field">
+            <label class="auth-label">PHONE NUMBER</label>
+            <div class="auth-input-row">
+              <span class="prompt-symbol">›</span>
+              <input class="auth-input" type="tel" id="reg-phone" placeholder="+1 (555) 000-0000" autocomplete="tel"/>
+            </div>
+          </div>
+          <div class="auth-row-2">
+            <div class="auth-field">
+              <label class="auth-label">PASSWORD</label>
+              <div class="auth-input-row">
+                <span class="prompt-symbol">›</span>
+                <input class="auth-input" type="password" id="reg-pass" placeholder="min. 8 characters" autocomplete="new-password"/>
+              </div>
+            </div>
+            <div class="auth-field">
+              <label class="auth-label">CONFIRM PASSWORD</label>
+              <div class="auth-input-row">
+                <span class="prompt-symbol">›</span>
+                <input class="auth-input" type="password" id="reg-confirm" placeholder="repeat password" autocomplete="new-password"/>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="auth-btn" id="register-btn">CREATE ACCOUNT</button>
+        </form>
+
+        <div class="auth-footer">
+          <a href="/">← RETURN TO HOME</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initMatrixRain } from '/js/matrix-rain.js';
+    import { saveAuth, isLoggedIn, getRole } from '/js/auth.js';
+
+    // Redirect if already logged in
+    if (isLoggedIn()) {
+      window.location.href = getRole() === 'admin' ? '/admin' : '/profile';
+    }
+
+    const rain = initMatrixRain('matrix-rain');
+    if (rain) rain.start();
+
+    // Tab switching
+    const tabs = document.querySelectorAll('.auth-tab');
+    const formLogin = document.getElementById('form-login');
+    const formRegister = document.getElementById('form-register');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const which = tab.dataset.tab;
+        formLogin.classList.toggle('hidden', which !== 'login');
+        formRegister.classList.toggle('hidden', which !== 'register');
+        setStatus('', '');
+      });
+    });
+
+    const statusEl = document.getElementById('auth-status');
+    function setStatus(msg, type) {
+      statusEl.textContent = msg;
+      statusEl.className = 'auth-status' + (type ? ' ' + type : '');
+    }
+
+    // Login
+    formLogin.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const identifier = document.getElementById('login-id').value.trim();
+      const password   = document.getElementById('login-pass').value;
+      const btn = document.getElementById('login-btn');
+      if (!identifier || !password) return setStatus('All fields required.', 'error');
+
+      btn.disabled = true;
+      btn.textContent = 'AUTHENTICATING...';
+      setStatus('', '');
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setStatus(data.error || 'Login failed.', 'error');
+          btn.disabled = false;
+          btn.textContent = 'AUTHENTICATE';
+          return;
+        }
+        saveAuth(data.token, data.user, data.role);
+        setStatus('ACCESS GRANTED — CONNECTING...', 'success');
+        setTimeout(() => {
+          window.location.href = data.role === 'admin' ? '/admin' : '/profile';
+        }, 800);
+      } catch {
+        setStatus('Connection error. Try again.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'AUTHENTICATE';
+      }
+    });
+
+    // Register
+    formRegister.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name    = document.getElementById('reg-name').value.trim();
+      const username = document.getElementById('reg-user').value.trim();
+      const email   = document.getElementById('reg-email').value.trim();
+      const phone   = document.getElementById('reg-phone').value.trim();
+      const pass    = document.getElementById('reg-pass').value;
+      const confirm = document.getElementById('reg-confirm').value;
+      const btn = document.getElementById('register-btn');
+
+      if (!name || !username || !email || !pass) return setStatus('Name, username, email, and password are required.', 'error');
+      if (pass !== confirm) return setStatus('Passwords do not match.', 'error');
+      if (pass.length < 8) return setStatus('Password must be at least 8 characters.', 'error');
+
+      btn.disabled = true;
+      btn.textContent = 'REGISTERING...';
+      setStatus('', '');
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, username, email, phone, password: pass }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setStatus(data.error || 'Registration failed.', 'error');
+          btn.disabled = false;
+          btn.textContent = 'CREATE ACCOUNT';
+          return;
+        }
+        saveAuth(data.token, data.user, 'user');
+        setStatus('ACCOUNT CREATED — INITIALIZING PROFILE...', 'success');
+        setTimeout(() => { window.location.href = '/profile'; }, 900);
+      } catch {
+        setStatus('Connection error. Try again.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'CREATE ACCOUNT';
+      }
+    });
+  </script>
+</body>
+</html>

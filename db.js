@@ -48,3 +48,44 @@ const sessionSchema = new mongoose.Schema({
 });
 
 export const Session = mongoose.models.Session || mongoose.model('Session', sessionSchema);
+
+// User Schema (registered accounts)
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: { type: String, unique: true, lowercase: true, trim: true },
+  username: { type: String, unique: true, lowercase: true, trim: true },
+  phone: String,
+  passwordHash: String,
+  salt: String,
+  authToken: String,
+  createdAt: { type: Date, default: Date.now },
+});
+export const User = mongoose.models.User || mongoose.model('User', userSchema);
+
+// Chat Session Schema (per-user saved conversations)
+const chatSessionSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  title: { type: String, default: 'New Chat' },
+  messages: [{
+    role: { type: String, enum: ['user', 'bot'] },
+    content: String,
+    timestamp: { type: Date, default: Date.now },
+  }],
+  startedAt: { type: Date, default: Date.now },
+  lastMessageAt: { type: Date, default: Date.now },
+});
+export const ChatSession = mongoose.models.ChatSession || mongoose.model('ChatSession', chatSessionSchema);
+
+// Service Request Schema
+const serviceRequestSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  name: String,
+  email: String,
+  type: String, // 'new_install', 'upgrade', 'support', 'callback', 'other'
+  details: String,
+  phone: String,
+  preferredTime: String,
+  status: { type: String, default: 'pending' },
+  createdAt: { type: Date, default: Date.now },
+});
+export const ServiceRequest = mongoose.models.ServiceRequest || mongoose.model('ServiceRequest', serviceRequestSchema);

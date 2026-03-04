@@ -1,0 +1,620 @@
+/* ── BLUE-NET Auth & Profile Styles ─────────────────────────────────────── */
+
+/* ── Login page ──────────────────────────────────────────────────────────── */
+.auth-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-card {
+  background: var(--bg-terminal);
+  border: 1px solid var(--blue-dark);
+  border-radius: 4px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 0 24px var(--blue-glow), inset 0 0 40px rgba(0,0,0,0.6);
+  overflow: hidden;
+  position: relative;
+}
+
+/* scanline overlay */
+.auth-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-card-inner {
+  position: relative;
+  z-index: 1;
+  padding: 0 36px 36px;
+}
+
+.auth-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--blue-dark);
+  background: rgba(93, 173, 226, 0.03);
+}
+
+.auth-badge {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--blue-dim);
+}
+
+.auth-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 0 20px;
+}
+
+.auth-logo-wrap svg {
+  width: 52px;
+  height: 20px;
+  color: var(--blue);
+  filter: drop-shadow(0 0 6px var(--blue-glow));
+}
+
+.auth-logo-text {
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 6px;
+  color: var(--blue);
+  text-shadow: 0 0 14px var(--blue-glow);
+}
+
+.auth-tagline {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--blue-dark);
+  margin-bottom: 28px;
+}
+
+/* ── Tabs ──────────────────────────────────────────────────────────────── */
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--blue-dark);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.auth-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--blue-dim);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 3px;
+  padding: 10px 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auth-tab:hover { background: rgba(93,173,226,0.06); color: var(--blue); }
+
+.auth-tab.active {
+  background: rgba(93,173,226,0.12);
+  color: var(--blue);
+  box-shadow: inset 0 -2px 0 var(--blue);
+}
+
+/* ── Form ────────────────────────────────────────────────────────────────── */
+.auth-form { display: flex; flex-direction: column; gap: 16px; }
+.auth-form.hidden { display: none; }
+
+.auth-field { display: flex; flex-direction: column; gap: 6px; }
+
+.auth-label {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--blue-dark);
+}
+
+.auth-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--blue-dark);
+  padding-bottom: 6px;
+  transition: border-color 0.2s;
+}
+
+.auth-input-row:focus-within { border-color: var(--blue); }
+
+.auth-input-row .prompt-symbol {
+  color: var(--blue);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.auth-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--blue);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  letter-spacing: 1px;
+  caret-color: var(--blue);
+}
+
+.auth-input::placeholder { color: var(--blue-dark); opacity: 0.6; }
+
+.auth-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.auth-status {
+  min-height: 20px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+  text-align: center;
+}
+.auth-status.error { color: #ff5f56; }
+.auth-status.success { color: #27c93f; }
+
+.auth-btn {
+  margin-top: 8px;
+  background: transparent;
+  border: 1px solid var(--blue-dark);
+  color: var(--blue-dim);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 4px;
+  padding: 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-btn:hover, .auth-btn:focus {
+  background: rgba(93,173,226,0.1);
+  color: var(--blue);
+  border-color: var(--blue);
+  box-shadow: 0 0 12px var(--blue-glow);
+}
+
+.auth-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth-footer {
+  margin-top: 24px;
+  text-align: center;
+  border-top: 1px solid rgba(93,173,226,0.1);
+  padding-top: 20px;
+}
+
+.auth-footer a {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--blue-dark);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.auth-footer a:hover { color: var(--blue); }
+
+/* ── Profile / Dashboard ─────────────────────────────────────────────────── */
+.profile-page {
+  min-height: 100vh;
+  padding: 80px 24px 48px;
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Profile top bar (replaces site-nav) */
+.profile-topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 60px;
+  background: rgba(13,13,13,0.97);
+  border-bottom: 1px solid var(--blue-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  z-index: 200;
+  backdrop-filter: blur(12px);
+}
+
+.profile-topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--blue);
+}
+.profile-topbar-logo svg { width: 52px; height: 18px; filter: drop-shadow(0 0 5px var(--blue-glow)); }
+.profile-topbar-logo-text {
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  text-shadow: 0 0 10px var(--blue-glow);
+}
+
+.profile-topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-avatar {
+  width: 34px; height: 34px;
+  border: 1px solid var(--blue-dark);
+  border-radius: 2px;
+  background: rgba(93,173,226,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: var(--blue);
+}
+
+.profile-username {
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--blue-dim);
+}
+
+.profile-logout-btn {
+  background: transparent;
+  border: 1px solid var(--blue-dark);
+  color: var(--blue-dim);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 6px 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.profile-logout-btn:hover {
+  color: #ff5f56;
+  border-color: #ff5f56;
+  box-shadow: 0 0 8px rgba(255,95,86,0.3);
+}
+
+/* ── Welcome banner ────────────────────────────────────────────────────── */
+.profile-welcome {
+  margin-bottom: 28px;
+}
+
+.profile-welcome-title {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--blue-dark);
+  margin-bottom: 4px;
+}
+
+.profile-welcome-name {
+  font-size: 26px;
+  font-weight: bold;
+  letter-spacing: 5px;
+  color: var(--blue);
+  text-shadow: 0 0 16px var(--blue-glow);
+}
+
+/* ── Info card ────────────────────────────────────────────────────────── */
+.profile-info-card {
+  background: var(--bg-terminal);
+  border: 1px solid var(--blue-dark);
+  border-radius: 4px;
+  padding: 20px 28px;
+  margin-bottom: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px 40px;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
+  position: relative;
+}
+
+.profile-info-field { display: flex; flex-direction: column; gap: 4px; }
+.profile-info-label { font-size: 10px; letter-spacing: 3px; color: var(--blue-dark); }
+.profile-info-value { font-size: 14px; color: var(--blue); letter-spacing: 1px; }
+
+/* ── Action grid ──────────────────────────────────────────────────────── */
+.profile-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.action-card {
+  background: var(--bg-terminal);
+  border: 1px solid var(--blue-dark);
+  border-radius: 4px;
+  padding: 24px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.action-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(93,173,226,0);
+  transition: background 0.2s;
+}
+
+.action-card:hover {
+  border-color: var(--blue);
+  box-shadow: 0 0 16px var(--blue-glow);
+  transform: translateY(-2px);
+}
+
+.action-card:hover::before { background: rgba(93,173,226,0.04); }
+
+.action-icon { font-size: 24px; line-height: 1; }
+
+.action-title {
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  color: var(--blue);
+}
+
+.action-desc {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--blue-dark);
+  line-height: 1.5;
+}
+
+/* active state for chat/history cards that expand sections */
+.action-card.active {
+  border-color: var(--blue);
+  background: rgba(93,173,226,0.06);
+  box-shadow: 0 0 16px var(--blue-glow);
+}
+
+/* ── Section panels (chat, past chats) ────────────────────────────────── */
+.profile-panel {
+  background: var(--bg-terminal);
+  border: 1px solid var(--blue-dark);
+  border-radius: 4px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  display: none;
+}
+.profile-panel.open { display: block; }
+
+.profile-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--blue-dark);
+  background: rgba(93,173,226,0.03);
+}
+
+.profile-panel-title {
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: var(--blue-dim);
+}
+
+.profile-panel-close {
+  background: transparent;
+  border: none;
+  color: var(--blue-dark);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.profile-panel-close:hover { color: var(--blue); }
+
+/* ── Embedded chat ────────────────────────────────────────────────────── */
+.profile-chat-body {
+  height: 340px;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--blue-dark) transparent;
+}
+
+.profile-chat-input-area {
+  border-top: 1px solid var(--blue-dark);
+  padding: 10px 16px;
+}
+
+/* ── Past chats list ──────────────────────────────────────────────────── */
+.past-chats-list { padding: 0; }
+
+.past-chat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(93,173,226,0.08);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.past-chat-item:last-child { border-bottom: none; }
+.past-chat-item:hover { background: rgba(93,173,226,0.05); }
+
+.past-chat-title { font-size: 13px; color: var(--blue); letter-spacing: 1px; }
+.past-chat-meta { font-size: 10px; color: var(--blue-dark); letter-spacing: 1px; margin-top: 3px; }
+
+.past-chat-expand { font-size: 12px; color: var(--blue-dark); transition: color 0.2s; }
+.past-chat-item:hover .past-chat-expand { color: var(--blue); }
+
+.past-chat-messages {
+  background: rgba(0,0,0,0.3);
+  padding: 12px 20px 16px;
+  border-bottom: 1px solid rgba(93,173,226,0.08);
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.past-chat-messages.open { display: flex; }
+
+.past-msg { font-size: 12px; line-height: 1.6; }
+.past-msg.user { color: var(--blue); }
+.past-msg.bot  { color: var(--blue-dim); }
+.past-msg-label { font-size: 10px; letter-spacing: 2px; margin-bottom: 2px; }
+
+.past-chats-empty {
+  padding: 32px;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--blue-dark);
+}
+
+/* ── Modal overlay ────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal-card {
+  background: var(--bg-terminal);
+  border: 1px solid var(--blue-dark);
+  border-radius: 4px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 0 30px var(--blue-glow);
+  position: relative;
+}
+
+.modal-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px);
+  pointer-events: none;
+  border-radius: 4px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--blue-dark);
+  background: rgba(93,173,226,0.03);
+  position: relative;
+  z-index: 1;
+}
+
+.modal-title { font-size: 13px; letter-spacing: 3px; color: var(--blue-dim); }
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--blue-dark);
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s;
+}
+.modal-close:hover { color: var(--blue); }
+
+.modal-body {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.modal-field { display: flex; flex-direction: column; gap: 6px; }
+.modal-label { font-size: 10px; letter-spacing: 3px; color: var(--blue-dark); }
+
+.modal-input, .modal-select, .modal-textarea {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--blue-dark);
+  color: var(--blue);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  padding: 6px 0;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+.modal-input:focus, .modal-select:focus, .modal-textarea:focus { border-color: var(--blue); }
+.modal-select option { background: #0d0d0d; color: var(--blue); }
+.modal-textarea { resize: vertical; min-height: 80px; }
+
+.modal-status { font-size: 12px; letter-spacing: 1px; min-height: 18px; text-align: center; }
+.modal-status.error { color: #ff5f56; }
+.modal-status.success { color: #27c93f; }
+
+.modal-btn {
+  background: transparent;
+  border: 1px solid var(--blue-dark);
+  color: var(--blue-dim);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 4px;
+  padding: 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.modal-btn:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+  box-shadow: 0 0 10px var(--blue-glow);
+  background: rgba(93,173,226,0.08);
+}
+.modal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .auth-row-2 { grid-template-columns: 1fr; }
+  .auth-card-inner { padding: 0 20px 28px; }
+  .profile-page { padding: 74px 14px 40px; }
+  .profile-topbar { padding: 0 16px; }
+  .profile-topbar-logo-text { display: none; }
+  .profile-welcome-name { font-size: 20px; }
+  .profile-actions { grid-template-columns: 1fr 1fr; }
+}

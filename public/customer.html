@@ -14,6 +14,14 @@
 
   <!-- Logo Splash Screen -->
   <div id="logo-splash" class="logo-splash-overlay">
+    <!-- Client portal sign-in link -->
+    <a href="/login" class="splash-signin-btn" id="splash-signin">
+      <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="5" r="2.5"/>
+        <path d="M3 13c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke-linecap="round"/>
+      </svg>
+      CLIENT PORTAL
+    </a>
     <!-- Pre-emerge status (shows before logo loads) -->
     <div class="pre-connection-status" id="pre-connection-status">
       <span class="status-text">ESTABLISHING CONNECTION...</span>
@@ -21,47 +29,353 @@
 
     <div class="splash-logo-container">
       <!-- Network Rack (Switch + Firewall integrated) -->
-      <svg class="rack-icon" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
+      <svg class="rack-icon" viewBox="0 0 300 186" xmlns="http://www.w3.org/2000/svg">
         <!-- ═══ RACK RAILS ═══ -->
         <g class="rack-rails-group">
-          <rect x="0" y="0" width="8" height="100" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          <rect x="292" y="0" width="8" height="100" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          <!-- Left rail holes -->
-          <rect x="1.5" y="7" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="0" y="0" width="8" height="186" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="292" y="0" width="8" height="186" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <!-- Left rail holes — patch panel section -->
+          <rect x="1.5" y="7"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
           <rect x="1.5" y="12" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
           <rect x="1.5" y="17" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
           <rect x="1.5" y="22" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
           <rect x="1.5" y="27" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
           <rect x="1.5" y="32" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
           <rect x="1.5" y="37" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="1.5" y="55" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="1.5" y="60" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="1.5" y="65" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="1.5" y="70" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="1.5" y="75" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="1.5" y="80" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="1.5" y="85" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="1.5" y="90" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <!-- Right rail holes -->
-          <rect x="293.5" y="7" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="42" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <!-- Left rail holes — switch section (+48) -->
+          <rect x="1.5" y="55"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="60"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="65"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="70"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="75"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="80"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="85"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="90"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <!-- Left rail holes — firewall section (+48) -->
+          <rect x="1.5" y="105" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="110" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="115" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="120" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="125" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="130" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="135" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="140" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <!-- Left rail holes — modem section (+48) -->
+          <rect x="1.5" y="148" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="153" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="158" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="163" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="168" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="173" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="178" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="1.5" y="183" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <!-- Right rail holes — patch panel section -->
+          <rect x="293.5" y="7"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
           <rect x="293.5" y="12" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
           <rect x="293.5" y="17" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
           <rect x="293.5" y="22" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
           <rect x="293.5" y="27" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
           <rect x="293.5" y="32" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
           <rect x="293.5" y="37" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="293.5" y="55" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="293.5" y="60" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="293.5" y="65" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="293.5" y="70" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="293.5" y="75" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="293.5" y="80" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="293.5" y="85" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
-          <rect x="293.5" y="90" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="42" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <!-- Right rail holes — switch section (+48) -->
+          <rect x="293.5" y="55"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="60"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="65"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="70"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="75"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="80"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="85"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="90"  width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <!-- Right rail holes — firewall section (+48) -->
+          <rect x="293.5" y="105" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="110" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="115" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="120" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="125" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="130" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="135" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="140" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <!-- Right rail holes — modem section (+48) -->
+          <rect x="293.5" y="148" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="153" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="158" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="163" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="168" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="173" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="178" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
+          <rect x="293.5" y="183" width="5" height="2.5" rx="0.5" fill="currentColor" opacity="0.3"/>
         </g>
+
+        <!-- (server removed) -->
+        <g class="server-group" style="display:none">
+          <!-- Rack mount ears -->
+          <rect x="2" y="5" width="6" height="36" fill="currentColor" opacity="0.08" stroke="currentColor" stroke-width="0.5"/>
+          <rect x="292" y="5" width="6" height="36" fill="currentColor" opacity="0.08" stroke="currentColor" stroke-width="0.5"/>
+          <!-- Screws -->
+          <circle cx="5" cy="9"  r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head"><line x1="3.5" y1="9"  x2="6.5" y2="9"  stroke="white" stroke-width="0.7"/><line x1="5" y1="7.5"  x2="5" y2="10.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="5" cy="36" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head"><line x1="3.5" y1="36" x2="6.5" y2="36" stroke="white" stroke-width="0.7"/><line x1="5" y1="34.5" x2="5" y2="37.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="295" cy="9"  r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head"><line x1="293.5" y1="9"  x2="296.5" y2="9"  stroke="white" stroke-width="0.7"/><line x1="295" y1="7.5"  x2="295" y2="10.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="295" cy="36" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head"><line x1="293.5" y1="36" x2="296.5" y2="36" stroke="white" stroke-width="0.7"/><line x1="295" y1="34.5" x2="295" y2="37.5" stroke="white" stroke-width="0.7"/></g>
+          <!-- Main panel -->
+          <rect x="8" y="2" width="284" height="42" rx="1" fill="rgba(0,0,0,0.3)" stroke="currentColor" stroke-width="1"/>
+          <!-- Top accent bar -->
+          <rect x="9" y="3" width="282" height="1.5" fill="currentColor" opacity="0.18"/>
+          <!-- Bottom accent bar -->
+          <rect x="9" y="42.5" width="282" height="1" fill="currentColor" opacity="0.1"/>
+          <!-- Section dividers -->
+          <line x1="65"  y1="3" x2="65"  y2="43" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <line x1="185" y1="3" x2="185" y2="43" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <line x1="222" y1="3" x2="222" y2="43" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <!-- ── LABEL SECTION ── -->
+          <text x="14" y="16" font-size="6.5" fill="currentColor" font-family="'Share Tech Mono', monospace" font-weight="bold">SERVER</text>
+          <text x="14" y="25" font-size="3.5" fill="currentColor" font-family="monospace" opacity="0.6">RS-3000</text>
+          <text x="14" y="31" font-size="3"   fill="currentColor" font-family="monospace" opacity="0.35">2U DUAL-CPU</text>
+          <!-- ── HOT-SWAP DRIVE BAYS (8 drives) ── -->
+          <text x="126" y="7" font-size="2.8" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">■ HOT-SWAP SSD ■</text>
+          <!-- Drive 1 -->
+          <rect x="67"  y="8" width="12" height="23" rx="0.5" fill="rgba(0,0,0,0.45)" stroke="currentColor" stroke-width="0.7"/>
+          <rect x="68"  y="9" width="10" height="21" rx="0.3" fill="currentColor" opacity="0.05"/>
+          <line x1="68" y1="15" x2="78" y2="15" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="68" y1="19" x2="78" y2="19" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="68" y1="23" x2="78" y2="23" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <rect x="70" y="30" width="6" height="1.2" rx="0.4" fill="currentColor" opacity="0.25"/>
+          <circle cx="73" cy="35" r="1" fill="#27c93f"/>
+          <text x="73" y="41" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">01</text>
+          <!-- Drive 2 -->
+          <rect x="82"  y="8" width="12" height="23" rx="0.5" fill="rgba(0,0,0,0.45)" stroke="currentColor" stroke-width="0.7"/>
+          <rect x="83"  y="9" width="10" height="21" rx="0.3" fill="currentColor" opacity="0.05"/>
+          <line x1="83" y1="15" x2="93" y2="15" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="83" y1="19" x2="93" y2="19" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="83" y1="23" x2="93" y2="23" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <rect x="85" y="30" width="6" height="1.2" rx="0.4" fill="currentColor" opacity="0.25"/>
+          <circle cx="88" cy="35" r="1" fill="#27c93f"/>
+          <text x="88" y="41" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">02</text>
+          <!-- Drive 3 -->
+          <rect x="97"  y="8" width="12" height="23" rx="0.5" fill="rgba(0,0,0,0.45)" stroke="currentColor" stroke-width="0.7"/>
+          <rect x="98"  y="9" width="10" height="21" rx="0.3" fill="currentColor" opacity="0.05"/>
+          <line x1="98" y1="15" x2="108" y2="15" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="98" y1="19" x2="108" y2="19" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="98" y1="23" x2="108" y2="23" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <rect x="100" y="30" width="6" height="1.2" rx="0.4" fill="currentColor" opacity="0.25"/>
+          <circle cx="103" cy="35" r="1" fill="#27c93f"/>
+          <text x="103" y="41" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">03</text>
+          <!-- Drive 4 -->
+          <rect x="112"  y="8" width="12" height="23" rx="0.5" fill="rgba(0,0,0,0.45)" stroke="currentColor" stroke-width="0.7"/>
+          <rect x="113"  y="9" width="10" height="21" rx="0.3" fill="currentColor" opacity="0.05"/>
+          <line x1="113" y1="15" x2="123" y2="15" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="113" y1="19" x2="123" y2="19" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="113" y1="23" x2="123" y2="23" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <rect x="115" y="30" width="6" height="1.2" rx="0.4" fill="currentColor" opacity="0.25"/>
+          <circle cx="118" cy="35" r="1" fill="#27c93f"/>
+          <text x="118" y="41" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">04</text>
+          <!-- Drive 5 -->
+          <rect x="127"  y="8" width="12" height="23" rx="0.5" fill="rgba(0,0,0,0.45)" stroke="currentColor" stroke-width="0.7"/>
+          <rect x="128"  y="9" width="10" height="21" rx="0.3" fill="currentColor" opacity="0.05"/>
+          <line x1="128" y1="15" x2="138" y2="15" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="128" y1="19" x2="138" y2="19" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="128" y1="23" x2="138" y2="23" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <rect x="130" y="30" width="6" height="1.2" rx="0.4" fill="currentColor" opacity="0.25"/>
+          <circle cx="133" cy="35" r="1" fill="#ffbd2e"/>
+          <text x="133" y="41" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">05</text>
+          <!-- Drive 6 -->
+          <rect x="142"  y="8" width="12" height="23" rx="0.5" fill="rgba(0,0,0,0.45)" stroke="currentColor" stroke-width="0.7"/>
+          <rect x="143"  y="9" width="10" height="21" rx="0.3" fill="currentColor" opacity="0.05"/>
+          <line x1="143" y1="15" x2="153" y2="15" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="143" y1="19" x2="153" y2="19" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="143" y1="23" x2="153" y2="23" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <rect x="145" y="30" width="6" height="1.2" rx="0.4" fill="currentColor" opacity="0.25"/>
+          <circle cx="148" cy="35" r="1" fill="#27c93f"/>
+          <text x="148" y="41" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">06</text>
+          <!-- Drive 7 -->
+          <rect x="157"  y="8" width="12" height="23" rx="0.5" fill="rgba(0,0,0,0.45)" stroke="currentColor" stroke-width="0.7"/>
+          <rect x="158"  y="9" width="10" height="21" rx="0.3" fill="currentColor" opacity="0.05"/>
+          <line x1="158" y1="15" x2="168" y2="15" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="158" y1="19" x2="168" y2="19" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="158" y1="23" x2="168" y2="23" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <rect x="160" y="30" width="6" height="1.2" rx="0.4" fill="currentColor" opacity="0.25"/>
+          <circle cx="163" cy="35" r="1" fill="#27c93f"/>
+          <text x="163" y="41" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">07</text>
+          <!-- Drive 8 -->
+          <rect x="172"  y="8" width="12" height="23" rx="0.5" fill="rgba(0,0,0,0.45)" stroke="currentColor" stroke-width="0.7"/>
+          <rect x="173"  y="9" width="10" height="21" rx="0.3" fill="currentColor" opacity="0.05"/>
+          <line x1="173" y1="15" x2="183" y2="15" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="173" y1="19" x2="183" y2="19" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <line x1="173" y1="23" x2="183" y2="23" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <rect x="175" y="30" width="6" height="1.2" rx="0.4" fill="currentColor" opacity="0.25"/>
+          <circle cx="178" cy="35" r="1" fill="#27c93f"/>
+          <text x="178" y="41" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">08</text>
+          <!-- ── PORTS SECTION ── -->
+          <text x="203" y="7" font-size="2.8" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">PORTS</text>
+          <!-- Power button -->
+          <circle cx="194" cy="23" r="6"   fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.7"/>
+          <circle cx="194" cy="23" r="4.2" fill="rgba(0,0,0,0.4)" stroke="currentColor" stroke-width="0.4" opacity="0.5"/>
+          <line x1="194" y1="19" x2="194" y2="23" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.9"/>
+          <path d="M 190.5 20.2 A 4.5 4.5 0 1 1 197.5 20.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.9"/>
+          <text x="194" y="37" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">PWR</text>
+          <!-- USB ports -->
+          <rect x="202" y="13" width="6" height="9" rx="0.8" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.6"/>
+          <rect x="203.5" y="14.5" width="3" height="4" rx="0.2" fill="currentColor" opacity="0.15"/>
+          <rect x="202" y="24" width="6" height="9" rx="0.8" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.6"/>
+          <rect x="203.5" y="25.5" width="3" height="4" rx="0.2" fill="currentColor" opacity="0.15"/>
+          <text x="205" y="37" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">USB</text>
+          <!-- Console port -->
+          <circle cx="214" cy="23" r="3.5" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.6"/>
+          <circle cx="214" cy="23" r="1.5" fill="currentColor" opacity="0.12"/>
+          <text x="214" y="37" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">CON</text>
+          <!-- ── RIGHT BRAND SECTION ── -->
+          <!-- Vent slots -->
+          <line x1="226" y1="5" x2="226" y2="42" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="229" y1="5" x2="229" y2="42" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="232" y1="5" x2="232" y2="42" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="235" y1="5" x2="235" y2="42" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="238" y1="5" x2="238" y2="42" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="241" y1="5" x2="241" y2="42" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="244" y1="5" x2="244" y2="42" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <!-- BLUE-NET brand (orange) -->
+          <text x="264" y="17" font-size="4.5" fill="#FF4500" font-family="'Share Tech Mono', monospace" font-weight="bold" opacity="0.9" text-anchor="end">BLUE-NET</text>
+          <!-- Status LEDs -->
+          <circle cx="268" cy="25" r="1.2" fill="#27c93f" filter="url(#glow-green)"/>
+          <text x="256" y="26" font-size="3" fill="currentColor" font-family="monospace" opacity="0.45" text-anchor="end">SYS</text>
+          <circle cx="268" cy="31" r="1.2" fill="#ffbd2e" opacity="0.7"/>
+          <text x="256" y="32" font-size="3" fill="currentColor" font-family="monospace" opacity="0.45" text-anchor="end">HDD</text>
+          <circle class="led-power" cx="278" cy="23" r="1.5" fill="currentColor"/>
+          <text x="266" y="24" font-size="3.5" fill="currentColor" font-family="monospace">PWR</text>
+        </g>
+
+        <!-- ═══ PATCH PANEL ═══ -->
+        <g class="patch-panel-group">
+          <!-- Rack mount ears -->
+          <rect x="2" y="6" width="6" height="34" fill="currentColor" opacity="0.08" stroke="currentColor" stroke-width="0.5"/>
+          <rect x="292" y="6" width="6" height="34" fill="currentColor" opacity="0.08" stroke="currentColor" stroke-width="0.5"/>
+          <!-- Screws -->
+          <circle cx="5" cy="11" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head pp-screw-1"><line x1="3.5" y1="11" x2="6.5" y2="11" stroke="white" stroke-width="0.7"/><line x1="5" y1="9.5" x2="5" y2="12.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="5" cy="35" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head pp-screw-2"><line x1="3.5" y1="35" x2="6.5" y2="35" stroke="white" stroke-width="0.7"/><line x1="5" y1="33.5" x2="5" y2="36.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="295" cy="11" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head pp-screw-3"><line x1="293.5" y1="11" x2="296.5" y2="11" stroke="white" stroke-width="0.7"/><line x1="295" y1="9.5" x2="295" y2="12.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="295" cy="35" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head pp-screw-4"><line x1="293.5" y1="35" x2="296.5" y2="35" stroke="white" stroke-width="0.7"/><line x1="295" y1="33.5" x2="295" y2="36.5" stroke="white" stroke-width="0.7"/></g>
+          <!-- Main panel -->
+          <rect x="8" y="4" width="284" height="38" rx="1" fill="rgba(0,0,0,0.3)" stroke="currentColor" stroke-width="1"/>
+          <rect x="9" y="5" width="282" height="1.5" fill="currentColor" opacity="0.18"/>
+          <rect x="9" y="40.5" width="282" height="1" fill="currentColor" opacity="0.1"/>
+          <!-- Section dividers -->
+          <line x1="65"  y1="5" x2="65"  y2="41" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <line x1="200" y1="5" x2="200" y2="41" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <line x1="222" y1="5" x2="222" y2="41" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <!-- Label section -->
+          <text x="14" y="16" font-size="5.5" fill="currentColor" font-family="'Share Tech Mono', monospace" font-weight="bold">PATCH PANEL</text>
+          <text x="14" y="24" font-size="3.5" fill="currentColor" font-family="monospace" opacity="0.6">PP-24</text>
+          <text x="14" y="30" font-size="3" fill="currentColor" font-family="monospace" opacity="0.35">CAT6 24-PORT</text>
+          <!-- ── 8 front RJ45 jacks (aligned with switch ports below) ── -->
+          <text x="130" y="9" font-size="2.8" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">■ CAT6 FRONT JACKS ■</text>
+          <!-- Port 1 -->
+          <rect class="pp-port" x="71" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="pp-port-active" x="71.5" y="11.5" width="4" height="4" rx="0.2" fill="#7DF9FF" opacity="0"/>
+          <!-- Port 2 (spare) -->
+          <rect class="pp-port" x="77" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <!-- Port 3 -->
+          <rect class="pp-port" x="83" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="pp-port-active" x="83.5" y="11.5" width="4" height="4" rx="0.2" fill="#7DF9FF" opacity="0"/>
+          <!-- Port 4 -->
+          <rect class="pp-port" x="89" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="pp-port-active" x="89.5" y="11.5" width="4" height="4" rx="0.2" fill="#7DF9FF" opacity="0"/>
+          <!-- Port 5 -->
+          <rect class="pp-port" x="95" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="pp-port-active" x="95.5" y="11.5" width="4" height="4" rx="0.2" fill="#7DF9FF" opacity="0"/>
+          <!-- Port 6 (spare) -->
+          <rect class="pp-port" x="101" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <!-- Port 7 (spare) -->
+          <rect class="pp-port" x="107" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <!-- Port 8 (spare) -->
+          <rect class="pp-port" x="113" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <!-- Port numbers -->
+          <text x="73.5" y="21" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">1</text>
+          <text x="79.5" y="21" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">2</text>
+          <text x="85.5" y="21" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">3</text>
+          <text x="91.5" y="21" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">4</text>
+          <text x="97.5" y="21" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">5</text>
+          <text x="103.5" y="21" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">6</text>
+          <text x="109.5" y="21" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">7</text>
+          <text x="115.5" y="21" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">8</text>
+          <!-- Port LEDs -->
+          <circle class="pp-led pp-led-1" cx="73.5" cy="27" r="0.9" fill="#7DF9FF" opacity="0.2"/>
+          <circle cx="79.5" cy="27" r="0.9" fill="currentColor" opacity="0.2"/>
+          <circle class="pp-led pp-led-3" cx="85.5" cy="27" r="0.9" fill="#7DF9FF" opacity="0.2"/>
+          <circle class="pp-led pp-led-4" cx="91.5" cy="27" r="0.9" fill="#7DF9FF" opacity="0.2"/>
+          <circle class="pp-led pp-led-5" cx="97.5" cy="27" r="0.9" fill="#7DF9FF" opacity="0.2"/>
+          <circle cx="103.5" cy="27" r="0.9" fill="currentColor" opacity="0.2"/>
+          <circle cx="109.5" cy="27" r="0.9" fill="currentColor" opacity="0.2"/>
+          <circle cx="115.5" cy="27" r="0.9" fill="currentColor" opacity="0.2"/>
+          <!-- Port wire labels (back) -->
+          <text x="130" y="35" font-size="2.5" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">── REAR IDC PUNCH-DOWN ──</text>
+          <!-- Vent slots -->
+          <line x1="226" y1="7" x2="226" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="229" y1="7" x2="229" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="232" y1="7" x2="232" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="235" y1="7" x2="235" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="238" y1="7" x2="238" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="241" y1="7" x2="241" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="244" y1="7" x2="244" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <!-- BLUE-NET sticker label -->
+          <rect x="245" y="11" width="35" height="9" rx="2" fill="#0d0500" stroke="#FF4500" stroke-width="0.7"/>
+          <text x="262" y="18" font-size="4.5" fill="#FF4500" font-family="'Share Tech Mono', monospace" font-weight="bold" text-anchor="middle">BLUE-NET</text>
+          <!-- PWR LED -->
+          <circle class="led-power" cx="278" cy="27" r="1.5" fill="currentColor"/>
+          <text x="266" y="28" font-size="3.5" fill="currentColor" font-family="monospace">PWR</text>
+          <!-- Blank panel below -->
+          <rect x="8" y="46" width="284" height="4" fill="none" stroke="currentColor" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.3"/>
+        </g>
+
+        <!-- ══ LIGHT BLUE CABLES: patch panel ports → switch ports ══ -->
+        <!-- These use absolute SVG coords; switch ports render at y=10+48=58 after translate -->
+        <!-- Cable 1: port 1 (x=73.5), PP bottom y=16 → switch port top y=58 -->
+        <path class="pp-cable pp-cable-1" d="M 73.5 16 C 73.5 30 73.5 44 73.5 58" stroke="#1a5f7f" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path class="pp-cable pp-cable-1" d="M 73.5 16 C 73.5 30 73.5 44 73.5 58" stroke="#7DF9FF" stroke-width="1.8" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 3px rgba(125,249,255,0.8))"/>
+        <!-- RJ45 plug top (at PP port 1) -->
+        <rect class="rj45-plug rj45-plug-pp" x="70.5" y="14" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="71.5" y="14.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+        <!-- RJ45 plug bottom (at switch port 1) -->
+        <rect class="rj45-plug rj45-plug-pp" x="70.5" y="56" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="71.5" y="56.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+
+        <!-- Cable 3: port 3 (x=85.5) -->
+        <path class="pp-cable pp-cable-3" d="M 85.5 16 C 85.5 30 85.5 44 85.5 58" stroke="#1a5f7f" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path class="pp-cable pp-cable-3" d="M 85.5 16 C 85.5 30 85.5 44 85.5 58" stroke="#7DF9FF" stroke-width="1.8" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 3px rgba(125,249,255,0.8))"/>
+        <rect class="rj45-plug rj45-plug-pp" x="82.5" y="14" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="83.5" y="14.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+        <rect class="rj45-plug rj45-plug-pp" x="82.5" y="56" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="83.5" y="56.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+
+        <!-- Cable 4: port 4 (x=91.5) -->
+        <path class="pp-cable pp-cable-4" d="M 91.5 16 C 91.5 30 91.5 44 91.5 58" stroke="#1a5f7f" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path class="pp-cable pp-cable-4" d="M 91.5 16 C 91.5 30 91.5 44 91.5 58" stroke="#7DF9FF" stroke-width="1.8" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 3px rgba(125,249,255,0.8))"/>
+        <rect class="rj45-plug rj45-plug-pp" x="88.5" y="14" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="89.5" y="14.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+        <rect class="rj45-plug rj45-plug-pp" x="88.5" y="56" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="89.5" y="56.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+
+        <!-- Cable 5: port 5 (x=97.5) -->
+        <path class="pp-cable pp-cable-5" d="M 97.5 16 C 97.5 30 97.5 44 97.5 58" stroke="#1a5f7f" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path class="pp-cable pp-cable-5" d="M 97.5 16 C 97.5 30 97.5 44 97.5 58" stroke="#7DF9FF" stroke-width="1.8" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 3px rgba(125,249,255,0.8))"/>
+        <rect class="rj45-plug rj45-plug-pp" x="94.5" y="14" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="95.5" y="14.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+        <rect class="rj45-plug rj45-plug-pp" x="94.5" y="56" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="95.5" y="56.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+
+        <!-- Shift switch/firewall/modem down 48 SVG units (patch panel occupies top 1U) -->
+        <g transform="translate(0,48)">
 
         <!-- ═══ SWITCH UNIT ═══ -->
         <g class="switch-group">
+          <!-- Rack mount ears -->
           <rect x="2" y="6" width="6" height="34" fill="currentColor" opacity="0.08" stroke="currentColor" stroke-width="0.5"/>
           <rect x="292" y="6" width="6" height="34" fill="currentColor" opacity="0.08" stroke="currentColor" stroke-width="0.5"/>
           <!-- Switch rack bolts -->
@@ -73,8 +387,23 @@
           <g class="screw-head sw-screw-3"><line x1="293.5" y1="11" x2="296.5" y2="11" stroke="white" stroke-width="0.7"/><line x1="295" y1="9.5" x2="295" y2="12.5" stroke="white" stroke-width="0.7"/></g>
           <circle cx="295" cy="35" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
           <g class="screw-head sw-screw-4"><line x1="293.5" y1="35" x2="296.5" y2="35" stroke="white" stroke-width="0.7"/><line x1="295" y1="33.5" x2="295" y2="36.5" stroke="white" stroke-width="0.7"/></g>
+          <!-- Main panel -->
           <rect x="8" y="4" width="284" height="38" rx="1" fill="rgba(0,0,0,0.3)" stroke="currentColor" stroke-width="1"/>
-          <text class="switch-brand" x="14" y="26" font-size="6" fill="currentColor" font-family="'Share Tech Mono', monospace" font-weight="bold">BLUE-NET</text>
+          <!-- Top accent bar -->
+          <rect x="9" y="5" width="282" height="1.5" fill="currentColor" opacity="0.18"/>
+          <!-- Bottom accent bar -->
+          <rect x="9" y="40.5" width="282" height="1" fill="currentColor" opacity="0.1"/>
+          <!-- Section dividers -->
+          <line x1="65" y1="5" x2="65" y2="41" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <line x1="167" y1="5" x2="167" y2="41" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <line x1="222" y1="5" x2="222" y2="41" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <!-- ── LABEL SECTION ── -->
+          <text class="switch-brand" x="14" y="17" font-size="6.5" fill="currentColor" font-family="'Share Tech Mono', monospace" font-weight="bold">SWITCH</text>
+          <text x="14" y="25" font-size="3.5" fill="currentColor" font-family="monospace" opacity="0.6">GS-2400</text>
+          <text x="14" y="31" font-size="3" fill="currentColor" font-family="monospace" opacity="0.35">24-PORT 1G</text>
+          <!-- ── 1G PORT SECTION ── -->
+          <text x="95" y="9" font-size="2.8" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">■ 1G ETHERNET ■</text>
+          <!-- Ports 1-8 (EXACT POSITIONS PRESERVED) -->
           <rect class="network-port" x="71" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
           <rect class="network-port network-port-active" x="77" y="10" width="5" height="5" rx="0.5" fill="none" stroke="white" stroke-width="0.8"/>
           <rect class="network-port" x="83" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
@@ -83,49 +412,144 @@
           <rect class="network-port" x="101" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
           <rect class="network-port network-port-active" x="107" y="10" width="5" height="5" rx="0.5" fill="none" stroke="white" stroke-width="0.8"/>
           <rect class="network-port" x="113" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
-          <circle class="led-green" cx="74" cy="21" r="1" fill="#27c93f"/>
-          <circle class="led-yellow" cx="80" cy="21" r="1" fill="#ffbd2e"/>
-          <circle class="led-green" cx="86" cy="21" r="1" fill="#27c93f"/>
-          <circle class="led-yellow" cx="92" cy="21" r="1" fill="#ffbd2e"/>
-          <circle class="led-green" cx="98" cy="21" r="1" fill="#27c93f"/>
+          <!-- LEDs 1-8 (EXACT POSITIONS PRESERVED) -->
+          <circle class="led-green"  cx="74"  cy="21" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="80"  cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-green"  cx="86"  cy="21" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="92"  cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-green"  cx="98"  cy="21" r="1" fill="#27c93f"/>
           <circle class="led-yellow" cx="104" cy="21" r="1" fill="#ffbd2e"/>
-          <circle class="led-green" cx="110" cy="21" r="1" fill="#27c93f"/>
+          <circle class="led-green"  cx="110" cy="21" r="1" fill="#27c93f"/>
           <circle class="led-yellow" cx="116" cy="21" r="1" fill="#ffbd2e"/>
-          <circle class="led-power" cx="278" cy="23" r="1.5" fill="currentColor"/>
-          <text x="266" y="24" font-size="3.5" fill="currentColor" font-family="monospace">PWR</text>
+          <!-- Port numbers 1-8 -->
+          <text x="74"  y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">1</text>
+          <text x="80"  y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">2</text>
+          <text x="86"  y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">3</text>
+          <text x="92"  y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">4</text>
+          <text x="98"  y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">5</text>
+          <text x="104" y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">6</text>
+          <text x="110" y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">7</text>
+          <text x="116" y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">8</text>
+          <!-- Ports 9-16 -->
+          <rect class="network-port" x="121" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port" x="127" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port" x="133" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port" x="139" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port" x="145" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port" x="151" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port" x="157" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port" x="163" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <circle class="led-green"  cx="124" cy="21" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="130" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-green"  cx="136" cy="21" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="142" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-green"  cx="148" cy="21" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="154" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-green"  cx="160" cy="21" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="166" cy="21" r="1" fill="#ffbd2e"/>
+          <!-- Port numbers 9-16 -->
+          <text x="124" y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">9</text>
+          <text x="130" y="29" font-size="2" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">10</text>
+          <text x="136" y="29" font-size="2" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">11</text>
+          <text x="142" y="29" font-size="2" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">12</text>
+          <text x="148" y="29" font-size="2" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">13</text>
+          <text x="154" y="29" font-size="2" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">14</text>
+          <text x="160" y="29" font-size="2" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">15</text>
+          <text x="166" y="29" font-size="2" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">16</text>
+          <!-- ── SFP+ SECTION ── -->
+          <text x="186" y="9" font-size="2.8" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">SFP+</text>
+          <!-- SFP cage 1 -->
+          <rect x="169" y="9" width="8" height="7" rx="0.5" fill="rgba(0,0,0,0.5)" stroke="currentColor" stroke-width="0.7" opacity="0.8"/>
+          <rect x="170" y="10" width="6" height="5" rx="0.3" fill="currentColor" opacity="0.08"/>
+          <line x1="170" y1="12.5" x2="176" y2="12.5" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <!-- SFP cage 2 -->
+          <rect x="181" y="9" width="8" height="7" rx="0.5" fill="rgba(0,0,0,0.5)" stroke="currentColor" stroke-width="0.7" opacity="0.8"/>
+          <rect x="182" y="10" width="6" height="5" rx="0.3" fill="currentColor" opacity="0.08"/>
+          <line x1="182" y1="12.5" x2="188" y2="12.5" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <!-- SFP LEDs -->
+          <circle cx="173" cy="21" r="1" fill="currentColor" opacity="0.5"/>
+          <circle cx="185" cy="21" r="1" fill="currentColor" opacity="0.5"/>
+          <text x="173" y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">U1</text>
+          <text x="185" y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">U2</text>
+          <!-- Console + USB -->
+          <text x="206" y="9" font-size="2.8" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">MGMT</text>
+          <circle cx="200" cy="19" r="3.5" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.6"/>
+          <circle cx="200" cy="19" r="1.5" fill="currentColor" opacity="0.15"/>
+          <text x="200" y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">CON</text>
+          <rect x="207" y="14" width="5" height="8" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.6"/>
+          <rect x="208.5" y="16" width="2" height="3" rx="0.2" fill="currentColor" opacity="0.2"/>
+          <text x="209.5" y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">USB</text>
+          <!-- ── RIGHT BRAND SECTION ── -->
+          <!-- Vent slots -->
+          <line x1="226" y1="7" x2="226" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="229" y1="7" x2="229" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="232" y1="7" x2="232" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="235" y1="7" x2="235" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="238" y1="7" x2="238" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="241" y1="7" x2="241" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="244" y1="7" x2="244" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <!-- BLUE-NET sticker label -->
+          <rect x="245" y="11" width="35" height="9" rx="2" fill="#0d0500" stroke="#FF4500" stroke-width="0.7"/>
+          <text x="262" y="18" font-size="4.5" fill="#FF4500" font-family="'Share Tech Mono', monospace" font-weight="bold" text-anchor="middle">BLUE-NET</text>
+          <!-- PWR LED (EXACT POSITION PRESERVED) -->
+          <circle class="led-power" cx="278" cy="27" r="1.5" fill="currentColor"/>
+          <text x="266" y="28" font-size="3.5" fill="currentColor" font-family="monospace">PWR</text>
           <!-- ═══ BLANK PANEL ═══ -->
           <rect x="8" y="46" width="284" height="6" fill="none" stroke="currentColor" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.3"/>
         </g>
 
-        <!-- ═══ PATCH CABLES: curved from switch ports into firewall LAN ports ═══ -->
+        <!-- ═══ PATCH CABLES: curved from switch ports into firewall LAN ports (RED) ═══ -->
         <!-- Cable 1: bows slightly left -->
-        <path class="patch-cable patch-cable-1" d="M 79 15 C 73 28 74 48 80 61" stroke="#B8860B" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-        <path class="patch-cable patch-cable-1" d="M 79 15 C 73 28 74 48 80 61" stroke="#FFD700" stroke-width="2.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 4px rgba(255,215,0,0.7))"/>
-        <path class="patch-cable patch-cable-1" d="M 78.2 15 C 72.2 28 73.2 48 79.2 61" stroke="rgba(255,250,180,0.45)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+        <path class="patch-cable patch-cable-1" d="M 79 15 C 73 28 74 48 80 61" stroke="#7a0000" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path class="patch-cable patch-cable-1" d="M 79 15 C 73 28 74 48 80 61" stroke="#FF0000" stroke-width="2.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 4px rgba(255,0,0,0.7))"/>
+        <path class="patch-cable patch-cable-1" d="M 78.2 15 C 72.2 28 73.2 48 79.2 61" stroke="rgba(255,160,160,0.4)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+        <!-- RJ45 plug at switch port 2 (cable exits downward) -->
+        <rect class="rj45-plug rj45-plug-patch" x="75.5" y="13.5" width="7" height="3.5" rx="0.8" fill="#7a0000"/>
+        <rect class="rj45-plug rj45-plug-patch" x="76.5" y="14" width="5" height="2.5" rx="0.3" fill="#FF2020" opacity="0.8"/>
+        <!-- RJ45 plug at FW LAN1 (cable arrives from above) -->
+        <rect class="rj45-plug rj45-plug-patch" x="74" y="58.5" width="10" height="4" rx="0.8" fill="#7a0000"/>
+        <rect class="rj45-plug rj45-plug-patch" x="75" y="59" width="8" height="2.5" rx="0.3" fill="#FF2020" opacity="0.8"/>
         <!-- Cable 2: bows slightly right -->
-        <path class="patch-cable patch-cable-2" d="M 109 15 C 115 28 116 48 110 61" stroke="#B8860B" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-        <path class="patch-cable patch-cable-2" d="M 109 15 C 115 28 116 48 110 61" stroke="#FFD700" stroke-width="2.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 4px rgba(255,215,0,0.7))"/>
-        <path class="patch-cable patch-cable-2" d="M 109.8 15 C 115.8 28 116.8 48 110.8 61" stroke="rgba(255,250,180,0.45)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+        <path class="patch-cable patch-cable-2" d="M 109 15 C 115 28 116 48 110 61" stroke="#7a0000" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path class="patch-cable patch-cable-2" d="M 109 15 C 115 28 116 48 110 61" stroke="#FF0000" stroke-width="2.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 4px rgba(255,0,0,0.7))"/>
+        <path class="patch-cable patch-cable-2" d="M 109.8 15 C 115.8 28 116.8 48 110.8 61" stroke="rgba(255,160,160,0.4)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+        <!-- RJ45 plug at switch port 7 -->
+        <rect class="rj45-plug rj45-plug-patch" x="105.5" y="13.5" width="7" height="3.5" rx="0.8" fill="#7a0000"/>
+        <rect class="rj45-plug rj45-plug-patch" x="106.5" y="14" width="5" height="2.5" rx="0.3" fill="#FF2020" opacity="0.8"/>
+        <!-- RJ45 plug at FW LAN2 -->
+        <rect class="rj45-plug rj45-plug-patch" x="104" y="58.5" width="10" height="4" rx="0.8" fill="#7a0000"/>
+        <rect class="rj45-plug rj45-plug-patch" x="105" y="59" width="8" height="2.5" rx="0.3" fill="#FF2020" opacity="0.8"/>
         <!-- Data packets on yellow cables (follow bezier path via animateMotion) -->
-        <circle class="data-pkt-yellow data-pkt-y-down-1" cx="0" cy="0" r="1.5" fill="#FFD700">
+        <circle class="data-pkt-yellow data-pkt-y-down-1" cx="0" cy="0" r="1.5" fill="#FF0000">
           <animateMotion dur="1.4s" begin="0.5s" repeatCount="indefinite" path="M 79 15 C 73 28 74 48 80 61"/>
         </circle>
-        <circle class="data-pkt-yellow data-pkt-y-up-1" cx="0" cy="0" r="1.5" fill="#FFD700">
+        <circle class="data-pkt-yellow data-pkt-y-up-1" cx="0" cy="0" r="1.5" fill="#FF0000">
           <animateMotion dur="1.4s" begin="1.2s" repeatCount="indefinite" path="M 80 61 C 74 48 73 28 79 15"/>
         </circle>
-        <circle class="data-pkt-yellow data-pkt-y-down-2" cx="0" cy="0" r="1.5" fill="#FFD700">
+        <circle class="data-pkt-yellow data-pkt-y-down-2" cx="0" cy="0" r="1.5" fill="#FF0000">
           <animateMotion dur="1.4s" begin="1.0s" repeatCount="indefinite" path="M 109 15 C 115 28 116 48 110 61"/>
         </circle>
-        <circle class="data-pkt-yellow data-pkt-y-up-2" cx="0" cy="0" r="1.5" fill="#FFD700">
+        <circle class="data-pkt-yellow data-pkt-y-up-2" cx="0" cy="0" r="1.5" fill="#FF0000">
           <animateMotion dur="1.4s" begin="1.7s" repeatCount="indefinite" path="M 110 61 C 116 48 115 28 109 15"/>
         </circle>
 
         <!-- ═══ FIREWALL UNIT ═══ -->
         <g class="firewall-group">
+          <!-- Rack mount ears -->
           <rect x="2" y="56" width="6" height="36" fill="currentColor" opacity="0.08" stroke="currentColor" stroke-width="0.5"/>
           <rect x="292" y="56" width="6" height="36" fill="currentColor" opacity="0.08" stroke="currentColor" stroke-width="0.5"/>
+          <!-- Main panel -->
           <rect x="8" y="54" width="284" height="40" rx="1" fill="rgba(0,0,0,0.3)" stroke="currentColor" stroke-width="1"/>
-          <!-- Firewall rack bolts -->
+          <!-- Top accent bar -->
+          <rect x="9" y="55" width="282" height="1.5" fill="currentColor" opacity="0.18"/>
+          <!-- Bottom accent bar -->
+          <rect x="9" y="91.5" width="282" height="1" fill="currentColor" opacity="0.1"/>
+          <!-- Section dividers -->
+          <line x1="65" y1="55" x2="65" y2="93" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <line x1="73" y1="55" x2="73" y2="93" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <line x1="178" y1="55" x2="178" y2="93" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <line x1="222" y1="55" x2="222" y2="93" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <!-- Firewall rack bolts (EXACT POSITIONS PRESERVED) -->
           <circle cx="5" cy="61" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
           <g class="screw-head fw-screw-1"><line x1="3.5" y1="61" x2="6.5" y2="61" stroke="white" stroke-width="0.7"/><line x1="5" y1="59.5" x2="5" y2="62.5" stroke="white" stroke-width="0.7"/></g>
           <circle cx="5" cy="86" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
@@ -134,48 +558,174 @@
           <g class="screw-head fw-screw-3"><line x1="293.5" y1="61" x2="296.5" y2="61" stroke="white" stroke-width="0.7"/><line x1="295" y1="59.5" x2="295" y2="62.5" stroke="white" stroke-width="0.7"/></g>
           <circle cx="295" cy="86" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
           <g class="screw-head fw-screw-4"><line x1="293.5" y1="86" x2="296.5" y2="86" stroke="white" stroke-width="0.7"/><line x1="295" y1="84.5" x2="295" y2="87.5" stroke="white" stroke-width="0.7"/></g>
-          <text x="14" y="76" font-size="6" fill="currentColor" font-family="'Share Tech Mono', monospace" font-weight="bold">FIREWALL</text>
-          <!-- LAN Ports -->
+          <!-- ── LABEL SECTION ── -->
+          <text x="14" y="66" font-size="6" fill="currentColor" font-family="'Share Tech Mono', monospace" font-weight="bold">FIREWALL</text>
+          <text x="14" y="74" font-size="3.5" fill="currentColor" font-family="monospace" opacity="0.6">FW-100X</text>
+          <text x="14" y="80" font-size="3" fill="currentColor" font-family="monospace" opacity="0.35">STATEFUL</text>
+          <!-- ── MGMT CONSOLE ── -->
+          <text x="69" y="60" font-size="2.5" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">CON</text>
+          <circle cx="69" cy="68" r="3.2" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.6"/>
+          <circle cx="69" cy="68" r="1.3" fill="currentColor" opacity="0.15"/>
+          <!-- ── LAN PORTS (EXACT POSITIONS PRESERVED) ── -->
+          <text x="80" y="60" font-size="2.5" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">LAN</text>
           <rect class="fw-lan-port" x="76" y="61" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
           <rect class="fw-lan-port" x="106" y="61" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
-          <text class="fw-lan-label" x="73" y="73" font-size="4.5" fill="currentColor" font-family="monospace" opacity="0.7">LAN1</text>
-          <text class="fw-lan-label" x="103" y="73" font-size="4.5" fill="currentColor" font-family="monospace" opacity="0.7">LAN2</text>
-          <!-- WAN Ports -->
+          <text class="fw-lan-label" x="80"  y="73" font-size="4.5" fill="currentColor" font-family="monospace" opacity="0.7" text-anchor="middle">LAN1</text>
+          <text class="fw-lan-label" x="110" y="73" font-size="4.5" fill="currentColor" font-family="monospace" opacity="0.7" text-anchor="middle">LAN2</text>
+          <!-- ── WAN PORTS (EXACT POSITIONS PRESERVED) ── -->
+          <text x="134" y="60" font-size="2.5" fill="#FF4500" font-family="monospace" opacity="0.7" text-anchor="middle">WAN</text>
           <rect class="fw-wan-port" x="130" y="61" width="8" height="5" rx="0.5" fill="none" stroke="#FF4500" stroke-width="1"/>
           <rect class="fw-wan-port" x="162" y="61" width="8" height="5" rx="0.5" fill="none" stroke="#FF4500" stroke-width="1"/>
-          <text class="fw-wan-label" x="127" y="73" font-size="4.5" fill="#FF4500" font-family="monospace" opacity="0.9">WAN1</text>
-          <text class="fw-wan-label" x="159" y="73" font-size="4.5" fill="#FF4500" font-family="monospace" opacity="0.9">WAN2</text>
-          <!-- Status LEDs -->
-          <circle class="led-lan" cx="80" cy="82" r="1.5" fill="#27c93f"/>
+          <text class="fw-wan-label" x="134" y="73" font-size="4.5" fill="#FF4500" font-family="monospace" opacity="0.9" text-anchor="middle">WAN1</text>
+          <text class="fw-wan-label" x="166" y="73" font-size="4.5" fill="#FF4500" font-family="monospace" opacity="0.9" text-anchor="middle">WAN2</text>
+          <!-- ── DMZ PORT ── -->
+          <text x="188" y="60" font-size="2.5" fill="#FFD700" font-family="monospace" opacity="0.7" text-anchor="middle">DMZ</text>
+          <rect x="184" y="61" width="8" height="5" rx="0.5" fill="none" stroke="#FFD700" stroke-width="0.8" opacity="0.7"/>
+          <text x="188" y="73" font-size="4.5" fill="#FFD700" font-family="monospace" opacity="0.7" text-anchor="middle">DMZ</text>
+          <circle cx="188" cy="82" r="1.5" fill="#FFD700" opacity="0.5"/>
+          <!-- ── STATUS LEDs (EXACT POSITIONS PRESERVED) ── -->
+          <circle class="led-lan"           cx="80"  cy="82" r="1.5" fill="#27c93f"/>
           <circle class="led-lan led-lan-2" cx="110" cy="82" r="1.5" fill="#27c93f"/>
-          <circle class="led-wan" cx="134" cy="82" r="1.5" fill="#ff5f56"/>
+          <circle class="led-wan"           cx="134" cy="82" r="1.5" fill="#ff5f56"/>
           <circle class="led-wan led-wan-2" cx="166" cy="82" r="1.5" fill="#ff5f56"/>
-          <circle class="led-power" cx="278" cy="74" r="1.5" fill="currentColor"/>
-          <text x="266" y="75" font-size="3.5" fill="currentColor" font-family="monospace">PWR</text>
+          <!-- ── RIGHT BRAND SECTION ── -->
+          <!-- Vent slots -->
+          <line x1="226" y1="57" x2="226" y2="91" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="229" y1="57" x2="229" y2="91" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="232" y1="57" x2="232" y2="91" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="235" y1="57" x2="235" y2="91" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="238" y1="57" x2="238" y2="91" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="241" y1="57" x2="241" y2="91" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="244" y1="57" x2="244" y2="91" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <!-- BLUE-NET sticker label -->
+          <rect x="245" y="63" width="35" height="9" rx="2" fill="#0d0500" stroke="#FF4500" stroke-width="0.7"/>
+          <text x="262" y="70" font-size="4.5" fill="#FF4500" font-family="'Share Tech Mono', monospace" font-weight="bold" text-anchor="middle">BLUE-NET</text>
+          <!-- PWR LED (EXACT POSITION PRESERVED) -->
+          <circle class="led-power" cx="278" cy="78" r="1.5" fill="currentColor"/>
+          <text x="266" y="79" font-size="3.5" fill="currentColor" font-family="monospace">PWR</text>
         </g>
+
+        <!-- ═══ BLANK PANEL (firewall → modem) ═══ -->
+        <rect x="8" y="94" width="284" height="3" fill="none" stroke="currentColor" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.3"/>
+
+        <!-- ═══ FW WAN → MODEM ETH IN CABLES (YELLOW) ═══ -->
+        <!-- Cable 1: FW WAN1 (134,66) → Modem ETH1 (101,103) — fans left -->
+        <path class="fw-modem-cable fw-modem-cable-1" d="M 134 66 L 101 103" stroke="#B8860B" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path class="fw-modem-cable fw-modem-cable-1" d="M 134 66 L 101 103" stroke="#FFD700" stroke-width="1.8" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 3px rgba(255,215,0,0.8))"/>
+        <!-- RJ45 plugs for cable 1 -->
+        <rect class="rj45-plug rj45-plug-modem" x="130" y="64.5" width="10" height="3.5" rx="0.8" fill="#B8860B"/>
+        <rect class="rj45-plug rj45-plug-modem" x="131" y="65" width="8" height="2" rx="0.3" fill="#FFD700" opacity="0.8"/>
+        <rect class="rj45-plug rj45-plug-modem" x="97" y="100.5" width="10" height="4" rx="0.8" fill="#B8860B"/>
+        <rect class="rj45-plug rj45-plug-modem" x="98" y="101" width="8" height="2.5" rx="0.3" fill="#FFD700" opacity="0.8"/>
+        <!-- Cable 2: FW WAN2 (166,66) → Modem ETH2 (186,103) — fans right -->
+        <path class="fw-modem-cable fw-modem-cable-2" d="M 166 66 L 186 103" stroke="#B8860B" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path class="fw-modem-cable fw-modem-cable-2" d="M 166 66 L 186 103" stroke="#FFD700" stroke-width="1.8" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 3px rgba(255,215,0,0.8))"/>
+        <!-- RJ45 plugs for cable 2 -->
+        <rect class="rj45-plug rj45-plug-modem" x="162" y="64.5" width="10" height="3.5" rx="0.8" fill="#B8860B"/>
+        <rect class="rj45-plug rj45-plug-modem" x="163" y="65" width="8" height="2" rx="0.3" fill="#FFD700" opacity="0.8"/>
+        <rect class="rj45-plug rj45-plug-modem" x="182" y="100.5" width="10" height="4" rx="0.8" fill="#B8860B"/>
+        <rect class="rj45-plug rj45-plug-modem" x="183" y="101" width="8" height="2.5" rx="0.3" fill="#FFD700" opacity="0.8"/>
+
+        <!-- ═══ MODEM UNIT (CM-1000) ═══ -->
+        <g class="modem-group">
+          <!-- Rack mount ears -->
+          <rect x="2" y="97" width="6" height="38" fill="currentColor" opacity="0.08" stroke="currentColor" stroke-width="0.5"/>
+          <rect x="292" y="97" width="6" height="38" fill="currentColor" opacity="0.08" stroke="currentColor" stroke-width="0.5"/>
+          <!-- Screws -->
+          <circle cx="5" cy="102" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head md-screw-1"><line x1="3.5" y1="102" x2="6.5" y2="102" stroke="white" stroke-width="0.7"/><line x1="5" y1="100.5" x2="5" y2="103.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="5" cy="129" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head md-screw-2"><line x1="3.5" y1="129" x2="6.5" y2="129" stroke="white" stroke-width="0.7"/><line x1="5" y1="127.5" x2="5" y2="130.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="295" cy="102" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head md-screw-3"><line x1="293.5" y1="102" x2="296.5" y2="102" stroke="white" stroke-width="0.7"/><line x1="295" y1="100.5" x2="295" y2="103.5" stroke="white" stroke-width="0.7"/></g>
+          <circle cx="295" cy="129" r="1.8" fill="none" stroke="white" stroke-width="0.7" opacity="0.6"/>
+          <g class="screw-head md-screw-4"><line x1="293.5" y1="129" x2="296.5" y2="129" stroke="white" stroke-width="0.7"/><line x1="295" y1="127.5" x2="295" y2="130.5" stroke="white" stroke-width="0.7"/></g>
+          <!-- Main panel -->
+          <rect x="8" y="97" width="284" height="38" rx="1" fill="rgba(0,0,0,0.3)" stroke="currentColor" stroke-width="1"/>
+          <!-- Top accent bar -->
+          <rect x="9" y="98" width="282" height="1.5" fill="currentColor" opacity="0.18"/>
+          <!-- Bottom accent bar -->
+          <rect x="9" y="133.5" width="282" height="1" fill="currentColor" opacity="0.1"/>
+          <!-- Section dividers -->
+          <line x1="65"  y1="98" x2="65"  y2="135" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <line x1="120" y1="98" x2="120" y2="135" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <line x1="196" y1="98" x2="196" y2="135" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <line x1="222" y1="98" x2="222" y2="135" stroke="currentColor" stroke-width="0.4" opacity="0.3"/>
+          <!-- ── LABEL SECTION ── -->
+          <text x="14" y="109" font-size="6" fill="currentColor" font-family="'Share Tech Mono', monospace" font-weight="bold">MODEM</text>
+          <text x="14" y="117" font-size="3.5" fill="currentColor" font-family="monospace" opacity="0.6">CM-1000</text>
+          <text x="14" y="123" font-size="3" fill="currentColor" font-family="monospace" opacity="0.35">DOCSIS 3.1</text>
+          <!-- ── COAX / ISP INPUT ── -->
+          <text x="82" y="102" font-size="2.5" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">ISP INPUT</text>
+          <circle cx="82" cy="114" r="5.5" fill="none" stroke="currentColor" stroke-width="0.9" opacity="0.7"/>
+          <circle cx="82" cy="114" r="3.5" fill="rgba(0,0,0,0.4)" stroke="currentColor" stroke-width="0.5" opacity="0.5"/>
+          <circle cx="82" cy="114" r="1.2" fill="currentColor" opacity="0.4"/>
+          <circle cx="82" cy="114" r="4.5" fill="none" stroke="currentColor" stroke-width="0.3" opacity="0.2"/>
+          <text x="82" y="127" font-size="2.5" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">COAX</text>
+          <!-- ── ETH IN PORTS (from firewall green cables) ── -->
+          <text x="101" y="102" font-size="2.5" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">ETH IN</text>
+          <rect class="modem-eth-port" x="97" y="103" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1" opacity="0.7"/>
+          <text x="101" y="113" font-size="3.5" fill="currentColor" font-family="monospace" opacity="0.6" text-anchor="middle">ETH1</text>
+          <rect class="modem-eth-port" x="182" y="103" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1" opacity="0.7"/>
+          <text x="186" y="113" font-size="3.5" fill="currentColor" font-family="monospace" opacity="0.6" text-anchor="middle">ETH2</text>
+          <!-- ── LAN OUT PORTS (feed red cables to chat/contact boxes) ── -->
+          <text x="150" y="102" font-size="2.5" fill="#FF4500" font-family="monospace" opacity="0.8" text-anchor="middle">LAN OUT</text>
+          <rect class="modem-lan-port" x="130" y="103" width="8" height="5" rx="0.5" fill="none" stroke="#27c93f" stroke-width="1"/>
+          <rect class="modem-lan-port" x="162" y="103" width="8" height="5" rx="0.5" fill="none" stroke="#27c93f" stroke-width="1"/>
+          <text x="134" y="113" font-size="3.5" fill="#FF4500" font-family="monospace" opacity="0.8" text-anchor="middle">LAN1</text>
+          <text x="166" y="113" font-size="3.5" fill="#FF4500" font-family="monospace" opacity="0.8" text-anchor="middle">LAN2</text>
+          <circle cx="134" cy="124" r="1.2" fill="#FF4500" opacity="0.7"/>
+          <circle cx="166" cy="124" r="1.2" fill="#FF4500" opacity="0.7"/>
+          <!-- ── STATUS LEDs ── -->
+          <text x="209" y="102" font-size="2.5" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">STATUS</text>
+          <circle cx="200" cy="108" r="1.3" fill="#27c93f"/>
+          <text x="214" y="109" font-size="2.8" fill="currentColor" font-family="monospace" opacity="0.45">PWR</text>
+          <circle class="led-ds" cx="200" cy="116" r="1.3" fill="#27c93f"/>
+          <text x="214" y="117" font-size="2.8" fill="currentColor" font-family="monospace" opacity="0.45">DS</text>
+          <circle class="led-us" cx="200" cy="124" r="1.3" fill="#ffbd2e"/>
+          <text x="214" y="125" font-size="2.8" fill="currentColor" font-family="monospace" opacity="0.45">US</text>
+          <circle class="led-online" cx="200" cy="131" r="1.3" fill="#00bfff" opacity="0.85"/>
+          <text x="214" y="132" font-size="2.8" fill="currentColor" font-family="monospace" opacity="0.45">ONL</text>
+          <!-- ── RIGHT BRAND SECTION ── -->
+          <!-- Vent slots -->
+          <line x1="226" y1="100" x2="226" y2="134" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="229" y1="100" x2="229" y2="134" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="232" y1="100" x2="232" y2="134" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="235" y1="100" x2="235" y2="134" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="238" y1="100" x2="238" y2="134" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="241" y1="100" x2="241" y2="134" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <line x1="244" y1="100" x2="244" y2="134" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
+          <!-- BLUE-NET sticker label -->
+          <rect x="245" y="106" width="35" height="9" rx="2" fill="#0d0500" stroke="#FF4500" stroke-width="0.7"/>
+          <text x="262" y="113" font-size="4.5" fill="#FF4500" font-family="'Share Tech Mono', monospace" font-weight="bold" text-anchor="middle">BLUE-NET</text>
+          <!-- PWR LED -->
+          <circle class="led-power" cx="278" cy="121" r="1.5" fill="currentColor"/>
+          <text x="266" y="122" font-size="3.5" fill="currentColor" font-family="monospace">PWR</text>
+        </g>
+        </g><!-- end translate(0,48) -->
       </svg>
 
       <!-- Red cables from Firewall WAN ports down to option boxes -->
       <div class="fw-cables-container">
         <svg class="fw-cable fw-cable-left" viewBox="0 0 99 250" xmlns="http://www.w3.org/2000/svg">
           <!-- Shadow/body -->
-          <path class="fw-cable-path" d="M 99 0 C 78 70 22 165 0 250" stroke="#8B0000" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <path class="fw-cable-path" d="M 99 0 C 78 70 22 165 0 250" stroke="#1a5c2a" stroke-width="5" fill="none" stroke-linecap="round"/>
           <!-- Main color -->
-          <path class="fw-cable-path" d="M 99 0 C 78 70 22 165 0 250" stroke="#FF0000" stroke-width="3.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 5px rgba(255,0,0,0.7))"/>
+          <path class="fw-cable-path" d="M 99 0 C 78 70 22 165 0 250" stroke="#27c93f" stroke-width="3.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 5px rgba(39,201,63,0.7))"/>
           <!-- Highlight -->
-          <path class="fw-cable-path" d="M 98.5 0 C 77.5 70 21.5 165 -0.5 250" stroke="rgba(255,180,180,0.4)" stroke-width="1" fill="none" stroke-linecap="round"/>
-          <circle class="fw-cable-packet" cx="99" cy="0" r="3" fill="#FF0000"/>
-          <circle class="fw-cable-packet-return fw-cable-return-left" cx="0" cy="250" r="3" fill="#FF0000"/>
+          <path class="fw-cable-path" d="M 98.5 0 C 77.5 70 21.5 165 -0.5 250" stroke="rgba(180,255,180,0.4)" stroke-width="1" fill="none" stroke-linecap="round"/>
+          <circle class="fw-cable-packet" cx="99" cy="0" r="3" fill="#27c93f"/>
+          <circle class="fw-cable-packet-return fw-cable-return-left" cx="0" cy="250" r="3" fill="#27c93f"/>
         </svg>
         <svg class="fw-cable fw-cable-right" viewBox="0 0 99 250" xmlns="http://www.w3.org/2000/svg">
           <!-- Shadow/body -->
-          <path class="fw-cable-path" d="M 0 0 C 22 70 78 165 99 250" stroke="#8B0000" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <path class="fw-cable-path" d="M 0 0 C 22 70 78 165 99 250" stroke="#1a5c2a" stroke-width="5" fill="none" stroke-linecap="round"/>
           <!-- Main color -->
-          <path class="fw-cable-path" d="M 0 0 C 22 70 78 165 99 250" stroke="#FF0000" stroke-width="3.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 5px rgba(255,0,0,0.7))"/>
+          <path class="fw-cable-path" d="M 0 0 C 22 70 78 165 99 250" stroke="#27c93f" stroke-width="3.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 5px rgba(39,201,63,0.7))"/>
           <!-- Highlight -->
-          <path class="fw-cable-path" d="M 0.5 0 C 22.5 70 78.5 165 99.5 250" stroke="rgba(255,180,180,0.4)" stroke-width="1" fill="none" stroke-linecap="round"/>
-          <circle class="fw-cable-packet" cx="0" cy="0" r="3" fill="#FF0000"/>
-          <circle class="fw-cable-packet-return fw-cable-return-right" cx="99" cy="250" r="3" fill="#FF0000"/>
+          <path class="fw-cable-path" d="M 0.5 0 C 22.5 70 78.5 165 99.5 250" stroke="rgba(180,255,180,0.4)" stroke-width="1" fill="none" stroke-linecap="round"/>
+          <circle class="fw-cable-packet" cx="0" cy="0" r="3" fill="#27c93f"/>
+          <circle class="fw-cable-packet-return fw-cable-return-right" cx="99" cy="250" r="3" fill="#27c93f"/>
         </svg>
       </div>
 

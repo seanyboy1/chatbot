@@ -31,15 +31,19 @@
 
 /* Rack part groups — each fades in individually via JS */
 .rack-rails-group,
+.patch-panel-group,
 .switch-group,
-.firewall-group {
+.firewall-group,
+.modem-group {
   opacity: 0;
   transition: opacity 0.7s ease;
 }
 
 .rack-rails-group.show,
+.patch-panel-group.show,
 .switch-group.show,
-.firewall-group.show {
+.firewall-group.show,
+.modem-group.show {
   opacity: 1;
 }
 
@@ -50,17 +54,25 @@
   opacity: 0;
 }
 
+.patch-panel-group.screwing .screw-head,
 .switch-group.screwing .screw-head,
-.firewall-group.screwing .screw-head {
+.firewall-group.screwing .screw-head,
+.modem-group.screwing .screw-head {
   animation: screwIn 0.8s ease-in-out forwards;
 }
 
+.patch-panel-group.screwing .pp-screw-2,
 .switch-group.screwing .sw-screw-2,
-.firewall-group.screwing .fw-screw-2 { animation-delay: 0.35s; }
+.firewall-group.screwing .fw-screw-2,
+.modem-group.screwing .md-screw-2 { animation-delay: 0.35s; }
+.patch-panel-group.screwing .pp-screw-3,
 .switch-group.screwing .sw-screw-3,
-.firewall-group.screwing .fw-screw-3 { animation-delay: 0.7s; }
+.firewall-group.screwing .fw-screw-3,
+.modem-group.screwing .md-screw-3 { animation-delay: 0.7s; }
+.patch-panel-group.screwing .pp-screw-4,
 .switch-group.screwing .sw-screw-4,
-.firewall-group.screwing .fw-screw-4 { animation-delay: 1.05s; }
+.firewall-group.screwing .fw-screw-4,
+.modem-group.screwing .md-screw-4 { animation-delay: 1.05s; }
 
 @keyframes screwIn {
   0%   { opacity: 0; transform: rotate(0deg); }
@@ -176,10 +188,38 @@
   }
 }
 
-/* Yellow cable data packets */
+/* Red cable data packets (switch → firewall) */
 .data-pkt-yellow {
   opacity: 0;
-  filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.9));
+  filter: drop-shadow(0 0 2px rgba(255, 0, 0, 0.9));
+}
+
+/* Light blue patch panel → switch cables */
+.pp-cable {
+  stroke-dasharray: 45;
+  stroke-dashoffset: 45;
+}
+.rack-icon.patch-panel-wired .pp-cable-1 { animation: drawPPCable 0.35s ease-out 0s   forwards; }
+.rack-icon.patch-panel-wired .pp-cable-3 { animation: drawPPCable 0.35s ease-out 0.15s forwards; }
+.rack-icon.patch-panel-wired .pp-cable-4 { animation: drawPPCable 0.35s ease-out 0.25s forwards; }
+.rack-icon.patch-panel-wired .pp-cable-5 { animation: drawPPCable 0.35s ease-out 0.35s forwards; }
+@keyframes drawPPCable { to { stroke-dashoffset: 0; } }
+
+/* RJ45 plugs — hidden until corresponding cable class added */
+.rj45-plug { opacity: 0; }
+.rack-icon.patch-panel-wired .rj45-plug-pp    { opacity: 1; transition: opacity 0.2s ease 0.3s; }
+.rack-icon.cables-active     .rj45-plug-patch  { opacity: 1; transition: opacity 0.2s ease 0.4s; }
+.rack-icon.modem-wired       .rj45-plug-modem  { opacity: 1; transition: opacity 0.2s ease 0.3s; }
+
+/* PP port LEDs glow when patch-panel-wired */
+.rack-icon.patch-panel-wired .pp-led { opacity: 1; animation: flashBlue 0.7s step-end infinite; }
+.rack-icon.patch-panel-wired .pp-led-3 { animation-delay: 0.1s; }
+.rack-icon.patch-panel-wired .pp-led-4 { animation-delay: 0.2s; }
+.rack-icon.patch-panel-wired .pp-led-5 { animation-delay: 0.15s; }
+.rack-icon.patch-panel-wired .pp-port-active { opacity: 0.4; transition: opacity 0.3s ease; }
+@keyframes flashBlue {
+  0%  { fill: #7DF9FF; filter: drop-shadow(0 0 3px rgba(125,249,255,0.9)); }
+  50% { fill: #1a3a3f; filter: none; }
 }
 
 .rack-icon.cables-active .data-pkt-y-down-1 {
@@ -202,10 +242,10 @@
   100% { opacity: 0; }
 }
 
-/* Red cable return packets (box → firewall) */
+/* Green cable return packets (box → modem) */
 .fw-cable-packet-return {
   opacity: 0;
-  filter: drop-shadow(0 0 4px rgba(255, 0, 0, 0.9));
+  filter: drop-shadow(0 0 4px rgba(39, 201, 63, 0.9));
 }
 
 .fw-cables-container.active .fw-cable-return-left {
@@ -230,44 +270,30 @@
   100% { cx: 0;  cy: 0;   opacity: 0; }
 }
 
-/* Default: ports dim until cables connect */
-.rack-icon .network-port,
-.rack-icon .network-port-active,
-.rack-icon .fw-lan-port,
-.rack-icon .fw-wan-port {
-  stroke: #2a2a2a;
+/* When yellow cables connect: light up the plugged-in switch ports and firewall LAN ports */
+.rack-icon.cables-active .network-port-active {
+  stroke: #ffffff;
+  filter: drop-shadow(0 0 3px rgba(255,255,255,0.8));
+  transition: stroke 0.4s ease, filter 0.4s ease;
 }
-.rack-icon .fw-lan-label,
-.rack-icon .fw-wan-label {
-  fill: #2a2a2a;
-  opacity: 1;
+.rack-icon.cables-active .fw-lan-port {
+  stroke: #7DF9FF;
+  filter: drop-shadow(0 0 3px rgba(125,249,255,0.8));
+  transition: stroke 0.4s ease, filter 0.4s ease;
 }
-
-/* Connected: restore proper port colors */
-.rack-icon.leds-active .network-port {
-  stroke: currentColor;
-  transition: stroke 0.4s ease;
-}
-.rack-icon.leds-active .network-port-active {
-  stroke: white;
-  transition: stroke 0.4s ease;
-}
-.rack-icon.leds-active .fw-lan-port {
-  stroke: currentColor;
-  transition: stroke 0.4s ease;
-}
-.rack-icon.leds-active .fw-lan-label {
-  fill: currentColor;
-  opacity: 0.7;
+.rack-icon.cables-active .fw-lan-label {
+  fill: #7DF9FF;
   transition: fill 0.4s ease;
 }
+
+/* When red cables connect: light up the firewall WAN ports */
 .rack-icon.leds-active .fw-wan-port {
-  stroke: #FF4500;
-  transition: stroke 0.4s ease;
+  stroke: #FF6030;
+  filter: drop-shadow(0 0 3px rgba(255,80,30,0.9));
+  transition: stroke 0.4s ease, filter 0.4s ease;
 }
 .rack-icon.leds-active .fw-wan-label {
-  fill: #FF4500;
-  opacity: 0.9;
+  fill: #FF6030;
   transition: fill 0.4s ease;
 }
 
@@ -284,49 +310,127 @@
 
 /* LAN / WAN status LED flash animations — activate when cables connect */
 .rack-icon.leds-active .led-lan {
-  animation: flashLan 1.2s ease-in-out infinite;
+  animation: flashLan 0.4s step-end infinite;
 }
 .rack-icon.leds-active .led-lan-2 {
-  animation-delay: 0.4s;
+  animation-delay: 0.15s;
 }
 .rack-icon.leds-active .led-wan {
-  animation: flashWan 1.8s ease-in-out infinite;
+  animation: flashWan 0.5s step-end infinite;
 }
 .rack-icon.leds-active .led-wan-2 {
-  animation-delay: 0.6s;
+  animation-delay: 0.2s;
 }
 
-/* Switch port LEDs restore proper colors */
+/* Switch port LEDs blink when active */
 .rack-icon.leds-active .led-green {
-  fill: #27c93f;
-  filter: drop-shadow(0 0 2px #27c93f);
+  animation: flashGreen 0.6s step-end infinite;
 }
+.rack-icon.leds-active .led-green:nth-of-type(2) { animation-delay: 0.1s; }
+.rack-icon.leds-active .led-green:nth-of-type(3) { animation-delay: 0.3s; }
+.rack-icon.leds-active .led-green:nth-of-type(4) { animation-delay: 0.2s; }
 .rack-icon.leds-active .led-yellow {
-  fill: #ffbd2e;
-  filter: drop-shadow(0 0 2px #ffbd2e);
+  animation: flashYellow 0.8s step-end infinite;
 }
+.rack-icon.leds-active .led-yellow:nth-of-type(2) { animation-delay: 0.25s; }
+.rack-icon.leds-active .led-yellow:nth-of-type(3) { animation-delay: 0.4s; }
+.rack-icon.leds-active .led-yellow:nth-of-type(4) { animation-delay: 0.15s; }
 .rack-icon.leds-active .led-power {
-  fill: currentColor;
-  filter: none;
+  animation: flashPower 1.8s ease-in-out infinite;
+}
+
+@keyframes flashPower {
+  0%, 100% { fill: #27c93f; filter: drop-shadow(0 0 5px rgba(39,201,63,0.9)); }
+  50%       { fill: #0d2e13; filter: none; }
 }
 
 @keyframes flashLan {
-  0%   { fill: #27c93f; filter: drop-shadow(0 0 3px #27c93f); }
-  49%  { fill: #27c93f; filter: drop-shadow(0 0 3px #27c93f); }
-  50%  { fill: #FFE000; filter: drop-shadow(0 0 3px #FFE000); }
-  99%  { fill: #FFE000; filter: drop-shadow(0 0 3px #FFE000); }
-  100% { fill: #27c93f; filter: drop-shadow(0 0 3px #27c93f); }
+  0%  { fill: #27c93f; filter: drop-shadow(0 0 4px #27c93f); }
+  50% { fill: #FFE000; filter: drop-shadow(0 0 4px #FFE000); }
 }
 
 @keyframes flashWan {
-  0%   { fill: #ff5f56; filter: drop-shadow(0 0 3px #ff5f56); }
-  49%  { fill: #ff5f56; filter: drop-shadow(0 0 3px #ff5f56); }
-  50%  { fill: #27c93f; filter: drop-shadow(0 0 3px #27c93f); }
-  99%  { fill: #27c93f; filter: drop-shadow(0 0 3px #27c93f); }
-  100% { fill: #ff5f56; filter: drop-shadow(0 0 3px #ff5f56); }
+  0%  { fill: #ff5f56; filter: drop-shadow(0 0 4px #ff5f56); }
+  50% { fill: #27c93f; filter: drop-shadow(0 0 4px #27c93f); }
 }
 
-/* Patch cable animation (yellow, switch → firewall) */
+@keyframes flashGreen {
+  0%  { fill: #27c93f; filter: drop-shadow(0 0 3px #27c93f); }
+  50% { fill: #1a7a28; filter: none; }
+}
+
+@keyframes flashYellow {
+  0%  { fill: #ffbd2e; filter: drop-shadow(0 0 3px #ffbd2e); }
+  50% { fill: #7a5a00; filter: none; }
+}
+
+/* Modem ETH IN ports — continuous green flash when green cables connected */
+.rack-icon.modem-wired .modem-eth-port {
+  animation: portFlashGreen 0.6s step-end infinite;
+}
+/* FW WAN ports — continuous green flash when green cables leave from here */
+.rack-icon.modem-wired .fw-wan-port {
+  animation: portFlashGreen 0.6s step-end infinite;
+}
+
+@keyframes portFlashGreen {
+  0%   { stroke: #FFD700; filter: drop-shadow(0 0 6px rgba(255,215,0,0.95)); opacity: 1; }
+  50%  { stroke: currentColor; filter: none; opacity: 0.4; }
+  100% { stroke: #FFD700; filter: drop-shadow(0 0 6px rgba(255,215,0,0.95)); opacity: 1; }
+}
+
+/* Modem LAN OUT ports — continuous orange flash when red cables plugged in */
+.rack-icon.leds-active .modem-lan-port {
+  animation: portFlashOrange 0.5s step-end infinite;
+}
+
+@keyframes portFlashOrange {
+  0%   { stroke: #27c93f; filter: drop-shadow(0 0 6px rgba(39,201,63,0.95)); opacity: 1; }
+  50%  { stroke: #0d2e13; filter: none; opacity: 0.4; }
+  100% { stroke: #27c93f; filter: drop-shadow(0 0 6px rgba(39,201,63,0.95)); opacity: 1; }
+}
+
+/* FW → Modem inner cables: hidden until modem-wired class added */
+.fw-modem-cable {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+}
+
+.rack-icon.modem-wired .fw-modem-cable-1 {
+  animation: drawModemCable 0.4s ease-out 0s forwards;
+}
+.rack-icon.modem-wired .fw-modem-cable-2 {
+  animation: drawModemCable 0.4s ease-out 0.25s forwards;
+}
+
+@keyframes drawModemCable {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Modem DS/US/ONLINE LED animations */
+.rack-icon.leds-active .led-ds {
+  animation: flashDs 0.7s step-end infinite;
+}
+.rack-icon.leds-active .led-us {
+  animation: flashUs 0.9s step-end 0.3s infinite;
+}
+.rack-icon.leds-active .led-online {
+  fill: #00bfff;
+  filter: drop-shadow(0 0 4px rgba(0,191,255,0.8));
+  animation: none;
+}
+
+@keyframes flashDs {
+  0%  { fill: #27c93f; filter: drop-shadow(0 0 3px #27c93f); }
+  50% { fill: #0a3d15; filter: none; }
+}
+
+@keyframes flashUs {
+  0%  { fill: #ffbd2e; filter: drop-shadow(0 0 3px #ffbd2e); }
+  50% { fill: #4a3500; filter: none; }
+}
+
+/* Patch cable animation (red, switch → firewall) */
 .patch-cable {
   stroke-dasharray: 52;
   stroke-dashoffset: 52;
@@ -350,7 +454,7 @@
   width: 840px;
   height: 250px;
   opacity: 0;
-  margin-top: -68px;
+  margin-top: -65px;
   transition: opacity 0.3s ease;
   z-index: 1;
 }
@@ -395,7 +499,7 @@
 
 .fw-cable-packet {
   opacity: 0;
-  filter: drop-shadow(0 0 4px rgba(255, 0, 0, 0.9));
+  filter: drop-shadow(0 0 4px rgba(39, 201, 63, 0.9));
 }
 
 .fw-cables-container.active .fw-cable-left .fw-cable-packet {
@@ -421,8 +525,8 @@
 }
 
 .cable-path {
-  stroke: #FF4500;
-  filter: drop-shadow(0 0 8px rgba(255, 69, 0, 0.6));
+  stroke: #27c93f;
+  filter: drop-shadow(0 0 8px rgba(39, 201, 63, 0.6));
   stroke-dasharray: 150;
   stroke-dashoffset: 150;
   stroke-linecap: round;
@@ -440,8 +544,8 @@
 
 .cable-packet {
   opacity: 0;
-  fill: #FF4500;
-  filter: drop-shadow(0 0 4px rgba(255, 69, 0, 0.8));
+  fill: #27c93f;
+  filter: drop-shadow(0 0 4px rgba(39, 201, 63, 0.8));
 }
 
 .network-cables-container.active .cable-left .cable-packet {
@@ -568,8 +672,8 @@
 }
 
 .splash-option-box.cable-connected {
-  border-color: #FF4444;
-  box-shadow: 0 0 12px rgba(255, 60, 60, 0.5), inset 0 0 10px rgba(255, 60, 60, 0.05);
+  border-color: #27c93f;
+  box-shadow: 0 0 12px rgba(39, 201, 63, 0.5), inset 0 0 10px rgba(39, 201, 63, 0.05);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -696,12 +800,12 @@
 /* 3 evenly-spaced glowing segments, perimeter ~752px */
 .border-data-path {
   fill: none;
-  stroke: #FF4444;
+  stroke: #27c93f;
   stroke-width: 2.5;
   stroke-dasharray: 25 225 25 225 25 225;
   stroke-dashoffset: 0;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 4px rgba(255, 60, 60, 0.9)) drop-shadow(0 0 8px rgba(255, 60, 60, 0.5));
+  filter: drop-shadow(0 0 4px rgba(39, 201, 63, 0.9)) drop-shadow(0 0 8px rgba(39, 201, 63, 0.5));
 }
 
 .splash-option-box.cable-connected .box-border-data {
@@ -954,4 +1058,40 @@
   .customer-main .terminal-container {
     height: 92vh;
   }
+}
+
+/* ── Client Portal sign-in button (splash screen) ─────────────────────── */
+.splash-signin-btn {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--blue-dim);
+  text-decoration: none;
+  border: 1px solid var(--blue-dark);
+  padding: 7px 16px;
+  border-radius: 2px;
+  background: rgba(13, 13, 13, 0.7);
+  backdrop-filter: blur(8px);
+  transition: opacity 0.5s ease, color 0.2s, border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-signin-btn.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.splash-signin-btn:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+  box-shadow: 0 0 10px var(--blue-glow);
+  background: rgba(93, 173, 226, 0.07);
 }

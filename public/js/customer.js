@@ -55,6 +55,13 @@ async function playSplashAnimation() {
   rackIcon.querySelector('.rack-rails-group')?.classList.add('show');
   await wait(800);
 
+  // 1.5. Patch panel slides in and screws drive
+  const patchPanelGroup = rackIcon.querySelector('.patch-panel-group');
+  patchPanelGroup?.classList.add('show');
+  await wait(300);
+  patchPanelGroup?.classList.add('screwing');
+  await wait(1400);
+
   // 2. Switch unit slides in, then screws drive in slowly
   const switchGroup = rackIcon.querySelector('.switch-group');
   switchGroup?.classList.add('show');
@@ -69,7 +76,14 @@ async function playSplashAnimation() {
   firewallGroup?.classList.add('screwing');
   await wait(1800);  // wait for all 4 screws to finish
 
-  // 4. Boxes appear now that rack is fully built
+  // 4. Modem unit slides in, then screws drive in
+  const modemGroup = rackIcon.querySelector('.modem-group');
+  modemGroup?.classList.add('show');
+  await wait(300);
+  modemGroup?.classList.add('screwing');
+  await wait(1200);
+
+  // 5. Boxes appear now that rack is fully built
   if (splashOptions) splashOptions.classList.add('show');
   await wait(400);
   document.getElementById('option-chat')?.classList.add('show');
@@ -77,11 +91,19 @@ async function playSplashAnimation() {
   document.getElementById('option-contact')?.classList.add('show');
   await wait(600);
 
-  // 5. Yellow patch cables draw (switch → firewall)
+  // 6. Light blue cables draw (patch panel → switch)
+  rackIcon.classList.add('patch-panel-wired');
+  await wait(600);
+
+  // 6.5. Red patch cables draw (switch → firewall)
   rackIcon.classList.add('cables-active');
   await wait(1200);
 
-  // 6. Red cables run down from firewall to boxes
+  // 7. Green cables draw from FW WAN into modem ETH IN (after yellow cables settle)
+  rackIcon.classList.add('modem-wired');
+  await wait(800);
+
+  // 8. Red cables run down from modem to boxes
   if (fwCablesContainer) fwCablesContainer.classList.add('active');
 
   // Left cable finishes at 0.7s — connect chat box
@@ -95,10 +117,15 @@ async function playSplashAnimation() {
   // Both cables connected — activate rack LEDs
   rackIcon.classList.add('leds-active');
 
+  // Reveal the CLIENT PORTAL button now that animation is complete
+  document.getElementById('splash-signin')?.classList.add('visible');
+
   // Wait for user to click an option
   return new Promise((resolve) => {
     // Re-attach click to overlay now to handle option selection
     overlay.removeEventListener('click', triggerSkip);
+    // Ensure button is visible even if skip was used
+    document.getElementById('splash-signin')?.classList.add('visible');
 
     document.getElementById('option-chat')?.addEventListener('click', () => resolve('chat'));
     document.getElementById('option-contact')?.addEventListener('click', () => resolve('contact'));

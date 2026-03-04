@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLUE-NET - MY ACCOUNT</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body>
+  <canvas id="matrix-rain"></canvas>
+
+  <!-- Top bar -->
+  <nav class="profile-topbar">
+    <a href="/" class="profile-topbar-logo">
+      <svg viewBox="0 0 60 20" xmlns="http://www.w3.org/2000/svg" color="var(--blue)">
+        <rect x="2" y="4" width="56" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="6" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+        <rect x="11" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+        <rect x="16" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+        <rect x="21" y="7" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="0.8"/>
+        <circle cx="7.5" cy="13" r="0.8" fill="#27c93f"/>
+        <circle cx="12.5" cy="13" r="0.8" fill="#ffbd2e"/>
+        <circle cx="17.5" cy="13" r="0.8" fill="#27c93f"/>
+        <circle cx="22.5" cy="13" r="0.8" fill="#ffbd2e"/>
+        <circle cx="52" cy="10" r="1.2" fill="currentColor"/>
+      </svg>
+      <span class="profile-topbar-logo-text">BLUE-NET</span>
+    </a>
+    <div class="profile-topbar-user">
+      <div class="profile-avatar" id="user-avatar">--</div>
+      <div class="profile-username" id="user-displayname">LOADING...</div>
+      <button class="profile-logout-btn" id="logout-btn">LOGOUT</button>
+    </div>
+  </nav>
+
+  <!-- Main dashboard -->
+  <main class="profile-page">
+
+    <!-- Welcome -->
+    <div class="profile-welcome">
+      <div class="profile-welcome-title">WELCOME BACK</div>
+      <div class="profile-welcome-name" id="welcome-name">...</div>
+    </div>
+
+    <!-- Account info card -->
+    <div class="profile-info-card">
+      <div class="profile-info-field">
+        <span class="profile-info-label">FULL NAME</span>
+        <span class="profile-info-value" id="info-name">—</span>
+      </div>
+      <div class="profile-info-field">
+        <span class="profile-info-label">EMAIL</span>
+        <span class="profile-info-value" id="info-email">—</span>
+      </div>
+      <div class="profile-info-field">
+        <span class="profile-info-label">PHONE</span>
+        <span class="profile-info-value" id="info-phone">—</span>
+      </div>
+      <div class="profile-info-field">
+        <span class="profile-info-label">MEMBER SINCE</span>
+        <span class="profile-info-value" id="info-since">—</span>
+      </div>
+      <div class="profile-info-field">
+        <span class="profile-info-label">TOTAL CHATS</span>
+        <span class="profile-info-value" id="info-chats">0</span>
+      </div>
+    </div>
+
+    <!-- Action cards -->
+    <div class="profile-actions">
+      <div class="action-card" id="card-service">
+        <div class="action-icon">⚡</div>
+        <div class="action-title">START A SERVICE</div>
+        <div class="action-desc">Request a new installation, upgrade, or support ticket.</div>
+      </div>
+      <div class="action-card" id="card-callback">
+        <div class="action-icon">📞</div>
+        <div class="action-title">REQUEST CALLBACK</div>
+        <div class="action-desc">Schedule a call with a BLUE-NET technician.</div>
+      </div>
+      <div class="action-card" id="card-chat">
+        <div class="action-icon">💬</div>
+        <div class="action-title">CHAT WITH AI</div>
+        <div class="action-desc">Start a live session with our AI support assistant.</div>
+      </div>
+      <div class="action-card" id="card-history">
+        <div class="action-icon">📜</div>
+        <div class="action-title">PAST CHATS</div>
+        <div class="action-desc">Review your previous support conversations.</div>
+      </div>
+    </div>
+
+    <!-- Chat panel -->
+    <div class="profile-panel" id="panel-chat">
+      <div class="profile-panel-header">
+        <div class="terminal-dots" style="gap:5px;">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        </div>
+        <span class="profile-panel-title">AI SUPPORT TERMINAL</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="terminal-status" style="font-size:11px;">
+            <span class="status-indicator"></span><span>ONLINE</span>
+          </div>
+          <button class="profile-panel-close" id="close-chat">✕</button>
+        </div>
+      </div>
+      <div class="profile-chat-body terminal-body" id="chat-window"></div>
+      <div class="profile-chat-input-area">
+        <div class="input-row">
+          <span class="prompt-symbol">›</span>
+          <input type="text" id="chat-input" class="terminal-input" placeholder="Type your message..." autocomplete="off" spellcheck="false"/>
+          <button id="chat-send" class="send-btn">SEND</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Past chats panel -->
+    <div class="profile-panel" id="panel-history">
+      <div class="profile-panel-header">
+        <span class="profile-panel-title">CHAT HISTORY</span>
+        <button class="profile-panel-close" id="close-history">✕</button>
+      </div>
+      <div class="past-chats-list" id="chats-list">
+        <div class="past-chats-empty">LOADING CHAT HISTORY...</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Service Request Modal -->
+  <div class="modal-overlay" id="modal-service">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">⚡ SERVICE REQUEST</span>
+        <button class="modal-close" data-close="modal-service">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label class="modal-label">SERVICE TYPE</label>
+          <select class="modal-select" id="svc-type">
+            <option value="new_install">New Installation</option>
+            <option value="upgrade">Upgrade / Expansion</option>
+            <option value="support">Technical Support</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">DETAILS</label>
+          <textarea class="modal-textarea" id="svc-details" placeholder="Describe what you need..."></textarea>
+        </div>
+        <div class="modal-status" id="svc-status"></div>
+        <button class="modal-btn" id="svc-submit">SUBMIT REQUEST</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Callback Request Modal -->
+  <div class="modal-overlay" id="modal-callback">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">📞 REQUEST CALLBACK</span>
+        <button class="modal-close" data-close="modal-callback">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label class="modal-label">PHONE NUMBER</label>
+          <input class="modal-input" type="tel" id="cb-phone" placeholder="+1 (555) 000-0000"/>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">PREFERRED TIME</label>
+          <select class="modal-select" id="cb-time">
+            <option value="morning">Morning (8AM – 12PM)</option>
+            <option value="afternoon">Afternoon (12PM – 5PM)</option>
+            <option value="evening">Evening (5PM – 8PM)</option>
+            <option value="weekend">Weekend</option>
+            <option value="anytime">Anytime</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">MESSAGE (OPTIONAL)</label>
+          <textarea class="modal-textarea" id="cb-msg" placeholder="What should we discuss?"></textarea>
+        </div>
+        <div class="modal-status" id="cb-status"></div>
+        <button class="modal-btn" id="cb-submit">REQUEST CALLBACK</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initMatrixRain } from '/js/matrix-rain.js';
+    import { requireAuth, getUser, getToken, clearAuth, authFetch } from '/js/auth.js';
+
+    // Auth guard
+    if (!requireAuth()) throw new Error('not authenticated');
+
+    const rain = initMatrixRain('matrix-rain');
+    if (rain) rain.start();
+
+    // ── Load user info ──────────────────────────────────────────────────────
+    const user = getUser();
+    if (user) {
+      const initials = (user.name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+      document.getElementById('user-avatar').textContent = initials;
+      document.getElementById('user-displayname').textContent = (user.username || user.name || '').toUpperCase();
+      document.getElementById('welcome-name').textContent = (user.name || user.username || '').toUpperCase();
+      document.getElementById('info-name').textContent  = user.name || '—';
+      document.getElementById('info-email').textContent = user.email || '—';
+      document.getElementById('info-phone').textContent = user.phone || '—';
+      if (user.createdAt) {
+        document.getElementById('info-since').textContent = new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      }
+    }
+
+    // ── Logout ──────────────────────────────────────────────────────────────
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      clearAuth();
+      window.location.href = '/login';
+    });
+
+    // ── Panel toggle helpers ────────────────────────────────────────────────
+    function openPanel(id) {
+      document.getElementById(id).classList.add('open');
+    }
+    function closePanel(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+    function toggleCard(cardId, panelId) {
+      const card = document.getElementById(cardId);
+      const panel = document.getElementById(panelId);
+      const isOpen = panel.classList.contains('open');
+      card.classList.toggle('active', !isOpen);
+      panel.classList.toggle('open', !isOpen);
+    }
+
+    document.getElementById('close-chat').addEventListener('click', () => {
+      closePanel('panel-chat');
+      document.getElementById('card-chat').classList.remove('active');
+    });
+    document.getElementById('close-history').addEventListener('click', () => {
+      closePanel('panel-history');
+      document.getElementById('card-history').classList.remove('active');
+    });
+
+    // ── Action cards ────────────────────────────────────────────────────────
+    document.getElementById('card-service').addEventListener('click', () => openModal('modal-service'));
+    document.getElementById('card-callback').addEventListener('click', () => {
+      const phone = user?.phone || '';
+      document.getElementById('cb-phone').value = phone;
+      openModal('modal-callback');
+    });
+    document.getElementById('card-chat').addEventListener('click', () => {
+      toggleCard('card-chat', 'panel-chat');
+      if (document.getElementById('panel-chat').classList.contains('open')) {
+        initChat();
+        document.getElementById('chat-input').focus();
+      }
+    });
+    document.getElementById('card-history').addEventListener('click', () => {
+      toggleCard('card-history', 'panel-history');
+      if (document.getElementById('panel-history').classList.contains('open')) {
+        loadChatHistory();
+      }
+    });
+
+    // ── Modal helpers ────────────────────────────────────────────────────────
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+    document.querySelectorAll('[data-close]').forEach(btn => {
+      btn.addEventListener('click', () => closeModal(btn.dataset.close));
+    });
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal(overlay.id);
+      });
+    });
+
+    // ── Service request ──────────────────────────────────────────────────────
+    document.getElementById('svc-submit').addEventListener('click', async () => {
+      const type    = document.getElementById('svc-type').value;
+      const details = document.getElementById('svc-details').value.trim();
+      const statusEl = document.getElementById('svc-status');
+      const btn = document.getElementById('svc-submit');
+
+      if (!details) { statusEl.textContent = 'Please describe your request.'; statusEl.className = 'modal-status error'; return; }
+
+      btn.disabled = true; btn.textContent = 'SUBMITTING...';
+      statusEl.textContent = ''; statusEl.className = 'modal-status';
+
+      try {
+        const res = await authFetch('/api/service-request', {
+          method: 'POST', body: JSON.stringify({ type, details }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          statusEl.textContent = data.message || 'Request submitted!';
+          statusEl.className = 'modal-status success';
+          document.getElementById('svc-details').value = '';
+          setTimeout(() => closeModal('modal-service'), 1800);
+        } else {
+          statusEl.textContent = data.error || 'Submission failed.';
+          statusEl.className = 'modal-status error';
+        }
+      } catch {
+        statusEl.textContent = 'Connection error.'; statusEl.className = 'modal-status error';
+      }
+      btn.disabled = false; btn.textContent = 'SUBMIT REQUEST';
+    });
+
+    // ── Callback request ──────────────────────────────────────────────────────
+    document.getElementById('cb-submit').addEventListener('click', async () => {
+      const phone = document.getElementById('cb-phone').value.trim();
+      const preferredTime = document.getElementById('cb-time').value;
+      const details = document.getElementById('cb-msg').value.trim();
+      const statusEl = document.getElementById('cb-status');
+      const btn = document.getElementById('cb-submit');
+
+      if (!phone) { statusEl.textContent = 'Phone number is required.'; statusEl.className = 'modal-status error'; return; }
+
+      btn.disabled = true; btn.textContent = 'SUBMITTING...';
+      statusEl.textContent = ''; statusEl.className = 'modal-status';
+
+      try {
+        const res = await authFetch('/api/callback-request', {
+          method: 'POST', body: JSON.stringify({ phone, preferredTime, details }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          statusEl.textContent = data.message || 'Callback requested!';
+          statusEl.className = 'modal-status success';
+          setTimeout(() => closeModal('modal-callback'), 1800);
+        } else {
+          statusEl.textContent = data.error || 'Submission failed.';
+          statusEl.className = 'modal-status error';
+        }
+      } catch {
+        statusEl.textContent = 'Connection error.'; statusEl.className = 'modal-status error';
+      }
+      btn.disabled = false; btn.textContent = 'REQUEST CALLBACK';
+    });
+
+    // ── Embedded chat ─────────────────────────────────────────────────────────
+    let chatSessionId = null;
+    let chatReady = false;
+
+    function addMsg(role, content) {
+      const win = document.getElementById('chat-window');
+      const el = document.createElement('div');
+      el.className = role === 'user' ? 'message user-message' : 'message bot-message';
+
+      if (role === 'user') {
+        el.innerHTML = `<span class="message-prompt">&gt; </span>${escHtml(content)}`;
+      } else {
+        const p = document.createElement('p');
+        p.innerHTML = `<span class="message-prompt">AI › </span>${escHtml(content)}`;
+        el.appendChild(p);
+      }
+      win.appendChild(el);
+      win.scrollTop = win.scrollHeight;
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    async function initChat() {
+      if (chatReady) return;
+      chatReady = true;
+      const win = document.getElementById('chat-window');
+      win.innerHTML = '';
+
+      // Boot sequence
+      const lines = ['BLUE-NET AI SUPPORT v2.0', 'AUTHENTICATING USER...', 'SESSION ESTABLISHED', '──────────────────────────────────', 'Hello! How can I help you today?'];
+      for (const line of lines) {
+        const p = document.createElement('p');
+        p.className = 'boot-sequence';
+        p.textContent = line;
+        win.appendChild(p);
+        await new Promise(r => setTimeout(r, 120));
+        win.scrollTop = win.scrollHeight;
+      }
+
+      // Create chat session
+      try {
+        const res = await authFetch('/api/chats', { method: 'POST', body: '{}' });
+        const data = await res.json();
+        chatSessionId = data.sessionId;
+      } catch { /* will use fallback */ }
+    }
+
+    async function sendChatMessage() {
+      const input = document.getElementById('chat-input');
+      const msg = input.value.trim();
+      if (!msg) return;
+      input.value = '';
+
+      addMsg('user', msg);
+
+      // Typing indicator
+      const win = document.getElementById('chat-window');
+      const typing = document.createElement('p');
+      typing.className = 'boot-sequence';
+      typing.textContent = 'AI › ...';
+      win.appendChild(typing);
+      win.scrollTop = win.scrollHeight;
+
+      try {
+        let reply;
+        if (chatSessionId) {
+          const res = await authFetch(`/api/chats/${chatSessionId}/message`, {
+            method: 'POST', body: JSON.stringify({ message: msg }),
+          });
+          const data = await res.json();
+          reply = data.reply || '[No response]';
+          // Update chat count
+          const countEl = document.getElementById('info-chats');
+          // We'll refresh on next history load
+        } else {
+          // Fallback to public chat endpoint
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg, context: 'customer' }),
+          });
+          const data = await res.json();
+          reply = data.reply || '[No response]';
+        }
+        win.removeChild(typing);
+        addMsg('bot', reply);
+      } catch {
+        win.removeChild(typing);
+        addMsg('bot', '[ERROR] Could not reach AI. Please try again.');
+      }
+    }
+
+    document.getElementById('chat-send').addEventListener('click', sendChatMessage);
+    document.getElementById('chat-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendChatMessage();
+    });
+
+    // ── Chat history ─────────────────────────────────────────────────────────
+    async function loadChatHistory() {
+      const listEl = document.getElementById('chats-list');
+      listEl.innerHTML = '<div class="past-chats-empty">LOADING...</div>';
+
+      try {
+        const res = await authFetch('/api/chats');
+        const data = await res.json();
+        const sessions = data.sessions || [];
+
+        document.getElementById('info-chats').textContent = sessions.length;
+
+        if (!sessions.length) {
+          listEl.innerHTML = '<div class="past-chats-empty">NO CHAT HISTORY YET</div>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        sessions.forEach((s) => {
+          const date = new Date(s.lastMessageAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          const msgCount = s.messages?.length || 0;
+
+          const item = document.createElement('div');
+          item.className = 'past-chat-item';
+          item.innerHTML = `
+            <div>
+              <div class="past-chat-title">${escHtml(s.title || 'Chat Session')}</div>
+              <div class="past-chat-meta">${date} · ${msgCount} messages</div>
+            </div>
+            <span class="past-chat-expand">▼</span>
+          `;
+
+          const msgBox = document.createElement('div');
+          msgBox.className = 'past-chat-messages';
+          (s.messages || []).forEach(m => {
+            const el = document.createElement('div');
+            el.className = `past-msg ${m.role}`;
+            el.innerHTML = `<div class="past-msg-label">${m.role === 'user' ? '&gt; YOU' : 'AI ›'}</div>${escHtml(m.content)}`;
+            msgBox.appendChild(el);
+          });
+
+          item.addEventListener('click', () => {
+            const isOpen = msgBox.classList.contains('open');
+            msgBox.classList.toggle('open', !isOpen);
+            item.querySelector('.past-chat-expand').textContent = isOpen ? '▼' : '▲';
+          });
+
+          listEl.appendChild(item);
+          listEl.appendChild(msgBox);
+        });
+      } catch {
+        listEl.innerHTML = '<div class="past-chats-empty">FAILED TO LOAD HISTORY</div>';
+      }
+    }
+  </script>
+</body>
+</html>
