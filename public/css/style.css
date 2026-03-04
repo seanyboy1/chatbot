@@ -1006,6 +1006,7 @@ body {
 /* System Chooser Card */
 .system-chooser-card {
   display: none;
+  position: relative;
   background: var(--bg-terminal);
   border: 1px solid var(--blue-dark);
   border-radius: 4px;
@@ -1029,6 +1030,8 @@ body {
 
 .system-chooser-btn {
   flex: 1;
+  position: relative;
+  z-index: 1;
   background: rgba(93,173,226,0.04);
   border: 1px solid var(--blue-dark);
   border-radius: 3px;
