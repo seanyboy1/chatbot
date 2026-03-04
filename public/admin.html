@@ -178,11 +178,12 @@
 
       <div class="requests-card">
         <h3>Service Requests</h3>
-        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
           <button class="req-filter-btn active" data-filter="all">ALL</button>
           <button class="req-filter-btn" data-filter="pending">PENDING</button>
           <button class="req-filter-btn" data-filter="in_progress">IN PROGRESS</button>
           <button class="req-filter-btn" data-filter="resolved">RESOLVED</button>
+          <button id="req-back-btn" class="req-filter-btn" style="display:none;margin-left:auto;">← BACK</button>
         </div>
         <div id="requests-list" class="customers-list">
           <div class="customers-loading">LOADING...</div>

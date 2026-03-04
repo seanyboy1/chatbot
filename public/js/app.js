@@ -580,7 +580,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (r) { renderRequestDetail(r, listEl); return; }
     }
 
-    // List view
+    // List view — hide back button, show filters
+    document.getElementById('req-back-btn').style.display = 'none';
+
     listEl.innerHTML = '';
     filtered.forEach(r => {
       const date = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -610,15 +612,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderRequestDetail(r, listEl) {
+    // Show back button in filter row
+    const backBtn = document.getElementById('req-back-btn');
+    backBtn.style.display = '';
+    backBtn.onclick = () => { openRequestId = null; renderRequests(); };
     const date = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const typeLabel = typeLabels[r.type] || (r.type || '').toUpperCase();
     const statusColor = statusColors[r.status] || 'var(--blue-dim)';
     const repliedDate = r.repliedAt ? new Date(r.repliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
 
     listEl.innerHTML = `
-      <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
-        <button id="req-back-btn" style="background:transparent;border:1px solid var(--blue-dark);color:var(--blue-dim);font-family:'Share Tech Mono',monospace;font-size:11px;cursor:pointer;letter-spacing:1px;padding:4px 12px;border-radius:2px;">← BACK</button>
-      </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
         <span style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--blue);background:rgba(93,173,226,0.08);border:1px solid var(--blue-dark);padding:2px 8px;border-radius:2px;">${typeLabel}</span>
         <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:${statusColor};">● ${(r.status||'pending').toUpperCase().replace('_',' ')}</span>
@@ -681,12 +684,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Filter buttons
-  document.querySelectorAll('.req-filter-btn').forEach(btn => {
+  // Filter buttons (only those with data-filter, not the back button)
+  document.querySelectorAll('.req-filter-btn[data-filter]').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.req-filter-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.req-filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       activeFilter = btn.dataset.filter;
+      openRequestId = null;
       renderRequests();
     });
   });
