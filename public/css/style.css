@@ -1050,15 +1050,16 @@ body {
 
 .system-chooser-btn .chooser-icon {
   font-size: 22px;
-  color: var(--blue);
+  color: #FF4500;
   margin-bottom: 8px;
-  text-shadow: 0 0 10px var(--blue-glow);
+  text-shadow: 0 0 10px rgba(255,69,0,0.5);
 }
 
 .system-chooser-btn .chooser-label {
   font-size: 11px;
   letter-spacing: 2px;
-  color: var(--blue);
+  color: #FF4500;
+  text-shadow: 0 0 8px rgba(255,69,0,0.5);
   margin-bottom: 4px;
 }
 

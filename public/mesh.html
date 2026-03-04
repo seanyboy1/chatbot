@@ -306,11 +306,11 @@
     .mesh-popup-label { color: var(--blue-dark); font-size: 9px; letter-spacing: 1.5px; }
     .mesh-popup-val   { color: var(--blue); font-size: 10px; }
 
-    .mesh-popup-delete {
-      margin-top: 10px;
+    .mesh-popup-btn {
+      margin-top: 6px;
       background: transparent;
-      border: 1px solid rgba(255,69,0,0.3);
-      color: rgba(255,69,0,0.6);
+      border: 1px solid var(--blue-dark);
+      color: var(--blue-dim);
       font-family: 'Share Tech Mono', monospace;
       font-size: 9px;
       letter-spacing: 1.5px;
@@ -319,12 +319,37 @@
       cursor: pointer;
       transition: all 0.2s;
       width: 100%;
+      display: block;
     }
 
-    .mesh-popup-delete:hover {
+    .mesh-popup-btn:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    .mesh-popup-btn.danger {
+      border-color: rgba(255,69,0,0.3);
+      color: rgba(255,69,0,0.6);
+    }
+
+    .mesh-popup-btn.danger:hover {
       border-color: #FF4500;
       color: #FF4500;
       box-shadow: 0 0 6px rgba(255,69,0,0.3);
+    }
+
+    .mesh-popup-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--blue-dark);
+      color: var(--blue);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      padding: 3px 0;
+      outline: none;
+      box-sizing: border-box;
+      margin-bottom: 6px;
     }
 
     /* ── Map coords tooltip ────────────────────────────── */
@@ -573,7 +598,7 @@
       document.getElementById('mesh-online-count').textContent = online;
     }
 
-    function buildPopup(n) {
+    function buildPopupView(n) {
       return `
         <div class="mesh-popup-name">${escHtml(n.name)}</div>
         <div class="mesh-popup-row">
@@ -589,18 +614,68 @@
           <span class="mesh-popup-label">STATUS</span>
           <span class="mesh-popup-val" style="color:${n.online !== false ? '#27c93f' : 'var(--blue-dark)'};">${n.online !== false ? 'ONLINE' : 'OFFLINE'}</span>
         </div>
-        <button class="mesh-popup-delete" data-id="${escHtml(n.id)}">DELETE NODE</button>
+        <button class="mesh-popup-btn" data-action="edit" data-id="${escHtml(n.id)}">EDIT</button>
+        <button class="mesh-popup-btn" data-action="toggle" data-id="${escHtml(n.id)}">${n.online !== false ? 'MARK OFFLINE' : 'MARK ONLINE'}</button>
+        <button class="mesh-popup-btn danger" data-action="delete" data-id="${escHtml(n.id)}">DELETE NODE</button>
+      `;
+    }
+
+    function buildPopupEdit(n) {
+      return `
+        <div class="mesh-popup-label" style="margin-bottom:4px;">EDIT NODE</div>
+        <input class="mesh-popup-input" data-field="name" value="${escHtml(n.name)}" placeholder="Name"/>
+        <input class="mesh-popup-input" data-field="desc" value="${escHtml(n.desc||'')}" placeholder="Description"/>
+        <button class="mesh-popup-btn" data-action="save-edit" data-id="${escHtml(n.id)}">SAVE</button>
+        <button class="mesh-popup-btn" data-action="cancel-edit" data-id="${escHtml(n.id)}">CANCEL</button>
       `;
     }
 
     function addMarker(n) {
       const m = L.marker([n.lat, n.lon], { icon: makeIcon(n.online !== false) })
         .addTo(map)
-        .bindPopup(buildPopup(n), { maxWidth: 220 });
+        .bindPopup(buildPopupView(n), { maxWidth: 240 });
 
-      m.on('popupopen', () => {
-        document.querySelector(`.mesh-popup-delete[data-id="${n.id}"]`)
-          ?.addEventListener('click', () => deleteNode(n.id));
+      m.on('popupopen', (e) => {
+        const el = e.popup.getElement();
+
+        el.addEventListener('click', (ev) => {
+          const btn = ev.target.closest('[data-action]');
+          if (!btn) return;
+          const id     = btn.dataset.id;
+          const action = btn.dataset.action;
+
+          if (action === 'delete') {
+            deleteNode(id);
+            m.closePopup();
+
+          } else if (action === 'toggle') {
+            const idx = nodes.findIndex(x => x.id === id);
+            if (idx !== -1) {
+              nodes[idx].online = !(nodes[idx].online !== false);
+              saveNodes(nodes);
+              render();
+            }
+
+          } else if (action === 'edit') {
+            const node = nodes.find(x => x.id === id);
+            if (node) m.setPopupContent(buildPopupEdit(node));
+
+          } else if (action === 'save-edit') {
+            const idx = nodes.findIndex(x => x.id === id);
+            if (idx !== -1) {
+              const inputs = el.querySelectorAll('[data-field]');
+              inputs.forEach(inp => { nodes[idx][inp.dataset.field] = inp.value.trim(); });
+              saveNodes(nodes);
+              render();
+              // Re-open popup with updated data
+              setTimeout(() => markers[id]?.openPopup(), 50);
+            }
+
+          } else if (action === 'cancel-edit') {
+            const node = nodes.find(x => x.id === id);
+            if (node) m.setPopupContent(buildPopupView(node));
+          }
+        });
       });
 
       markers[n.id] = m;
