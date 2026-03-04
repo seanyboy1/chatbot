@@ -337,6 +337,13 @@
 /* Ports stay at cable color, no flash */
 .rack-icon.leds-active .fw-lan-label { fill: #FF0000; }
 
+/* Uncabled switch ports: solid amber always */
+.rack-icon .led-amber {
+  fill: #ffbd2e;
+  filter: drop-shadow(0 0 3px rgba(255, 189, 46, 0.7));
+  animation: none !important;
+}
+
 /* Default: all rack LEDs solid red until cables connect */
 .rack-icon .led-green,
 .rack-icon .led-yellow,

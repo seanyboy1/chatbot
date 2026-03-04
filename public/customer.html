@@ -427,15 +427,15 @@
           <rect class="network-port" x="101" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
           <rect class="network-port network-port-active sw-red-2" x="107" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
           <rect class="network-port" x="113" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
-          <!-- LEDs 1-8 (EXACT POSITIONS PRESERVED) -->
+          <!-- LEDs 1-8: ports with cables flash, ports without cables solid amber -->
           <circle class="led-green"  cx="74"  cy="21" r="1" fill="#27c93f"/>
           <circle class="led-yellow" cx="80"  cy="21" r="1" fill="#ffbd2e"/>
           <circle class="led-green"  cx="86"  cy="21" r="1" fill="#27c93f"/>
           <circle class="led-yellow" cx="92"  cy="21" r="1" fill="#ffbd2e"/>
           <circle class="led-green"  cx="98"  cy="21" r="1" fill="#27c93f"/>
-          <circle class="led-yellow" cx="104" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-amber"  cx="104" cy="21" r="1" fill="#ffbd2e"/>
           <circle class="led-green"  cx="110" cy="21" r="1" fill="#27c93f"/>
-          <circle class="led-yellow" cx="116" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-amber"  cx="116" cy="21" r="1" fill="#ffbd2e"/>
           <!-- Port numbers 1-8 -->
           <text x="74"  y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">1</text>
           <text x="80"  y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">2</text>
@@ -454,14 +454,15 @@
           <rect class="network-port" x="151" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
           <rect class="network-port" x="157" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
           <rect class="network-port" x="163" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
-          <circle class="led-green"  cx="124" cy="21" r="1" fill="#27c93f"/>
-          <circle class="led-yellow" cx="130" cy="21" r="1" fill="#ffbd2e"/>
-          <circle class="led-green"  cx="136" cy="21" r="1" fill="#27c93f"/>
-          <circle class="led-yellow" cx="142" cy="21" r="1" fill="#ffbd2e"/>
-          <circle class="led-green"  cx="148" cy="21" r="1" fill="#27c93f"/>
-          <circle class="led-yellow" cx="154" cy="21" r="1" fill="#ffbd2e"/>
-          <circle class="led-green"  cx="160" cy="21" r="1" fill="#27c93f"/>
-          <circle class="led-yellow" cx="166" cy="21" r="1" fill="#ffbd2e"/>
+          <!-- LEDs 9-16: all uncabled, solid amber -->
+          <circle class="led-amber" cx="124" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-amber" cx="130" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-amber" cx="136" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-amber" cx="142" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-amber" cx="148" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-amber" cx="154" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-amber" cx="160" cy="21" r="1" fill="#ffbd2e"/>
+          <circle class="led-amber" cx="166" cy="21" r="1" fill="#ffbd2e"/>
           <!-- Port numbers 9-16 -->
           <text x="124" y="29" font-size="2.3" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">9</text>
           <text x="130" y="29" font-size="2" fill="currentColor" font-family="monospace" opacity="0.3" text-anchor="middle">10</text>
