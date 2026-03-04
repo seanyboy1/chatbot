@@ -199,7 +199,8 @@
 /* Red cable data packets (switch → firewall) */
 .data-pkt-yellow {
   opacity: 0;
-  filter: drop-shadow(0 0 2px rgba(255, 0, 0, 0.9));
+  r: 1.5;
+  filter: drop-shadow(0 0 3px rgba(255, 0, 0, 1)) drop-shadow(0 0 7px rgba(255, 0, 0, 0.6));
 }
 
 /* Light blue patch panel → switch cables */
@@ -230,7 +231,7 @@
   50% { fill: #1a3a3f; filter: none; }
 }
 
-.data-pkt-yellow { opacity: 0; filter: drop-shadow(0 0 4px rgba(255,0,0,0.9)); }
+.data-pkt-yellow { opacity: 0; r: 1.5; filter: drop-shadow(0 0 3px rgba(255,0,0,1)) drop-shadow(0 0 7px rgba(255,0,0,0.6)); }
 .rack-icon.leds-active .data-pkt-y-down-1 {
   animation: pktYFade 1.0s ease-in-out 0s    infinite;
 }
@@ -249,34 +250,6 @@
   10%  { opacity: 1; }
   90%  { opacity: 1; }
   100% { opacity: 0; }
-}
-
-/* Green cable return packets (box → modem) */
-.fw-cable-packet-return {
-  opacity: 0;
-  filter: drop-shadow(0 0 4px rgba(39, 201, 63, 0.9));
-}
-
-.fw-cables-container.data-active .fw-cable-return-left {
-  animation: fwReturnLeft 1.8s ease-in-out 0.9s infinite;
-}
-
-.fw-cables-container.data-active .fw-cable-return-right {
-  animation: fwReturnRight 1.8s ease-in-out 1.6s infinite;
-}
-
-@keyframes fwReturnLeft {
-  0%   { cx: 0;  cy: 250; opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { cx: 99; cy: 0;   opacity: 1; }
-  100% { cx: 99; cy: 0;   opacity: 0; }
-}
-
-@keyframes fwReturnRight {
-  0%   { cx: 99; cy: 250; opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { cx: 0;  cy: 0;   opacity: 1; }
-  100% { cx: 0;  cy: 0;   opacity: 0; }
 }
 
 /* Per-port color timing — PP ports light when cable starts, switch ports when cable arrives */
@@ -304,7 +277,7 @@
 .rack-icon.modem-wired .modem-eth-2 { stroke: #FFD700; filter: drop-shadow(0 0 3px rgba(255,215,0,0.8)); transition: stroke 0.15s ease 0.4s,  filter 0.15s ease 0.4s; }
 
 /* Yellow cable data packets */
-.modem-data-pkt { opacity: 0; filter: drop-shadow(0 0 4px rgba(255,215,0,0.9)); }
+.modem-data-pkt { opacity: 0; r: 1.5; filter: drop-shadow(0 0 3px rgba(255,215,0,1)) drop-shadow(0 0 7px rgba(255,215,0,0.6)); }
 .rack-icon.leds-active .modem-data-pkt-1 { animation: pktYFade 1.0s ease-in-out 0s infinite; }
 .rack-icon.leds-active .modem-data-pkt-2 { animation: pktYFade 1.0s ease-in-out 0.5s infinite; }
 
@@ -324,7 +297,7 @@
 }
 
 /* PP cable data packets — all data flows only after full connection */
-.pp-data-pkt { opacity: 0; filter: drop-shadow(0 0 4px rgba(125,249,255,0.9)); }
+.pp-data-pkt { opacity: 0; r: 1.2; filter: drop-shadow(0 0 3px rgba(125,249,255,1)) drop-shadow(0 0 7px rgba(125,249,255,0.6)); }
 .rack-icon.leds-active .pp-data-pkt-1  { animation: pktYFade 1.0s ease-in-out 0s    infinite; }
 .rack-icon.leds-active .pp-data-pkt-3  { animation: pktYFade 1.0s ease-in-out 0.25s infinite; }
 .rack-icon.leds-active .pp-data-pkt-4  { animation: pktYFade 1.0s ease-in-out 0.5s  infinite; }
@@ -545,31 +518,11 @@
   to { stroke-dashoffset: 0; }
 }
 
-.fw-cable-packet {
-  opacity: 0;
-  filter: drop-shadow(0 0 4px rgba(39, 201, 63, 0.9));
-}
-
-.fw-cables-container.data-active .fw-cable-left .fw-cable-packet {
-  animation: fwPacketLeft 1.8s ease-in-out 0.6s infinite;
-}
-
-.fw-cables-container.data-active .fw-cable-right .fw-cable-packet {
-  animation: fwPacketRight 1.8s ease-in-out 0.6s infinite;
-}
-
-@keyframes fwPacketLeft {
-  0%   { cx: 99; cy: 0;   opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { cx: 0;  cy: 250; opacity: 1; }
-  100% { cx: 0;  cy: 250; opacity: 0; }
-}
-
-@keyframes fwPacketRight {
-  0%   { cx: 0;  cy: 0;   opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { cx: 99; cy: 250; opacity: 1; }
-  100% { cx: 99; cy: 250; opacity: 0; }
+/* Green cable forward/return packets — animated via SVG animateMotion */
+.fw-cable-packet,
+.fw-cable-packet-return {
+  r: 4;
+  filter: drop-shadow(0 0 4px rgba(39, 201, 63, 1)) drop-shadow(0 0 10px rgba(39, 201, 63, 0.6));
 }
 
 .cable-path {
@@ -875,12 +828,13 @@
   to   { stroke-dashoffset: -752; }
 }
 
-/* Responsive splash screen */
+/* Responsive splash screen — zoom applied via JS, so only font/icon tweaks needed here */
 @media (max-width: 768px) {
-  .rack-icon {
-    width: 100%;
-    max-width: 480px;
-  }
+  /* Rack packet sizes: container is zoomed ~0.5x so use larger r values to compensate */
+  .pp-data-pkt    { r: 2; }
+  .data-pkt-yellow { r: 2.5; }
+  .modem-data-pkt  { r: 2.5; }
+
   .splash-logo-icon {
     width: 220px;
     height: 66px;
@@ -890,34 +844,9 @@
     letter-spacing: 4px;
   }
   .code-prompt { font-size: 24px; }
-  .splash-options {
-    flex-direction: column;
-    gap: 20px;
-    margin-top: 0;
-  }
-  .network-cables-container {
-    width: 100%;
-    height: 80px;
-    justify-content: space-around;
-  }
-  .cable-left { left: 25%; }
-  .cable-right { right: 25%; }
-  .splash-option-box {
-    min-width: 0;
-    width: 100%;
-    max-width: 320px;
-    padding: 20px 24px;
-  }
-  .option-icon { width: 40px; height: 40px; }
-  .option-label { font-size: 14px; letter-spacing: 2px; }
-  .option-description { font-size: 10px; }
 }
 
 @media (max-width: 480px) {
-  .rack-icon {
-    width: 100%;
-    max-width: 360px;
-  }
   .splash-logo-icon {
     width: 160px;
     height: 48px;
@@ -927,34 +856,6 @@
     letter-spacing: 3px;
   }
   .code-prompt { font-size: 16px; }
-  .splash-options {
-    gap: 14px;
-    flex-direction: column;
-    width: 100%;
-    padding: 0 16px;
-    box-sizing: border-box;
-  }
-  .network-cables-container {
-    width: 100%;
-    height: 60px;
-    justify-content: space-around;
-  }
-  .network-cable { height: 60px; }
-  .cable-left { left: 20%; }
-  .cable-right { right: 20%; }
-  .splash-option-box {
-    min-width: 0;
-    width: 100%;
-    padding: 16px 20px;
-  }
-  .option-icon { width: 32px; height: 32px; }
-  .option-label { font-size: 13px; letter-spacing: 1.5px; }
-  .option-description { font-size: 10px; }
-
-  /* Rack animation page nav */
-  .fw-cables-container svg {
-    max-width: 100%;
-  }
 }
 
 

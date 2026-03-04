@@ -9,6 +9,16 @@ if (rain) {
   rain.start();
 }
 
+// Scale the splash container to fit any viewport width
+function scaleSplashContainer() {
+  const container = document.querySelector('.splash-logo-container');
+  if (!container) return;
+  const scale = Math.min(1, (window.innerWidth - 16) / 840);
+  container.style.zoom = scale;
+}
+scaleSplashContainer();
+window.addEventListener('resize', scaleSplashContainer);
+
 // Initialize terminal chat with customer context
 const terminal = initTerminalChat({
   chatWindowId: 'chat-window',
@@ -45,12 +55,19 @@ async function playSplashAnimation() {
   // Initialize network animation on rack
   if (rackIcon) initNetworkAnimation(rackIcon);
 
-  // Show "ESTABLISHING CONNECTION..." blinking (4 smooth pulses via CSS animation)
+  // Hide rack while "ESTABLISHING CONNECTION..." blinks
+  const splashContainer = document.querySelector('.splash-logo-container');
+  if (splashContainer) splashContainer.style.visibility = 'hidden';
+
+  // Show "ESTABLISHING CONNECTION..." blinking (3 smooth pulses via CSS animation)
   if (preStatus) {
     preStatus.classList.add('blinking');
     await wait(1.4 * 3 * 1000); // 3 iterations × 1.4s each
     preStatus.classList.remove('blinking');
   }
+
+  // Reveal rack now that blinking is done
+  if (splashContainer) splashContainer.style.visibility = '';
 
   // 1. Rack rails appear
   rackIcon.querySelector('.rack-rails-group')?.classList.add('show');
@@ -119,6 +136,18 @@ async function playSplashAnimation() {
   // Both cables connected — activate rack LEDs and start all data flow
   rackIcon.classList.add('leds-active');
   if (fwCablesContainer) fwCablesContainer.classList.add('data-active');
+
+  // Start packet path animations (SVG animateMotion) with staggered timing
+  function beginCableAnims(selector, delay) {
+    setTimeout(() => {
+      const circle = fwCablesContainer?.querySelector(selector);
+      circle?.querySelectorAll('animateMotion, animate').forEach(a => a.beginElement());
+    }, delay);
+  }
+  beginCableAnims('.fw-cable-left .fw-cable-packet', 600);
+  beginCableAnims('.fw-cable-right .fw-cable-packet', 600);
+  beginCableAnims('.fw-cable-left .fw-cable-packet-return', 900);
+  beginCableAnims('.fw-cable-right .fw-cable-packet-return', 1600);
 
   // Reveal the CLIENT PORTAL button now that animation is complete
   document.getElementById('splash-signin')?.classList.add('visible');

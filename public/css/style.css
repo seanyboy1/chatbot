@@ -1152,3 +1152,69 @@ body {
   .actions-card {
     max-width: 100%;
   }
+}
+
+/* ── Admin Panel Mobile ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Scrollable tab bar — 8 tabs can't fit in 390px with flex:1 */
+  .mobile-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .mobile-tabs::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    flex: 0 0 auto;       /* don't shrink — let bar scroll instead */
+    white-space: nowrap;
+    padding: 10px 14px;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  /* Nav: hide "ADMIN PANEL" label to save space */
+  .admin-label { display: none; }
+
+  /* Cards fill full width */
+  .stats-card,
+  .activity-card,
+  .actions-card,
+  .profile-card {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .customers-card,
+  .requests-card {
+    min-width: 0;
+    padding: 14px;
+    box-sizing: border-box;
+  }
+
+  /* Prevent long emails/values from overflowing */
+  .customer-field-value {
+    word-break: break-all;
+    text-align: right;
+    max-width: 55vw;
+  }
+
+  .customer-row-meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: calc(100vw - 60px);
+  }
+
+  /* Terminal (chat tab) fills viewport */
+  .dashboard-main .terminal-container {
+    height: calc(100vh - 120px);
+    min-height: 0;
+  }
+
+  /* Requests filter buttons wrap cleanly */
+  .req-filter-btn {
+    font-size: 9px;
+    padding: 4px 8px;
+  }
+}

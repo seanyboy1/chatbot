@@ -757,8 +757,14 @@
           <path class="fw-cable-path" d="M 99 0 C 78 70 22 165 0 250" stroke="#27c93f" stroke-width="3.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 5px rgba(39,201,63,0.7))"/>
           <!-- Highlight -->
           <path class="fw-cable-path" d="M 98.5 0 C 77.5 70 21.5 165 -0.5 250" stroke="rgba(180,255,180,0.4)" stroke-width="1" fill="none" stroke-linecap="round"/>
-          <circle class="fw-cable-packet" cx="99" cy="0" r="3" fill="#27c93f"/>
-          <circle class="fw-cable-packet-return fw-cable-return-left" cx="0" cy="250" r="3" fill="#27c93f"/>
+          <circle class="fw-cable-packet" r="3" fill="#27c93f" opacity="0">
+            <animateMotion dur="1.8s" begin="indefinite" repeatCount="indefinite" path="M 99 0 C 78 70 22 165 0 250"/>
+            <animate attributeName="opacity" dur="1.8s" begin="indefinite" repeatCount="indefinite" values="0;1;1;0" keyTimes="0;0.06;0.92;1"/>
+          </circle>
+          <circle class="fw-cable-packet-return fw-cable-return-left" r="3" fill="#27c93f" opacity="0">
+            <animateMotion dur="1.8s" begin="indefinite" repeatCount="indefinite" path="M 0 250 C 22 165 78 70 99 0"/>
+            <animate attributeName="opacity" dur="1.8s" begin="indefinite" repeatCount="indefinite" values="0;1;1;0" keyTimes="0;0.06;0.92;1"/>
+          </circle>
         </svg>
         <svg class="fw-cable fw-cable-right" viewBox="0 0 99 250" xmlns="http://www.w3.org/2000/svg">
           <!-- Shadow/body -->
@@ -767,8 +773,14 @@
           <path class="fw-cable-path" d="M 0 0 C 22 70 78 165 99 250" stroke="#27c93f" stroke-width="3.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 5px rgba(39,201,63,0.7))"/>
           <!-- Highlight -->
           <path class="fw-cable-path" d="M 0.5 0 C 22.5 70 78.5 165 99.5 250" stroke="rgba(180,255,180,0.4)" stroke-width="1" fill="none" stroke-linecap="round"/>
-          <circle class="fw-cable-packet" cx="0" cy="0" r="3" fill="#27c93f"/>
-          <circle class="fw-cable-packet-return fw-cable-return-right" cx="99" cy="250" r="3" fill="#27c93f"/>
+          <circle class="fw-cable-packet" r="3" fill="#27c93f" opacity="0">
+            <animateMotion dur="1.8s" begin="indefinite" repeatCount="indefinite" path="M 0 0 C 22 70 78 165 99 250"/>
+            <animate attributeName="opacity" dur="1.8s" begin="indefinite" repeatCount="indefinite" values="0;1;1;0" keyTimes="0;0.06;0.92;1"/>
+          </circle>
+          <circle class="fw-cable-packet-return fw-cable-return-right" r="3" fill="#27c93f" opacity="0">
+            <animateMotion dur="1.8s" begin="indefinite" repeatCount="indefinite" path="M 99 250 C 78 165 22 70 0 0"/>
+            <animate attributeName="opacity" dur="1.8s" begin="indefinite" repeatCount="indefinite" values="0;1;1;0" keyTimes="0;0.06;0.92;1"/>
+          </circle>
         </svg>
       </div>
 
