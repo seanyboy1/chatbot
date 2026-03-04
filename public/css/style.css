@@ -109,6 +109,12 @@ body {
   box-shadow: 0 0 8px var(--blue-glow);
 }
 
+.site-nav-tab--portal {
+  color: var(--blue);
+  border-color: var(--blue-dark);
+  background: rgba(93, 173, 226, 0.08);
+}
+
 .site-nav + main,
 .site-nav ~ main {
   padding-top: 60px;
@@ -859,10 +865,10 @@ body {
 }
 
 .tab-btn.active {
-  color: var(--blue);
-  border-bottom-color: var(--blue);
-  background: rgba(93, 173, 226, 0.08);
-  text-shadow: 0 0 8px var(--blue-glow);
+  color: #FF4500;
+  border-bottom-color: #FF4500;
+  background: transparent;
+  text-shadow: 0 0 8px rgba(255, 69, 0, 0.6);
 }
 
 /* Tab behavior for all screen sizes */
@@ -873,14 +879,18 @@ body {
   gap: 20px;
 }
 
-/* Terminal always visible at bottom */
+/* Terminal shown only when chat tab is active */
 .dashboard-main {
-  display: flex !important;
+  display: none;
   order: 2;
   align-items: center;
   justify-content: center;
   min-height: 0;
   padding: 20px 0;
+}
+
+.dashboard-main.active {
+  display: flex !important;
 }
 
 /* Tab content area for cards */
