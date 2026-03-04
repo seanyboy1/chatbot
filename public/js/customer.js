@@ -105,6 +105,7 @@ async function playSplashAnimation() {
 
   // 8. Green cables run down from modem to boxes
   if (fwCablesContainer) fwCablesContainer.classList.add('active');
+  rackIcon.classList.add('fw-cables-active');
 
   // Left cable finishes at 0.5s — connect chat box
   await wait(500);
@@ -114,8 +115,9 @@ async function playSplashAnimation() {
   await wait(500);
   document.getElementById('option-contact')?.classList.add('cable-connected');
 
-  // Both cables connected — activate rack LEDs
+  // Both cables connected — activate rack LEDs and start all data flow
   rackIcon.classList.add('leds-active');
+  if (fwCablesContainer) fwCablesContainer.classList.add('data-active');
 
   // Reveal the CLIENT PORTAL button now that animation is complete
   document.getElementById('splash-signin')?.classList.add('visible');

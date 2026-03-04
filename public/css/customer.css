@@ -223,16 +223,16 @@
 }
 
 .data-pkt-yellow { opacity: 0; filter: drop-shadow(0 0 4px rgba(255,0,0,0.9)); }
-.rack-icon.cables-active .data-pkt-y-down-1 {
+.rack-icon.leds-active .data-pkt-y-down-1 {
   animation: pktYFade 1.0s ease-in-out 0s    infinite;
 }
-.rack-icon.cables-active .data-pkt-y-up-1 {
+.rack-icon.leds-active .data-pkt-y-up-1 {
   animation: pktYFade 1.0s ease-in-out 0.5s  infinite;
 }
-.rack-icon.cables-active .data-pkt-y-down-2 {
+.rack-icon.leds-active .data-pkt-y-down-2 {
   animation: pktYFade 1.0s ease-in-out 0.25s infinite;
 }
-.rack-icon.cables-active .data-pkt-y-up-2 {
+.rack-icon.leds-active .data-pkt-y-up-2 {
   animation: pktYFade 1.0s ease-in-out 0.75s infinite;
 }
 
@@ -249,11 +249,11 @@
   filter: drop-shadow(0 0 4px rgba(39, 201, 63, 0.9));
 }
 
-.fw-cables-container.active .fw-cable-return-left {
+.fw-cables-container.data-active .fw-cable-return-left {
   animation: fwReturnLeft 1.8s ease-in-out 0.9s infinite;
 }
 
-.fw-cables-container.active .fw-cable-return-right {
+.fw-cables-container.data-active .fw-cable-return-right {
   animation: fwReturnRight 1.8s ease-in-out 1.6s infinite;
 }
 
@@ -297,8 +297,8 @@
 
 /* Yellow cable data packets */
 .modem-data-pkt { opacity: 0; filter: drop-shadow(0 0 4px rgba(255,215,0,0.9)); }
-.rack-icon.modem-wired .modem-data-pkt-1 { animation: pktYFade 1.0s ease-in-out 0s infinite; }
-.rack-icon.modem-wired .modem-data-pkt-2 { animation: pktYFade 1.0s ease-in-out 0.5s infinite; }
+.rack-icon.leds-active .modem-data-pkt-1 { animation: pktYFade 1.0s ease-in-out 0s infinite; }
+.rack-icon.leds-active .modem-data-pkt-2 { animation: pktYFade 1.0s ease-in-out 0.5s infinite; }
 
 /* ═══ FULL CONNECTION (leds-active): ports flash + data packets activate ═══ */
 
@@ -315,12 +315,12 @@
   50%, 100% { opacity: 0; }
 }
 
-/* PP cable data packets — visible at leds-active (patch-panel-wired data starts at cables-active below) */
+/* PP cable data packets — all data flows only after full connection */
 .pp-data-pkt { opacity: 0; filter: drop-shadow(0 0 4px rgba(125,249,255,0.9)); }
-.rack-icon.patch-panel-wired .pp-data-pkt-1 { animation: pktYFade 1.0s ease-in-out 0s    infinite; }
-.rack-icon.patch-panel-wired .pp-data-pkt-3 { animation: pktYFade 1.0s ease-in-out 0.25s infinite; }
-.rack-icon.patch-panel-wired .pp-data-pkt-4 { animation: pktYFade 1.0s ease-in-out 0.5s  infinite; }
-.rack-icon.patch-panel-wired .pp-data-pkt-5 { animation: pktYFade 1.0s ease-in-out 0.75s infinite; }
+.rack-icon.leds-active .pp-data-pkt-1 { animation: pktYFade 1.0s ease-in-out 0s    infinite; }
+.rack-icon.leds-active .pp-data-pkt-3 { animation: pktYFade 1.0s ease-in-out 0.25s infinite; }
+.rack-icon.leds-active .pp-data-pkt-4 { animation: pktYFade 1.0s ease-in-out 0.5s  infinite; }
+.rack-icon.leds-active .pp-data-pkt-5 { animation: pktYFade 1.0s ease-in-out 0.75s infinite; }
 
 /* === Full connection: RJ45 connectors flash, ports stay steady === */
 @keyframes connFlash {
@@ -525,11 +525,11 @@
   filter: drop-shadow(0 0 4px rgba(39, 201, 63, 0.9));
 }
 
-.fw-cables-container.active .fw-cable-left .fw-cable-packet {
+.fw-cables-container.data-active .fw-cable-left .fw-cable-packet {
   animation: fwPacketLeft 1.8s ease-in-out 0.6s infinite;
 }
 
-.fw-cables-container.active .fw-cable-right .fw-cable-packet {
+.fw-cables-container.data-active .fw-cable-right .fw-cable-packet {
   animation: fwPacketRight 1.8s ease-in-out 0.6s infinite;
 }
 
