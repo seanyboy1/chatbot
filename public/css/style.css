@@ -510,6 +510,15 @@ body {
   animation: pulse 2s ease-in-out infinite;
 }
 
+.status-dot-green {
+  width: 10px;
+  height: 10px;
+  background: #27c93f;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(39,201,63,0.9);
+  animation: pulseGreen 1.2s ease-in-out infinite;
+}
+
 /* Dashboard Grid Container */
 .dashboard-container {
   display: grid;
@@ -886,7 +895,8 @@ body {
 /* Hide all cards by default */
 .stats-card,
 .activity-card,
-.actions-card {
+.actions-card,
+.profile-card {
   display: none;
   min-width: 100%;
   width: 100%;
@@ -897,8 +907,26 @@ body {
 /* Show cards based on active tab */
 .stats-card.active,
 .activity-card.active,
-.actions-card.active {
+.actions-card.active,
+.profile-card.active {
   display: block;
+}
+
+.profile-card {
+  background: var(--bg-terminal);
+  border: 1px solid var(--blue-dark);
+  border-radius: 4px;
+  padding: 18px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.profile-card h3 {
+  color: var(--blue);
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+  text-transform: uppercase;
 }
 
 @media (max-width: 1200px) {

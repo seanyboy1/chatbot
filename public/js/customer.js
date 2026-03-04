@@ -47,71 +47,71 @@ async function playSplashAnimation() {
 
   // Show "ESTABLISHING CONNECTION..." blinking
   if (preStatus) preStatus.style.opacity = '1';
-  await wait(1600);
+  await wait(900);
   if (preStatus) preStatus.style.opacity = '0';
-  await wait(300);
+  await wait(150);
 
   // 1. Rack rails appear
   rackIcon.querySelector('.rack-rails-group')?.classList.add('show');
-  await wait(800);
+  await wait(400);
 
   // 1.5. Patch panel slides in and screws drive
   const patchPanelGroup = rackIcon.querySelector('.patch-panel-group');
   patchPanelGroup?.classList.add('show');
-  await wait(300);
+  await wait(150);
   patchPanelGroup?.classList.add('screwing');
-  await wait(1400);
+  await wait(900);
 
-  // 2. Switch unit slides in, then screws drive in slowly
+  // 2. Switch unit slides in, then screws drive in
   const switchGroup = rackIcon.querySelector('.switch-group');
   switchGroup?.classList.add('show');
-  await wait(300);
+  await wait(150);
   switchGroup?.classList.add('screwing');
-  await wait(1800);  // wait for all 4 screws to finish
+  await wait(1000);
 
-  // 3. Firewall unit slides in, then screws drive in slowly
+  // 3. Firewall unit slides in, then screws drive in
   const firewallGroup = rackIcon.querySelector('.firewall-group');
   firewallGroup?.classList.add('show');
-  await wait(300);
+  await wait(150);
   firewallGroup?.classList.add('screwing');
-  await wait(1800);  // wait for all 4 screws to finish
+  await wait(1000);
 
   // 4. Modem unit slides in, then screws drive in
   const modemGroup = rackIcon.querySelector('.modem-group');
   modemGroup?.classList.add('show');
-  await wait(300);
+  await wait(150);
   modemGroup?.classList.add('screwing');
-  await wait(1200);
+  await wait(700);
 
   // 5. Boxes appear now that rack is fully built
   if (splashOptions) splashOptions.classList.add('show');
-  await wait(400);
+  await wait(200);
   document.getElementById('option-chat')?.classList.add('show');
-  await wait(400);
+  await wait(200);
   document.getElementById('option-contact')?.classList.add('show');
-  await wait(600);
+  await wait(300);
 
   // 6. Light blue cables draw (patch panel → switch)
   rackIcon.classList.add('patch-panel-wired');
-  await wait(600);
+  await wait(350);
 
   // 6.5. Red patch cables draw (switch → firewall)
   rackIcon.classList.add('cables-active');
-  await wait(1200);
+  await wait(700);
 
-  // 7. Green cables draw from FW WAN into modem ETH IN (after yellow cables settle)
+  // 7. Green cables draw from FW WAN into modem ETH IN
   rackIcon.classList.add('modem-wired');
-  await wait(800);
+  await wait(400);
 
-  // 8. Red cables run down from modem to boxes
+  // 8. Green cables run down from modem to boxes
   if (fwCablesContainer) fwCablesContainer.classList.add('active');
 
-  // Left cable finishes at 0.7s — connect chat box
-  await wait(700);
+  // Left cable finishes at 0.5s — connect chat box
+  await wait(500);
   document.getElementById('option-chat')?.classList.add('cable-connected');
 
-  // Right cable finishes at another 0.7s — connect contact box
-  await wait(700);
+  // Right cable finishes at another 0.5s — connect contact box
+  await wait(500);
   document.getElementById('option-contact')?.classList.add('cable-connected');
 
   // Both cables connected — activate rack LEDs

@@ -45,7 +45,7 @@
     </div>
     <div class="nav-right" style="display:flex;align-items:center;gap:16px;">
       <div class="nav-status">
-        <span class="status-dot"></span> ONLINE
+        <span class="status-dot status-dot-green"></span> <span style="color:#FF4500;">ONLINE</span>
       </div>
       <button id="signout-btn" style="
         font-family:'Share Tech Mono',monospace;
@@ -86,6 +86,7 @@
     <button class="tab-btn" data-tab="statistics">Statistics</button>
     <button class="tab-btn" data-tab="actions">Actions</button>
     <button class="tab-btn" data-tab="activity">Activity</button>
+    <button class="tab-btn" data-tab="profile">Profile</button>
   </div>
 
   <!-- Dashboard Grid -->
@@ -130,6 +131,36 @@
           <div class="activity-item">[System] Dashboard loaded</div>
           <div class="activity-item">[System] Awaiting user interaction</div>
         </div>
+      </div>
+
+      <div class="profile-card">
+        <h3>Admin Profile</h3>
+        <div class="modal-field" style="margin-bottom:12px;">
+          <label class="modal-label" style="font-size:10px;letter-spacing:2px;color:var(--blue-dark);margin-bottom:4px;display:block;">USERNAME</label>
+          <input id="ap-username" type="text" autocomplete="off" spellcheck="false" style="
+            background:transparent;border:none;border-bottom:1px solid var(--blue-dark);
+            color:var(--blue);font-family:'Share Tech Mono',monospace;font-size:12px;
+            padding:4px 0;width:100%;outline:none;letter-spacing:1px;
+          "/>
+        </div>
+        <div class="modal-field" style="margin-bottom:12px;">
+          <label class="modal-label" style="font-size:10px;letter-spacing:2px;color:var(--blue-dark);margin-bottom:4px;display:block;">CURRENT PASSWORD</label>
+          <input id="ap-current-pw" type="password" autocomplete="off" style="
+            background:transparent;border:none;border-bottom:1px solid var(--blue-dark);
+            color:var(--blue);font-family:'Share Tech Mono',monospace;font-size:12px;
+            padding:4px 0;width:100%;outline:none;letter-spacing:1px;
+          "/>
+        </div>
+        <div class="modal-field" style="margin-bottom:16px;">
+          <label class="modal-label" style="font-size:10px;letter-spacing:2px;color:var(--blue-dark);margin-bottom:4px;display:block;">NEW PASSWORD</label>
+          <input id="ap-new-pw" type="password" autocomplete="off" style="
+            background:transparent;border:none;border-bottom:1px solid var(--blue-dark);
+            color:var(--blue);font-family:'Share Tech Mono',monospace;font-size:12px;
+            padding:4px 0;width:100%;outline:none;letter-spacing:1px;
+          "/>
+        </div>
+        <div id="ap-status" style="font-family:'Share Tech Mono',monospace;font-size:11px;min-height:16px;margin-bottom:10px;"></div>
+        <button class="action-btn" id="ap-submit">SAVE CHANGES</button>
       </div>
     </aside>
 

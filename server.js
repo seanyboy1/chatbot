@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { connectDB, ActivityLog, Session, User, ChatSession, ServiceRequest } from './db.js';
 import crypto from 'crypto';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -173,6 +174,37 @@ app.post('/api/auth/login', async (req, res) => {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Login failed.' });
   }
+});
+
+// ── Admin: Update Profile ────────────────────────────────────────────────────
+app.put('/api/admin/profile', requireAuth, (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
+  const { username, currentPassword, newPassword } = req.body;
+  if (!currentPassword) return res.status(400).json({ error: 'Current password required.' });
+
+  if (currentPassword !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Current password is incorrect.' });
+  }
+
+  const newUser = (username || process.env.ADMIN_USERNAME).trim();
+  const newPass = (newPassword || '').trim() || process.env.ADMIN_PASSWORD;
+
+  // Update in memory immediately
+  process.env.ADMIN_USERNAME = newUser;
+  process.env.ADMIN_PASSWORD = newPass;
+
+  // Persist to .env file
+  try {
+    const envPath = join(__dirname, '.env');
+    let content = fs.readFileSync(envPath, 'utf8');
+    content = content.replace(/^ADMIN_USERNAME=.*$/m, `ADMIN_USERNAME=${newUser}`);
+    content = content.replace(/^ADMIN_PASSWORD=.*$/m, `ADMIN_PASSWORD=${newPass}`);
+    fs.writeFileSync(envPath, content, 'utf8');
+  } catch (err) {
+    console.error('Failed to persist admin credentials:', err);
+  }
+
+  res.json({ success: true });
 });
 
 // ── Auth: Me ────────────────────────────────────────────────────────────────

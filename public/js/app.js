@@ -299,35 +299,78 @@ document.addEventListener('DOMContentLoaded', () => {
   const statsCard = document.querySelector('.stats-card:nth-child(2)');  // Statistics
   const actionsCard = document.querySelector('.actions-card');
   const activityCard = document.querySelector('.activity-card');
+  const profileCard = document.querySelector('.profile-card');
+
+  const allCards = [systemCard, statsCard, actionsCard, activityCard, profileCard];
 
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      // Remove active class from all buttons
       tabBtns.forEach(b => b.classList.remove('active'));
-
-      // Add active class to clicked button
       btn.classList.add('active');
+      allCards.forEach(c => c?.classList.remove('active'));
 
-      // Hide all cards
-      systemCard?.classList.remove('active');
-      statsCard?.classList.remove('active');
-      actionsCard?.classList.remove('active');
-      activityCard?.classList.remove('active');
-
-      // Show selected card
       const tab = btn.getAttribute('data-tab');
-      if (tab === 'system') {
-        systemCard?.classList.add('active');
-      } else if (tab === 'statistics') {
-        statsCard?.classList.add('active');
-      } else if (tab === 'actions') {
-        actionsCard?.classList.add('active');
-      } else if (tab === 'activity') {
-        activityCard?.classList.add('active');
+      if (tab === 'system')     systemCard?.classList.add('active');
+      else if (tab === 'statistics') statsCard?.classList.add('active');
+      else if (tab === 'actions')    actionsCard?.classList.add('active');
+      else if (tab === 'activity')   activityCard?.classList.add('active');
+      else if (tab === 'profile') {
+        profileCard?.classList.add('active');
+        // Pre-fill username from localStorage
+        import('/js/auth.js').then(({ getUser }) => {
+          const u = getUser();
+          const usernameEl = document.getElementById('ap-username');
+          if (usernameEl && u) usernameEl.value = u.username || '';
+        });
       }
     });
   });
 
   // Initialize: show system card by default
   systemCard?.classList.add('active');
+
+  // ── Admin Profile Form ──────────────────────────────────────────────────
+  const apSubmit = document.getElementById('ap-submit');
+  if (apSubmit) {
+    apSubmit.addEventListener('click', async () => {
+      const username    = document.getElementById('ap-username').value.trim();
+      const currentPassword = document.getElementById('ap-current-pw').value;
+      const newPassword     = document.getElementById('ap-new-pw').value;
+      const statusEl = document.getElementById('ap-status');
+
+      if (!currentPassword) {
+        statusEl.textContent = 'Current password required.';
+        statusEl.style.color = '#FF4500';
+        return;
+      }
+
+      apSubmit.disabled = true;
+      apSubmit.textContent = 'SAVING...';
+      statusEl.textContent = '';
+
+      try {
+        const { getToken } = await import('/js/auth.js');
+        const res = await fetch('/api/admin/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+          body: JSON.stringify({ username, currentPassword, newPassword }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          statusEl.textContent = 'Saved.';
+          statusEl.style.color = '#27c93f';
+          document.getElementById('ap-current-pw').value = '';
+          document.getElementById('ap-new-pw').value = '';
+        } else {
+          statusEl.textContent = data.error || 'Update failed.';
+          statusEl.style.color = '#FF4500';
+        }
+      } catch {
+        statusEl.textContent = 'Connection error.';
+        statusEl.style.color = '#FF4500';
+      }
+      apSubmit.disabled = false;
+      apSubmit.textContent = 'SAVE CHANGES';
+    });
+  }
 });

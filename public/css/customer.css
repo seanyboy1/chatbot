@@ -36,7 +36,7 @@
 .firewall-group,
 .modem-group {
   opacity: 0;
-  transition: opacity 0.7s ease;
+  transition: opacity 0.4s ease;
 }
 
 .rack-rails-group.show,
@@ -58,21 +58,21 @@
 .switch-group.screwing .screw-head,
 .firewall-group.screwing .screw-head,
 .modem-group.screwing .screw-head {
-  animation: screwIn 0.8s ease-in-out forwards;
+  animation: screwIn 0.5s ease-in-out forwards;
 }
 
 .patch-panel-group.screwing .pp-screw-2,
 .switch-group.screwing .sw-screw-2,
 .firewall-group.screwing .fw-screw-2,
-.modem-group.screwing .md-screw-2 { animation-delay: 0.35s; }
+.modem-group.screwing .md-screw-2 { animation-delay: 0.2s; }
 .patch-panel-group.screwing .pp-screw-3,
 .switch-group.screwing .sw-screw-3,
 .firewall-group.screwing .fw-screw-3,
-.modem-group.screwing .md-screw-3 { animation-delay: 0.7s; }
+.modem-group.screwing .md-screw-3 { animation-delay: 0.4s; }
 .patch-panel-group.screwing .pp-screw-4,
 .switch-group.screwing .sw-screw-4,
 .firewall-group.screwing .fw-screw-4,
-.modem-group.screwing .md-screw-4 { animation-delay: 1.05s; }
+.modem-group.screwing .md-screw-4 { animation-delay: 0.6s; }
 
 @keyframes screwIn {
   0%   { opacity: 0; transform: rotate(0deg); }
@@ -199,10 +199,10 @@
   stroke-dasharray: 45;
   stroke-dashoffset: 45;
 }
-.rack-icon.patch-panel-wired .pp-cable-1 { animation: drawPPCable 0.35s ease-out 0s   forwards; }
-.rack-icon.patch-panel-wired .pp-cable-3 { animation: drawPPCable 0.35s ease-out 0.15s forwards; }
-.rack-icon.patch-panel-wired .pp-cable-4 { animation: drawPPCable 0.35s ease-out 0.25s forwards; }
-.rack-icon.patch-panel-wired .pp-cable-5 { animation: drawPPCable 0.35s ease-out 0.35s forwards; }
+.rack-icon.patch-panel-wired .pp-cable-1 { animation: drawPPCable 0.25s ease-out 0s    forwards; }
+.rack-icon.patch-panel-wired .pp-cable-3 { animation: drawPPCable 0.25s ease-out 0.08s forwards; }
+.rack-icon.patch-panel-wired .pp-cable-4 { animation: drawPPCable 0.25s ease-out 0.16s forwards; }
+.rack-icon.patch-panel-wired .pp-cable-5 { animation: drawPPCable 0.25s ease-out 0.24s forwards; }
 @keyframes drawPPCable { to { stroke-dashoffset: 0; } }
 
 /* RJ45 plugs — hidden until corresponding cable class added */
@@ -397,10 +397,10 @@
 }
 
 .rack-icon.modem-wired .fw-modem-cable-1 {
-  animation: drawModemCable 0.4s ease-out 0s forwards;
+  animation: drawModemCable 0.25s ease-out 0s    forwards;
 }
 .rack-icon.modem-wired .fw-modem-cable-2 {
-  animation: drawModemCable 0.4s ease-out 0.25s forwards;
+  animation: drawModemCable 0.25s ease-out 0.15s forwards;
 }
 
 @keyframes drawModemCable {
@@ -437,11 +437,11 @@
 }
 
 .rack-icon.cables-active .patch-cable-1 {
-  animation: drawPatchCable 0.5s ease-out 0s forwards;
+  animation: drawPatchCable 0.3s ease-out 0s   forwards;
 }
 
 .rack-icon.cables-active .patch-cable-2 {
-  animation: drawPatchCable 0.5s ease-out 0.6s forwards;
+  animation: drawPatchCable 0.3s ease-out 0.35s forwards;
 }
 
 @keyframes drawPatchCable {
@@ -486,11 +486,11 @@
 }
 
 .fw-cables-container.active .fw-cable-left .fw-cable-path {
-  animation: drawFwCable 0.7s ease-out 0s forwards;
+  animation: drawFwCable 0.45s ease-out 0s    forwards;
 }
 
 .fw-cables-container.active .fw-cable-right .fw-cable-path {
-  animation: drawFwCable 0.7s ease-out 0.7s forwards;
+  animation: drawFwCable 0.45s ease-out 0.45s forwards;
 }
 
 @keyframes drawFwCable {
