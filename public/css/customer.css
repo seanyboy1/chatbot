@@ -317,10 +317,14 @@
 
 /* PP cable data packets — all data flows only after full connection */
 .pp-data-pkt { opacity: 0; filter: drop-shadow(0 0 4px rgba(125,249,255,0.9)); }
-.rack-icon.leds-active .pp-data-pkt-1 { animation: pktYFade 1.0s ease-in-out 0s    infinite; }
-.rack-icon.leds-active .pp-data-pkt-3 { animation: pktYFade 1.0s ease-in-out 0.25s infinite; }
-.rack-icon.leds-active .pp-data-pkt-4 { animation: pktYFade 1.0s ease-in-out 0.5s  infinite; }
-.rack-icon.leds-active .pp-data-pkt-5 { animation: pktYFade 1.0s ease-in-out 0.75s infinite; }
+.rack-icon.leds-active .pp-data-pkt-1  { animation: pktYFade 1.0s ease-in-out 0s    infinite; }
+.rack-icon.leds-active .pp-data-pkt-3  { animation: pktYFade 1.0s ease-in-out 0.25s infinite; }
+.rack-icon.leds-active .pp-data-pkt-4  { animation: pktYFade 1.0s ease-in-out 0.5s  infinite; }
+.rack-icon.leds-active .pp-data-pkt-5  { animation: pktYFade 1.0s ease-in-out 0.75s infinite; }
+.rack-icon.leds-active .pp-data-pkt-r1 { animation: pktYFade 1.0s ease-in-out 0.5s  infinite; }
+.rack-icon.leds-active .pp-data-pkt-r3 { animation: pktYFade 1.0s ease-in-out 0.75s infinite; }
+.rack-icon.leds-active .pp-data-pkt-r4 { animation: pktYFade 1.0s ease-in-out 0s    infinite; }
+.rack-icon.leds-active .pp-data-pkt-r5 { animation: pktYFade 1.0s ease-in-out 0.25s infinite; }
 
 /* === Full connection: RJ45 connectors flash, ports stay steady === */
 @keyframes connFlash {

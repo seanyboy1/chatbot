@@ -372,17 +372,31 @@
         <rect class="rj45-plug rj45-plug-pp" x="96.25" y="59.25" width="2.5" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
 
         <!-- PP cable data packets (animate along cable path, visible at full connection) -->
+        <!-- PP packets going down (patch panel → switch) -->
         <circle class="pp-data-pkt pp-data-pkt-1" cx="0" cy="0" r="1.5" fill="#7DF9FF">
-          <animateMotion dur="1.0s" begin="0s" repeatCount="indefinite" path="M 73.5 16 C 73.5 30 73.5 44 73.5 58"/>
+          <animateMotion dur="1.0s" begin="0s"    repeatCount="indefinite" path="M 73.5 16 C 73.5 30 73.5 44 73.5 58"/>
         </circle>
         <circle class="pp-data-pkt pp-data-pkt-3" cx="0" cy="0" r="1.5" fill="#7DF9FF">
-          <animateMotion dur="1.0s" begin="0.45s" repeatCount="indefinite" path="M 85.5 16 C 85.5 30 85.5 44 85.5 58"/>
+          <animateMotion dur="1.0s" begin="0.25s" repeatCount="indefinite" path="M 85.5 16 C 85.5 30 85.5 44 85.5 58"/>
         </circle>
         <circle class="pp-data-pkt pp-data-pkt-4" cx="0" cy="0" r="1.5" fill="#7DF9FF">
-          <animateMotion dur="1.0s" begin="0.9s" repeatCount="indefinite" path="M 91.5 16 C 91.5 30 91.5 44 91.5 58"/>
+          <animateMotion dur="1.0s" begin="0.5s"  repeatCount="indefinite" path="M 91.5 16 C 91.5 30 91.5 44 91.5 58"/>
         </circle>
         <circle class="pp-data-pkt pp-data-pkt-5" cx="0" cy="0" r="1.5" fill="#7DF9FF">
-          <animateMotion dur="1.0s" begin="1.35s" repeatCount="indefinite" path="M 97.5 16 C 97.5 30 97.5 44 97.5 58"/>
+          <animateMotion dur="1.0s" begin="0.75s" repeatCount="indefinite" path="M 97.5 16 C 97.5 30 97.5 44 97.5 58"/>
+        </circle>
+        <!-- PP packets going up (switch → patch panel) -->
+        <circle class="pp-data-pkt pp-data-pkt-r1" cx="0" cy="0" r="1.5" fill="#7DF9FF">
+          <animateMotion dur="1.0s" begin="0.5s"  repeatCount="indefinite" path="M 73.5 58 C 73.5 44 73.5 30 73.5 16"/>
+        </circle>
+        <circle class="pp-data-pkt pp-data-pkt-r3" cx="0" cy="0" r="1.5" fill="#7DF9FF">
+          <animateMotion dur="1.0s" begin="0.75s" repeatCount="indefinite" path="M 85.5 58 C 85.5 44 85.5 30 85.5 16"/>
+        </circle>
+        <circle class="pp-data-pkt pp-data-pkt-r4" cx="0" cy="0" r="1.5" fill="#7DF9FF">
+          <animateMotion dur="1.0s" begin="0s"    repeatCount="indefinite" path="M 91.5 58 C 91.5 44 91.5 30 91.5 16"/>
+        </circle>
+        <circle class="pp-data-pkt pp-data-pkt-r5" cx="0" cy="0" r="1.5" fill="#7DF9FF">
+          <animateMotion dur="1.0s" begin="0.25s" repeatCount="indefinite" path="M 97.5 58 C 97.5 44 97.5 30 97.5 16"/>
         </circle>
 
         <!-- Shift switch/firewall/modem down 48 SVG units (patch panel occupies top 1U) -->
