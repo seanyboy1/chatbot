@@ -115,9 +115,17 @@
   letter-spacing: 3px;
   text-transform: uppercase;
   opacity: 0;
-  transition: opacity 0.4s ease;
   z-index: 10000;
   text-shadow: 0 0 10px var(--blue-glow);
+}
+
+@keyframes preStatusBlink {
+  0%, 100% { opacity: 0; }
+  35%, 65% { opacity: 1; }
+}
+
+.pre-connection-status.blinking {
+  animation: preStatusBlink 1.4s ease-in-out 4 forwards;
 }
 
 /* Connection Status */
