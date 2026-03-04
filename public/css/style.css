@@ -900,7 +900,10 @@ body {
 .stats-card,
 .activity-card,
 .actions-card,
-.profile-card,
+.profile-card {
+  display: none;
+}
+
 .req-filter-btn {
   background: transparent;
   border: 1px solid var(--blue-dark);
