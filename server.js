@@ -242,7 +242,7 @@ app.get('/api/admin/customers/:id', requireAuth, async (req, res) => {
 // ── Admin: Update Customer ────────────────────────────────────────────────────
 app.put('/api/admin/customers/:id', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
-  const { name, email, phone } = req.body;
+  const { name, email, phone, newPassword } = req.body;
   try {
     await connectDB();
     const user = await User.findById(req.params.id);
@@ -250,6 +250,10 @@ app.put('/api/admin/customers/:id', requireAuth, async (req, res) => {
     if (name)  user.name  = name;
     if (email) user.email = email.toLowerCase();
     if (phone !== undefined) user.phone = phone;
+    if (newPassword) {
+      user.salt = crypto.randomBytes(16).toString('hex');
+      user.passwordHash = hashPassword(newPassword, user.salt);
+    }
     await user.save();
     res.json({ customer: { id: user._id, name: user.name, email: user.email, username: user.username, phone: user.phone, createdAt: user.createdAt } });
   } catch (err) {

@@ -481,22 +481,26 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('customer-back')?.addEventListener('click', loadCustomerList);
 
   document.getElementById('ce-save')?.addEventListener('click', async () => {
-    const name  = document.getElementById('ce-name').value.trim();
-    const email = document.getElementById('ce-email').value.trim();
-    const phone = document.getElementById('ce-phone').value.trim();
-    const statusEl = document.getElementById('ce-status');
-    const btn = document.getElementById('ce-save');
+    const name      = document.getElementById('ce-name').value.trim();
+    const email     = document.getElementById('ce-email').value.trim();
+    const phone     = document.getElementById('ce-phone').value.trim();
+    const newPassword = document.getElementById('ce-new-pw')?.value || '';
+    const statusEl  = document.getElementById('ce-status');
+    const btn       = document.getElementById('ce-save');
 
     btn.disabled = true; btn.textContent = 'SAVING...';
     try {
+      const body = { name, email, phone };
+      if (newPassword) body.newPassword = newPassword;
       const res = await adminFetch(`/api/admin/customers/${currentCustomerId}`, {
-        method: 'PUT', body: JSON.stringify({ name, email, phone }),
+        method: 'PUT', body: JSON.stringify(body),
       });
       const data = await res.json();
       if (res.ok) {
         document.getElementById('cf-name').textContent  = data.customer.name  || '—';
         document.getElementById('cf-email').textContent = data.customer.email || '—';
         document.getElementById('cf-phone').textContent = data.customer.phone || '—';
+        if (document.getElementById('ce-new-pw')) document.getElementById('ce-new-pw').value = '';
         statusEl.textContent = 'Saved.'; statusEl.style.color = '#27c93f';
         setTimeout(() => {
           document.getElementById('customer-edit-form').style.display = 'none';
