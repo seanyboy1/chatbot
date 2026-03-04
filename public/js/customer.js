@@ -48,7 +48,7 @@ async function playSplashAnimation() {
   // Show "ESTABLISHING CONNECTION..." blinking (4 smooth pulses via CSS animation)
   if (preStatus) {
     preStatus.classList.add('blinking');
-    await wait(1.4 * 4 * 1000); // 4 iterations × 1.4s each
+    await wait(1.4 * 3 * 1000); // 3 iterations × 1.4s each
     preStatus.classList.remove('blinking');
   }
 
