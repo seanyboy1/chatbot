@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { connectDB, ActivityLog, Session, User, ChatSession, ServiceRequest } from './db.js';
+import { connectDB, ActivityLog, Session, User, ChatSession, ServiceRequest, MeshNode } from './db.js';
 import crypto from 'crypto';
 import fs from 'fs';
 
@@ -113,6 +113,59 @@ app.get('/profile', (req, res) => {
 
 app.get('/mesh', (req, res) => {
   res.sendFile(join(__dirname, 'public', 'mesh.html'));
+});
+
+// ── Mesh Nodes ───────────────────────────────────────────────────────────────
+app.get('/api/mesh/nodes', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
+  try {
+    await connectDB();
+    const nodes = await MeshNode.find().sort({ addedAt: 1 });
+    res.json({ nodes });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load nodes.' });
+  }
+});
+
+app.post('/api/mesh/nodes', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
+  const { nodeId, name, lat, lon, desc, online } = req.body;
+  if (!nodeId || !name || lat == null || lon == null) return res.status(400).json({ error: 'nodeId, name, lat, lon required.' });
+  try {
+    await connectDB();
+    const node = await MeshNode.create({ nodeId, name, lat, lon, desc, online: online !== false });
+    res.json({ node });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save node.' });
+  }
+});
+
+app.put('/api/mesh/nodes/:nodeId', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
+  const { name, desc, online } = req.body;
+  try {
+    await connectDB();
+    const update = {};
+    if (name  !== undefined) update.name   = name;
+    if (desc  !== undefined) update.desc   = desc;
+    if (online !== undefined) update.online = online;
+    const node = await MeshNode.findOneAndUpdate({ nodeId: req.params.nodeId }, update, { new: true });
+    if (!node) return res.status(404).json({ error: 'Node not found.' });
+    res.json({ node });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update node.' });
+  }
+});
+
+app.delete('/api/mesh/nodes/:nodeId', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
+  try {
+    await connectDB();
+    await MeshNode.findOneAndDelete({ nodeId: req.params.nodeId });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete node.' });
+  }
 });
 
 // ── Auth: Register ──────────────────────────────────────────────────────────

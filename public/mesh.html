@@ -517,18 +517,6 @@
       });
     });
 
-    // ── Node Storage (localStorage) ───────────────────────
-    const STORAGE_KEY = 'mesh_nodes';
-
-    function loadNodes() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-      catch { return []; }
-    }
-
-    function saveNodes(nodes) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(nodes));
-    }
-
     // ── Leaflet Map ───────────────────────────────────────
   </script>
   <!-- Leaflet JS (loaded after module to avoid ordering issues) -->
@@ -536,13 +524,40 @@
   <script type="module">
     import { getToken } from '/js/auth.js';
 
-    const STORAGE_KEY = 'mesh_nodes';
-    function loadNodes() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-      catch { return []; }
+    function authHeaders() {
+      return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
     }
-    function saveNodes(nodes) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(nodes));
+
+    async function apiLoadNodes() {
+      const res = await fetch('/api/mesh/nodes', { headers: authHeaders() });
+      const data = await res.json();
+      return (data.nodes || []).map(n => ({
+        id: n.nodeId, name: n.name, lat: n.lat, lon: n.lon,
+        desc: n.desc || '', online: n.online !== false, addedAt: n.addedAt,
+      }));
+    }
+
+    async function apiAddNode(node) {
+      const res = await fetch('/api/mesh/nodes', {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ nodeId: node.id, name: node.name, lat: node.lat, lon: node.lon, desc: node.desc, online: node.online }),
+      });
+      return res.ok;
+    }
+
+    async function apiUpdateNode(id, fields) {
+      const res = await fetch(`/api/mesh/nodes/${id}`, {
+        method: 'PUT', headers: authHeaders(),
+        body: JSON.stringify(fields),
+      });
+      return res.ok;
+    }
+
+    async function apiDeleteNode(id) {
+      const res = await fetch(`/api/mesh/nodes/${id}`, {
+        method: 'DELETE', headers: authHeaders(),
+      });
+      return res.ok;
     }
 
     // Wait for Leaflet to load
@@ -587,7 +602,7 @@
     }
 
     // State
-    let nodes = loadNodes();
+    let nodes = [];
     const markers = {};
 
     function escHtml(s) {
@@ -659,8 +674,9 @@
           } else if (action === 'toggle') {
             const idx = nodes.findIndex(x => x.id === id);
             if (idx !== -1) {
-              nodes[idx].online = !(nodes[idx].online !== false);
-              saveNodes(nodes);
+              const newOnline = !(nodes[idx].online !== false);
+              await apiUpdateNode(id, { online: newOnline });
+              nodes[idx].online = newOnline;
               render();
               setTimeout(() => markers[id]?.openPopup(), 50);
             }
@@ -672,11 +688,12 @@
           } else if (action === 'save-edit') {
             const idx = nodes.findIndex(x => x.id === id);
             if (idx !== -1) {
-              // Read inputs from the live popup DOM (el doesn't change on setPopupContent)
+              const fields = {};
               el.querySelectorAll('[data-field]').forEach(inp => {
-                nodes[idx][inp.dataset.field] = inp.value.trim();
+                fields[inp.dataset.field] = inp.value.trim();
               });
-              saveNodes(nodes);
+              await apiUpdateNode(id, fields);
+              Object.assign(nodes[idx], fields);
               render();
               setTimeout(() => markers[id]?.openPopup(), 50);
             }
@@ -729,9 +746,9 @@
       updateStats();
     }
 
-    function deleteNode(id) {
+    async function deleteNode(id) {
+      await apiDeleteNode(id);
       nodes = nodes.filter(n => n.id !== id);
-      saveNodes(nodes);
       render();
     }
 
@@ -748,32 +765,36 @@
     });
 
     // ── Add node form ─────────────────────────────────────
-    document.getElementById('mesh-add-btn').addEventListener('click', () => {
+    document.getElementById('mesh-add-btn').addEventListener('click', async () => {
       const name = document.getElementById('node-name').value.trim();
       const lat  = parseFloat(document.getElementById('node-lat').value);
       const lon  = parseFloat(document.getElementById('node-lon').value);
       const desc = document.getElementById('node-desc').value.trim();
       const msg  = document.getElementById('mesh-form-msg');
+      const btn  = document.getElementById('mesh-add-btn');
 
       if (!name) { msg.style.color = '#FF4500'; msg.textContent = 'Node name required.'; return; }
       if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
         msg.style.color = '#FF4500'; msg.textContent = 'Valid coordinates required.'; return;
       }
 
+      btn.disabled = true; btn.textContent = 'SAVING...';
+
       const node = {
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-        name, lat, lon, desc,
-        online: true,
-        addedAt: new Date().toISOString(),
+        name, lat, lon, desc, online: true,
       };
 
+      const ok = await apiAddNode(node);
+      btn.disabled = false; btn.textContent = '+ ADD NODE';
+
+      if (!ok) { msg.style.color = '#FF4500'; msg.textContent = 'Save failed.'; return; }
+
       nodes.push(node);
-      saveNodes(nodes);
       render();
       map.flyTo([lat, lon], 12, { duration: 0.8 });
       setTimeout(() => markers[node.id]?.openPopup(), 850);
 
-      // Clear form
       document.getElementById('node-name').value = '';
       document.getElementById('node-lat').value  = '';
       document.getElementById('node-lon').value  = '';
@@ -792,7 +813,8 @@
       });
     });
 
-    // Initial render
+    // Initial load from database
+    nodes = await apiLoadNodes();
     render();
   </script>
 </body>

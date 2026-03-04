@@ -91,3 +91,15 @@ const serviceRequestSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 export const ServiceRequest = mongoose.models.ServiceRequest || mongoose.model('ServiceRequest', serviceRequestSchema);
+
+// Mesh Node Schema (Meshtastic radio node locations)
+const meshNodeSchema = new mongoose.Schema({
+  nodeId: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  lat: { type: Number, required: true },
+  lon: { type: Number, required: true },
+  desc: String,
+  online: { type: Boolean, default: true },
+  addedAt: { type: Date, default: Date.now },
+});
+export const MeshNode = mongoose.models.MeshNode || mongoose.model('MeshNode', meshNodeSchema);
