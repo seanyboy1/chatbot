@@ -131,7 +131,8 @@
     <!-- My Requests panel -->
     <div class="profile-panel" id="panel-requests">
       <div class="profile-panel-header">
-        <span class="profile-panel-title">MY REQUESTS</span>
+        <button class="profile-panel-close" id="req-panel-back" style="display:none;background:transparent;border:none;color:var(--blue-dim);font-family:'Share Tech Mono',monospace;font-size:11px;cursor:pointer;letter-spacing:1px;padding:0;">← BACK</button>
+        <span class="profile-panel-title" id="req-panel-title">MY REQUESTS</span>
         <div style="display:flex;align-items:center;gap:8px;">
           <button class="service-status-refresh" id="svc-refresh-btn" title="Refresh">↻</button>
           <button class="profile-panel-close" id="close-requests">✕</button>
@@ -318,6 +319,7 @@
     document.getElementById('close-requests').addEventListener('click', () => {
       closePanel('panel-requests');
       document.getElementById('card-requests').classList.remove('active');
+      openReqId = null;
     });
 
     // ── Action cards ────────────────────────────────────────────────────────
@@ -601,43 +603,94 @@
       cancelled:   { label: 'CANCELLED',   cls: 'svc-status-cancelled'},
     };
 
+    let cachedRequests = [];
+    let openReqId = null;
+
     async function loadServiceRequests() {
       const list = document.getElementById('svc-status-list');
       if (!list) return;
       list.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--blue-dark);padding:8px 0;">LOADING...</div>';
-
       try {
         const res = await authFetch('/api/service-requests');
         const data = await res.json();
-        const requests = data.requests || [];
-
-        if (!requests.length) {
-          list.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--blue-dark);padding:8px 0;">NO REQUESTS YET</div>';
-          return;
-        }
-
-        list.innerHTML = '';
-        requests.forEach(r => {
-          const sm = statusMeta[r.status] || { label: r.status.toUpperCase(), cls: 'svc-status-pending' };
-          const date = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-          const typeLabel = typeLabels[r.type] || (r.type || 'REQUEST').toUpperCase();
-
-          const item = document.createElement('div');
-          item.className = 'svc-status-item';
-          item.innerHTML = `
-            <div class="svc-status-row">
-              <span class="svc-type-badge">${typeLabel}</span>
-              <span class="svc-status-badge ${sm.cls}">${sm.label}</span>
-              <span class="svc-date">${date}</span>
-            </div>
-            ${r.details ? `<div class="svc-details">${escHtml(r.details)}</div>` : ''}
-            ${r.adminReply ? `<div class="svc-admin-reply"><span class="svc-admin-reply-label">REPLY:</span> ${escHtml(r.adminReply)}</div>` : ''}
-          `;
-          list.appendChild(item);
-        });
+        cachedRequests = data.requests || [];
+        openReqId = null;
+        renderRequestList();
       } catch {
         list.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:#FF4500;padding:8px 0;">FAILED TO LOAD</div>';
       }
+    }
+
+    function renderRequestList() {
+      const list = document.getElementById('svc-status-list');
+      const backBtn = document.getElementById('req-panel-back');
+      const title = document.getElementById('req-panel-title');
+      backBtn.style.display = 'none';
+      title.textContent = 'MY REQUESTS';
+
+      if (!cachedRequests.length) {
+        list.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--blue-dark);padding:8px 0;">NO REQUESTS YET</div>';
+        return;
+      }
+
+      list.innerHTML = '';
+      cachedRequests.forEach(r => {
+        const sm = statusMeta[r.status] || { label: (r.status||'PENDING').toUpperCase(), cls: 'svc-status-pending' };
+        const date = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const typeLabel = typeLabels[r.type] || (r.type || 'REQUEST').toUpperCase();
+
+        const item = document.createElement('div');
+        item.className = 'svc-status-item';
+        item.style.cursor = 'pointer';
+        item.innerHTML = `
+          <div class="svc-status-row">
+            <span class="svc-type-badge">${typeLabel}</span>
+            <span class="svc-status-badge ${sm.cls}">${sm.label}</span>
+            <span class="svc-date">${date}</span>
+            <span style="color:var(--blue-dim);font-size:12px;margin-left:4px;">›</span>
+          </div>
+          ${r.details ? `<div class="svc-details">${escHtml(r.details)}</div>` : ''}
+        `;
+        item.addEventListener('click', () => { openReqId = r._id; renderRequestDetail(); });
+        list.appendChild(item);
+      });
+    }
+
+    function renderRequestDetail() {
+      const r = cachedRequests.find(x => x._id === openReqId);
+      if (!r) return;
+      const list = document.getElementById('svc-status-list');
+      const backBtn = document.getElementById('req-panel-back');
+      const title = document.getElementById('req-panel-title');
+
+      const sm = statusMeta[r.status] || { label: (r.status||'PENDING').toUpperCase(), cls: 'svc-status-pending' };
+      const date = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const typeLabel = typeLabels[r.type] || (r.type || 'REQUEST').toUpperCase();
+      const repliedDate = r.repliedAt ? new Date(r.repliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+
+      title.textContent = typeLabel;
+      backBtn.style.display = '';
+      backBtn.onclick = () => { openReqId = null; renderRequestList(); };
+
+      list.innerHTML = `
+        <div class="svc-status-row" style="margin-bottom:12px;">
+          <span class="svc-type-badge">${typeLabel}</span>
+          <span class="svc-status-badge ${sm.cls}">${sm.label}</span>
+          <span class="svc-date">${date}</span>
+        </div>
+        ${r.details ? `
+        <div style="border:1px solid var(--blue-dark);border-radius:2px;padding:10px;margin-bottom:12px;background:rgba(0,0,0,0.2);">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--blue-dark);margin-bottom:6px;">YOUR REQUEST</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--blue-dim);white-space:pre-wrap;word-break:break-word;">${escHtml(r.details)}</div>
+        </div>` : ''}
+        ${r.phone ? `<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--blue-dim);margin-bottom:10px;">📞 ${escHtml(r.phone)}${r.preferredTime?' · '+escHtml(r.preferredTime):''}</div>` : ''}
+        ${r.adminReply ? `
+        <div style="border:1px solid rgba(39,201,63,0.25);border-radius:2px;padding:10px;background:rgba(39,201,63,0.04);">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#27c93f;margin-bottom:6px;">REPLY FROM BLUE-NET${repliedDate?' · '+repliedDate:''}</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--blue-dim);white-space:pre-wrap;word-break:break-word;">${escHtml(r.adminReply)}</div>
+        </div>` : `
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--blue-dark);font-style:italic;">No reply yet — we'll get back to you soon.</div>`}
+      `;
     }
 
     document.getElementById('svc-refresh-btn').addEventListener('click', loadServiceRequests);
