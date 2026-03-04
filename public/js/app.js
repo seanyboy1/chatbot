@@ -560,6 +560,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  let openRequestId = null;
+
   function renderRequests() {
     const listEl = document.getElementById('requests-list');
     if (!listEl) return;
@@ -571,6 +573,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Detail view
+    if (openRequestId) {
+      const r = allRequests.find(x => x._id === openRequestId);
+      if (r) { renderRequestDetail(r, listEl); return; }
+    }
+
+    // List view
     listEl.innerHTML = '';
     filtered.forEach(r => {
       const date = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -579,39 +588,95 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const item = document.createElement('div');
       item.className = 'customer-row';
-      item.style.cssText = 'padding:10px 0;border-bottom:1px solid rgba(93,173,226,0.1);cursor:default;';
+      item.style.cssText = 'padding:10px 0;border-bottom:1px solid rgba(93,173,226,0.1);cursor:pointer;';
       item.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-          <div>
+          <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--blue);background:rgba(93,173,226,0.08);border:1px solid var(--blue-dark);padding:2px 6px;border-radius:2px;">${typeLabel}</span>
-            ${r.name ? `<span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--blue-dim);margin-left:8px;">${escHtml(r.name)}</span>` : ''}
+            ${r.name ? `<span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--blue-dim);">${escHtml(r.name)}</span>` : ''}
           </div>
-          <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--blue-dark);">${date}</span>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:${statusColor};">● ${(r.status||'pending').toUpperCase().replace('_',' ')}</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--blue-dark);">${date}</span>
+            <span style="color:var(--blue-dim);font-size:12px;">›</span>
+          </div>
         </div>
-        ${r.details ? `<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--blue-dim);margin:5px 0 6px;white-space:pre-wrap;word-break:break-word;">${escHtml(r.details)}</div>` : ''}
-        ${r.phone ? `<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--blue-dim);margin-bottom:4px;">📞 ${escHtml(r.phone)}${r.preferredTime ? ' · ' + escHtml(r.preferredTime) : ''}</div>` : ''}
-        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
-          <span style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:${statusColor};">● ${(r.status || 'pending').toUpperCase().replace('_',' ')}</span>
-          <select class="req-status-select" data-id="${r._id}" style="background:transparent;border:1px solid var(--blue-dark);color:var(--blue-dim);font-family:'Share Tech Mono',monospace;font-size:10px;padding:2px 4px;border-radius:2px;cursor:pointer;">
-            ${statusOptions.map(s => `<option value="${s}" ${r.status === s ? 'selected' : ''}>${s.toUpperCase().replace('_',' ')}</option>`).join('')}
-          </select>
-        </div>
+        ${r.details ? `<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--blue-dark);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(r.details.slice(0,80))}${r.details.length>80?'…':''}</div>` : ''}
       `;
+      item.addEventListener('click', () => { openRequestId = r._id; renderRequests(); });
       listEl.appendChild(item);
     });
+  }
 
-    // Status change handlers
-    listEl.querySelectorAll('.req-status-select').forEach(sel => {
-      sel.addEventListener('change', async () => {
-        const id = sel.dataset.id;
-        const newStatus = sel.value;
-        try {
-          await adminFetch(`/api/admin/service-requests/${id}`, { method: 'PUT', body: JSON.stringify({ status: newStatus }) });
-          const req = allRequests.find(r => r._id === id);
-          if (req) req.status = newStatus;
-          renderRequests();
-        } catch { /* ignore */ }
-      });
+  function renderRequestDetail(r, listEl) {
+    const date = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const typeLabel = typeLabels[r.type] || (r.type || '').toUpperCase();
+    const statusColor = statusColors[r.status] || 'var(--blue-dim)';
+    const repliedDate = r.repliedAt ? new Date(r.repliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+
+    listEl.innerHTML = `
+      <div style="margin-bottom:14px;">
+        <button id="req-back-btn" style="background:transparent;border:none;color:var(--blue-dim);font-family:'Share Tech Mono',monospace;font-size:11px;cursor:pointer;letter-spacing:1px;padding:0;">← BACK</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--blue);background:rgba(93,173,226,0.08);border:1px solid var(--blue-dark);padding:2px 8px;border-radius:2px;">${typeLabel}</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:${statusColor};">● ${(r.status||'pending').toUpperCase().replace('_',' ')}</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--blue-dark);margin-left:auto;">${date}</span>
+      </div>
+      ${r.name || r.email ? `
+      <div style="margin-bottom:10px;">
+        ${r.name  ? `<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--blue-dim);margin-bottom:2px;">NAME: ${escHtml(r.name)}</div>` : ''}
+        ${r.email ? `<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--blue-dim);margin-bottom:2px;">EMAIL: ${escHtml(r.email)}</div>` : ''}
+        ${r.phone ? `<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--blue-dim);margin-bottom:2px;">PHONE: ${escHtml(r.phone)}${r.preferredTime?' · '+escHtml(r.preferredTime):''}</div>` : ''}
+      </div>` : ''}
+      ${r.details ? `
+      <div style="border:1px solid var(--blue-dark);border-radius:2px;padding:10px;margin-bottom:14px;background:rgba(0,0,0,0.2);">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--blue-dark);margin-bottom:6px;">REQUEST DETAILS</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--blue-dim);white-space:pre-wrap;word-break:break-word;">${escHtml(r.details)}</div>
+      </div>` : ''}
+      ${repliedDate ? `
+      <div style="border:1px solid rgba(39,201,63,0.2);border-radius:2px;padding:10px;margin-bottom:14px;background:rgba(39,201,63,0.04);">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#27c93f;margin-bottom:6px;">ADMIN REPLY · ${repliedDate}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--blue-dim);white-space:pre-wrap;word-break:break-word;">${escHtml(r.adminReply)}</div>
+      </div>` : ''}
+      <div style="margin-bottom:10px;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--blue-dark);margin-bottom:6px;">STATUS</div>
+        <select id="req-detail-status" style="background:var(--bg-terminal);border:1px solid var(--blue-dark);color:var(--blue-dim);font-family:'Share Tech Mono',monospace;font-size:11px;padding:5px 8px;border-radius:2px;width:100%;cursor:pointer;">
+          ${statusOptions.map(s => `<option value="${s}" ${r.status===s?'selected':''}>${s.toUpperCase().replace('_',' ')}</option>`).join('')}
+        </select>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--blue-dark);margin-bottom:6px;">REPLY TO CUSTOMER</div>
+        <textarea id="req-detail-reply" style="width:100%;min-height:90px;background:rgba(0,0,0,0.3);border:1px solid var(--blue-dark);color:var(--blue);font-family:'Share Tech Mono',monospace;font-size:12px;padding:8px;border-radius:2px;resize:vertical;outline:none;box-sizing:border-box;" placeholder="Type your reply...">${escHtml(r.adminReply||'')}</textarea>
+      </div>
+      <div id="req-detail-msg" style="font-family:'Share Tech Mono',monospace;font-size:11px;min-height:16px;margin-bottom:8px;"></div>
+      <button id="req-detail-save" style="background:transparent;border:1px solid var(--blue-dark);color:var(--blue-dim);font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;padding:8px 20px;border-radius:2px;cursor:pointer;transition:all 0.2s;">SAVE &amp; REPLY</button>
+    `;
+
+    document.getElementById('req-back-btn').addEventListener('click', () => { openRequestId = null; renderRequests(); });
+
+    document.getElementById('req-detail-save').addEventListener('click', async () => {
+      const status = document.getElementById('req-detail-status').value;
+      const adminReply = document.getElementById('req-detail-reply').value.trim();
+      const msgEl = document.getElementById('req-detail-msg');
+      const btn = document.getElementById('req-detail-save');
+      btn.disabled = true; btn.textContent = 'SAVING...';
+      try {
+        const res = await adminFetch(`/api/admin/service-requests/${r._id}`, {
+          method: 'PUT', body: JSON.stringify({ status, adminReply }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          const idx = allRequests.findIndex(x => x._id === r._id);
+          if (idx !== -1) allRequests[idx] = data.request;
+          openRequestId = data.request._id;
+          msgEl.style.color = '#27c93f'; msgEl.textContent = 'SAVED.';
+          setTimeout(() => renderRequests(), 800);
+        } else {
+          msgEl.style.color = '#FF4500'; msgEl.textContent = data.error || 'Save failed.';
+        }
+      } catch { msgEl.style.color = '#FF4500'; msgEl.textContent = 'Connection error.'; }
+      btn.disabled = false; btn.textContent = 'SAVE & REPLY';
     });
   }
 

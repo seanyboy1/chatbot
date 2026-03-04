@@ -751,6 +751,23 @@
   margin-left: auto;
 }
 
+.svc-admin-reply {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: #27c93f;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-left: 2px solid rgba(39,201,63,0.4);
+  background: rgba(39,201,63,0.04);
+  border-radius: 0 2px 2px 0;
+  word-break: break-word;
+}
+.svc-admin-reply-label {
+  opacity: 0.6;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
 .svc-details {
   font-family: 'Share Tech Mono', monospace;
   font-size: 11px;

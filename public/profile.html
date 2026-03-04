@@ -631,6 +631,7 @@
               <span class="svc-date">${date}</span>
             </div>
             ${r.details ? `<div class="svc-details">${escHtml(r.details)}</div>` : ''}
+            ${r.adminReply ? `<div class="svc-admin-reply"><span class="svc-admin-reply-label">REPLY:</span> ${escHtml(r.adminReply)}</div>` : ''}
           `;
           list.appendChild(item);
         });

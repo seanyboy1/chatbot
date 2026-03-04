@@ -86,6 +86,8 @@ const serviceRequestSchema = new mongoose.Schema({
   phone: String,
   preferredTime: String,
   status: { type: String, default: 'pending' },
+  adminReply: String,
+  repliedAt: Date,
   createdAt: { type: Date, default: Date.now },
 });
 export const ServiceRequest = mongoose.models.ServiceRequest || mongoose.model('ServiceRequest', serviceRequestSchema);

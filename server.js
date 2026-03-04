@@ -280,15 +280,18 @@ app.get('/api/admin/service-requests', requireAuth, async (req, res) => {
   }
 });
 
-// ── Admin: Update Service Request Status ─────────────────────────────────────
+// ── Admin: Update Service Request Status + Reply ──────────────────────────────
 app.put('/api/admin/service-requests/:id', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
-  const { status } = req.body;
+  const { status, adminReply } = req.body;
   try {
     await connectDB();
-    const req_ = await ServiceRequest.findByIdAndUpdate(req.params.id, { status }, { new: true });
-    if (!req_) return res.status(404).json({ error: 'Request not found.' });
-    res.json({ request: req_ });
+    const update = {};
+    if (status) update.status = status;
+    if (adminReply !== undefined) { update.adminReply = adminReply; update.repliedAt = new Date(); }
+    const updated = await ServiceRequest.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!updated) return res.status(404).json({ error: 'Request not found.' });
+    res.json({ request: updated });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update request.' });
   }
