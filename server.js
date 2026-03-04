@@ -207,6 +207,56 @@ app.put('/api/admin/profile', requireAuth, (req, res) => {
   res.json({ success: true });
 });
 
+// ── Admin: Customer List ─────────────────────────────────────────────────────
+app.get('/api/admin/customers', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
+  try {
+    await connectDB();
+    const users = await User.find({}).select('-passwordHash -salt -authToken').sort({ createdAt: -1 });
+    const withCounts = await Promise.all(users.map(async u => {
+      const chatCount = await ChatSession.countDocuments({ userId: u._id });
+      return { id: u._id, name: u.name, email: u.email, username: u.username, phone: u.phone, createdAt: u.createdAt, chatCount };
+    }));
+    res.json({ customers: withCounts });
+  } catch (err) {
+    console.error('Admin customers error:', err);
+    res.status(500).json({ error: 'Failed to load customers.' });
+  }
+});
+
+// ── Admin: Customer Detail ────────────────────────────────────────────────────
+app.get('/api/admin/customers/:id', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
+  try {
+    await connectDB();
+    const user = await User.findById(req.params.id).select('-passwordHash -salt -authToken');
+    if (!user) return res.status(404).json({ error: 'Customer not found.' });
+    const chats = await ChatSession.find({ userId: user._id }).sort({ lastMessageAt: -1 }).limit(10);
+    const serviceRequests = await ServiceRequest.find({ userId: user._id }).sort({ createdAt: -1 }).limit(10);
+    res.json({ customer: { id: user._id, name: user.name, email: user.email, username: user.username, phone: user.phone, createdAt: user.createdAt }, chats, serviceRequests });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load customer.' });
+  }
+});
+
+// ── Admin: Update Customer ────────────────────────────────────────────────────
+app.put('/api/admin/customers/:id', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
+  const { name, email, phone } = req.body;
+  try {
+    await connectDB();
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'Customer not found.' });
+    if (name)  user.name  = name;
+    if (email) user.email = email.toLowerCase();
+    if (phone !== undefined) user.phone = phone;
+    await user.save();
+    res.json({ customer: { id: user._id, name: user.name, email: user.email, username: user.username, phone: user.phone, createdAt: user.createdAt } });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update customer.' });
+  }
+});
+
 // ── Auth: Me ────────────────────────────────────────────────────────────────
 app.get('/api/auth/me', requireAuth, async (req, res) => {
   if (req.isAdmin) return res.json({ role: 'admin', user: req.user });

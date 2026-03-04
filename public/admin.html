@@ -87,6 +87,7 @@
     <button class="tab-btn" data-tab="actions">Actions</button>
     <button class="tab-btn" data-tab="activity">Activity</button>
     <button class="tab-btn" data-tab="profile">Profile</button>
+    <button class="tab-btn" data-tab="customers">Customers</button>
   </div>
 
   <!-- Dashboard Grid -->
@@ -130,6 +131,42 @@
         <div id="activity-log" class="activity-list">
           <div class="activity-item">[System] Dashboard loaded</div>
           <div class="activity-item">[System] Awaiting user interaction</div>
+        </div>
+      </div>
+
+      <div class="customers-card">
+        <h3>Registered Customers</h3>
+        <div id="customers-list" class="customers-list">
+          <div class="customers-loading">LOADING...</div>
+        </div>
+
+        <!-- Customer detail panel (hidden until a customer is clicked) -->
+        <div id="customer-detail" class="customer-detail" style="display:none;">
+          <div class="customer-detail-header">
+            <button id="customer-back" class="customer-back-btn">← BACK</button>
+            <span id="customer-detail-name" class="customer-detail-title"></span>
+          </div>
+          <div class="customer-detail-fields" id="customer-detail-fields"></div>
+          <div id="customer-edit-form" class="customer-edit-form" style="display:none;">
+            <div class="customer-edit-row">
+              <label class="modal-label" style="font-size:10px;letter-spacing:2px;color:var(--blue-dark);display:block;margin-bottom:4px;">FULL NAME</label>
+              <input id="ce-name" type="text" class="customer-edit-input"/>
+            </div>
+            <div class="customer-edit-row">
+              <label class="modal-label" style="font-size:10px;letter-spacing:2px;color:var(--blue-dark);display:block;margin-bottom:4px;">EMAIL</label>
+              <input id="ce-email" type="email" class="customer-edit-input"/>
+            </div>
+            <div class="customer-edit-row">
+              <label class="modal-label" style="font-size:10px;letter-spacing:2px;color:var(--blue-dark);display:block;margin-bottom:4px;">PHONE</label>
+              <input id="ce-phone" type="tel" class="customer-edit-input"/>
+            </div>
+            <div id="ce-status" style="font-size:11px;min-height:16px;margin:8px 0;font-family:'Share Tech Mono',monospace;"></div>
+            <div style="display:flex;gap:8px;">
+              <button class="action-btn" id="ce-save">SAVE</button>
+              <button class="action-btn" id="ce-cancel" style="color:var(--blue-dark);border-color:var(--blue-dark);">CANCEL</button>
+            </div>
+          </div>
+          <div id="customer-chats-section" style="margin-top:16px;"></div>
         </div>
       </div>
 

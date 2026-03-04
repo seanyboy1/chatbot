@@ -300,8 +300,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const actionsCard = document.querySelector('.actions-card');
   const activityCard = document.querySelector('.activity-card');
   const profileCard = document.querySelector('.profile-card');
+  const customersCard = document.querySelector('.customers-card');
 
-  const allCards = [systemCard, statsCard, actionsCard, activityCard, profileCard];
+  const allCards = [systemCard, statsCard, actionsCard, activityCard, profileCard, customersCard];
 
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -314,6 +315,10 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (tab === 'statistics') statsCard?.classList.add('active');
       else if (tab === 'actions')    actionsCard?.classList.add('active');
       else if (tab === 'activity')   activityCard?.classList.add('active');
+      else if (tab === 'customers') {
+        customersCard?.classList.add('active');
+        loadCustomerList();
+      }
       else if (tab === 'profile') {
         profileCard?.classList.add('active');
         // Pre-fill username from localStorage
@@ -372,5 +377,147 @@ document.addEventListener('DOMContentLoaded', () => {
       apSubmit.disabled = false;
       apSubmit.textContent = 'SAVE CHANGES';
     });
+  }
+
+  // ── Customers Tab ────────────────────────────────────────────────────────────
+  let currentCustomerId = null;
+
+  async function adminFetch(url, options = {}) {
+    const { getToken } = await import('/js/auth.js');
+    return fetch(url, {
+      ...options,
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}`, ...(options.headers || {}) },
+    });
+  }
+
+  async function loadCustomerList() {
+    const listEl = document.getElementById('customers-list');
+    const detailEl = document.getElementById('customer-detail');
+    if (!listEl) return;
+    detailEl.style.display = 'none';
+    listEl.style.display = 'block';
+    listEl.innerHTML = '<div class="customers-loading">LOADING...</div>';
+
+    try {
+      const res = await adminFetch('/api/admin/customers');
+      const data = await res.json();
+      if (!res.ok) { listEl.innerHTML = `<div class="customers-loading">${data.error}</div>`; return; }
+
+      const customers = data.customers || [];
+      if (!customers.length) { listEl.innerHTML = '<div class="customers-loading">NO CUSTOMERS YET</div>'; return; }
+
+      listEl.innerHTML = '';
+      customers.forEach(c => {
+        const row = document.createElement('div');
+        row.className = 'customer-row';
+        row.innerHTML = `
+          <div class="customer-row-name">${escHtml(c.name || c.username)}</div>
+          <div class="customer-row-meta">${escHtml(c.email)} &nbsp;·&nbsp; ${c.chatCount} chat${c.chatCount !== 1 ? 's' : ''}</div>
+        `;
+        row.addEventListener('click', () => loadCustomerDetail(c.id, c.name || c.username));
+        listEl.appendChild(row);
+      });
+    } catch {
+      listEl.innerHTML = '<div class="customers-loading">CONNECTION ERROR</div>';
+    }
+  }
+
+  async function loadCustomerDetail(id, name) {
+    currentCustomerId = id;
+    const listEl = document.getElementById('customers-list');
+    const detailEl = document.getElementById('customer-detail');
+    listEl.style.display = 'none';
+    detailEl.style.display = 'block';
+    document.getElementById('customer-detail-name').textContent = name.toUpperCase();
+    document.getElementById('customer-detail-fields').innerHTML = '<div class="customers-loading">LOADING...</div>';
+    document.getElementById('customer-edit-form').style.display = 'none';
+    document.getElementById('customer-chats-section').innerHTML = '';
+
+    try {
+      const res = await adminFetch(`/api/admin/customers/${id}`);
+      const data = await res.json();
+      if (!res.ok) { document.getElementById('customer-detail-fields').innerHTML = `<div class="customers-loading">${data.error}</div>`; return; }
+
+      const c = data.customer;
+      const since = c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+
+      document.getElementById('customer-detail-fields').innerHTML = `
+        <div class="customer-field-row"><span class="customer-field-label">USERNAME</span><span class="customer-field-value">${escHtml(c.username || '—')}</span></div>
+        <div class="customer-field-row"><span class="customer-field-label">FULL NAME</span><span class="customer-field-value" id="cf-name">${escHtml(c.name || '—')}</span></div>
+        <div class="customer-field-row"><span class="customer-field-label">EMAIL</span><span class="customer-field-value" id="cf-email">${escHtml(c.email || '—')}</span></div>
+        <div class="customer-field-row"><span class="customer-field-label">PHONE</span><span class="customer-field-value" id="cf-phone">${escHtml(c.phone || '—')}</span></div>
+        <div class="customer-field-row"><span class="customer-field-label">MEMBER SINCE</span><span class="customer-field-value">${since}</span></div>
+        <button class="action-btn" id="ce-edit-btn" style="margin-top:10px;">EDIT ACCOUNT</button>
+      `;
+
+      document.getElementById('ce-edit-btn').addEventListener('click', () => {
+        document.getElementById('ce-name').value  = c.name  || '';
+        document.getElementById('ce-email').value = c.email || '';
+        document.getElementById('ce-phone').value = c.phone || '';
+        document.getElementById('ce-status').textContent = '';
+        document.getElementById('customer-edit-form').style.display = 'block';
+        document.getElementById('ce-edit-btn').style.display = 'none';
+      });
+
+      // Chat history
+      const chats = data.chats || [];
+      const chatsHtml = chats.length
+        ? chats.map(s => {
+            const d = new Date(s.lastMessageAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const msgCount = s.messages?.length || 0;
+            return `<div class="customer-chat-row">${escHtml(s.title || 'Chat Session')} <span class="customer-chat-meta">${d} · ${msgCount} msg${msgCount !== 1 ? 's' : ''}</span></div>`;
+          }).join('')
+        : '<div class="customers-loading" style="font-size:11px;">No chats yet</div>';
+
+      document.getElementById('customer-chats-section').innerHTML = `
+        <div class="customer-section-label">CHAT HISTORY</div>
+        ${chatsHtml}
+      `;
+    } catch {
+      document.getElementById('customer-detail-fields').innerHTML = '<div class="customers-loading">CONNECTION ERROR</div>';
+    }
+  }
+
+  document.getElementById('customer-back')?.addEventListener('click', loadCustomerList);
+
+  document.getElementById('ce-save')?.addEventListener('click', async () => {
+    const name  = document.getElementById('ce-name').value.trim();
+    const email = document.getElementById('ce-email').value.trim();
+    const phone = document.getElementById('ce-phone').value.trim();
+    const statusEl = document.getElementById('ce-status');
+    const btn = document.getElementById('ce-save');
+
+    btn.disabled = true; btn.textContent = 'SAVING...';
+    try {
+      const res = await adminFetch(`/api/admin/customers/${currentCustomerId}`, {
+        method: 'PUT', body: JSON.stringify({ name, email, phone }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        document.getElementById('cf-name').textContent  = data.customer.name  || '—';
+        document.getElementById('cf-email').textContent = data.customer.email || '—';
+        document.getElementById('cf-phone').textContent = data.customer.phone || '—';
+        statusEl.textContent = 'Saved.'; statusEl.style.color = '#27c93f';
+        setTimeout(() => {
+          document.getElementById('customer-edit-form').style.display = 'none';
+          document.getElementById('ce-edit-btn').style.display = '';
+          statusEl.textContent = '';
+        }, 1200);
+      } else {
+        statusEl.textContent = data.error || 'Update failed.'; statusEl.style.color = '#FF4500';
+      }
+    } catch {
+      statusEl.textContent = 'Connection error.'; statusEl.style.color = '#FF4500';
+    }
+    btn.disabled = false; btn.textContent = 'SAVE';
+  });
+
+  document.getElementById('ce-cancel')?.addEventListener('click', () => {
+    document.getElementById('customer-edit-form').style.display = 'none';
+    document.getElementById('ce-edit-btn').style.display = '';
+  });
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 });

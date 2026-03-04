@@ -896,7 +896,8 @@ body {
 .stats-card,
 .activity-card,
 .actions-card,
-.profile-card {
+.profile-card,
+.customers-card {
   display: none;
   min-width: 100%;
   width: 100%;
@@ -908,8 +909,164 @@ body {
 .stats-card.active,
 .activity-card.active,
 .actions-card.active,
-.profile-card.active {
+.profile-card.active,
+.customers-card.active {
   display: block;
+}
+
+.customers-card {
+  background: var(--bg-terminal);
+  border: 1px solid var(--blue-dark);
+  border-radius: 4px;
+  padding: 18px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.3);
+  position: relative;
+}
+
+.customers-card h3 {
+  color: var(--blue);
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.customers-loading {
+  font-size: 11px;
+  color: var(--blue-dark);
+  letter-spacing: 1px;
+  padding: 8px 0;
+}
+
+.customer-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--blue-dark);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.customer-row:last-child { border-bottom: none; }
+
+.customer-row:hover { background: rgba(93,173,226,0.05); }
+
+.customer-row-name {
+  font-size: 13px;
+  color: var(--blue);
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+}
+
+.customer-row-meta {
+  font-size: 10px;
+  color: var(--blue-dark);
+  letter-spacing: 1px;
+}
+
+.customer-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--blue-dark);
+}
+
+.customer-back-btn {
+  background: none;
+  border: 1px solid var(--blue-dark);
+  color: var(--blue-dim);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.customer-back-btn:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+}
+
+.customer-detail-title {
+  font-size: 13px;
+  color: var(--blue);
+  letter-spacing: 2px;
+}
+
+.customer-field-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(93,173,226,0.1);
+  gap: 10px;
+}
+
+.customer-field-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--blue-dark);
+  flex-shrink: 0;
+}
+
+.customer-field-value {
+  font-size: 12px;
+  color: var(--blue);
+  text-align: right;
+}
+
+.customer-edit-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--blue-dark);
+  color: var(--blue);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  padding: 4px 0;
+  width: 100%;
+  outline: none;
+  letter-spacing: 1px;
+  transition: border-color 0.2s;
+}
+
+.customer-edit-input:focus { border-color: var(--blue); }
+
+.customer-edit-form {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--blue-dark);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.customer-edit-row { display: flex; flex-direction: column; gap: 4px; }
+
+.customer-section-label {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--blue-dark);
+  margin-bottom: 8px;
+  padding-top: 4px;
+}
+
+.customer-chat-row {
+  font-size: 11px;
+  color: var(--blue-dim);
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(93,173,226,0.08);
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.customer-chat-meta {
+  font-size: 10px;
+  color: var(--blue-dark);
+  flex-shrink: 0;
 }
 
 .profile-card {
