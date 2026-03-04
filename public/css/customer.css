@@ -344,9 +344,15 @@
   animation: none !important;
 }
 
-/* Default: all rack LEDs solid red until cables connect */
+/* Default: switch port LEDs amber until data flows */
 .rack-icon .led-green,
-.rack-icon .led-yellow,
+.rack-icon .led-yellow {
+  fill: #ffbd2e;
+  filter: drop-shadow(0 0 3px rgba(255, 189, 46, 0.7));
+  animation: none;
+}
+
+/* Default: power/LAN/WAN LEDs solid red until cables connect */
 .rack-icon .led-power,
 .rack-icon .led-lan,
 .rack-icon .led-wan {
