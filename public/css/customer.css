@@ -216,23 +216,24 @@
 .rack-icon.patch-panel-wired .pp-led-3 { animation-delay: 0.1s; }
 .rack-icon.patch-panel-wired .pp-led-4 { animation-delay: 0.2s; }
 .rack-icon.patch-panel-wired .pp-led-5 { animation-delay: 0.15s; }
-.rack-icon.patch-panel-wired .pp-port-active { opacity: 0.4; transition: opacity 0.3s ease; }
+.rack-icon.patch-panel-wired .pp-port-active { opacity: 0; }
 @keyframes flashBlue {
   0%  { fill: #7DF9FF; filter: drop-shadow(0 0 3px rgba(125,249,255,0.9)); }
   50% { fill: #1a3a3f; filter: none; }
 }
 
+.data-pkt-yellow { opacity: 0; filter: drop-shadow(0 0 4px rgba(255,0,0,0.9)); }
 .rack-icon.cables-active .data-pkt-y-down-1 {
-  animation: pktYFade 1.4s ease-in-out 0.5s infinite;
+  animation: pktYFade 1.0s ease-in-out 0s    infinite;
 }
 .rack-icon.cables-active .data-pkt-y-up-1 {
-  animation: pktYFade 1.4s ease-in-out 1.2s infinite;
+  animation: pktYFade 1.0s ease-in-out 0.5s  infinite;
 }
 .rack-icon.cables-active .data-pkt-y-down-2 {
-  animation: pktYFade 1.4s ease-in-out 1.0s infinite;
+  animation: pktYFade 1.0s ease-in-out 0.25s infinite;
 }
 .rack-icon.cables-active .data-pkt-y-up-2 {
-  animation: pktYFade 1.4s ease-in-out 1.7s infinite;
+  animation: pktYFade 1.0s ease-in-out 0.75s infinite;
 }
 
 @keyframes pktYFade {
@@ -270,32 +271,71 @@
   100% { cx: 0;  cy: 0;   opacity: 0; }
 }
 
-/* When yellow cables connect: light up the plugged-in switch ports and firewall LAN ports */
-.rack-icon.cables-active .network-port-active {
-  stroke: #ffffff;
-  filter: drop-shadow(0 0 3px rgba(255,255,255,0.8));
-  transition: stroke 0.4s ease, filter 0.4s ease;
+/* Per-port color timing — PP ports light when cable starts, switch ports when cable arrives */
+.rack-icon.patch-panel-wired .pp-port-c1 { stroke: #7DF9FF; filter: drop-shadow(0 0 3px rgba(125,249,255,0.6)); transition: stroke 0.15s ease 0s,    filter 0.15s ease 0s; }
+.rack-icon.patch-panel-wired .pp-port-c3 { stroke: #7DF9FF; filter: drop-shadow(0 0 3px rgba(125,249,255,0.6)); transition: stroke 0.15s ease 0.08s, filter 0.15s ease 0.08s; }
+.rack-icon.patch-panel-wired .pp-port-c4 { stroke: #7DF9FF; filter: drop-shadow(0 0 3px rgba(125,249,255,0.6)); transition: stroke 0.15s ease 0.16s, filter 0.15s ease 0.16s; }
+.rack-icon.patch-panel-wired .pp-port-c5 { stroke: #7DF9FF; filter: drop-shadow(0 0 3px rgba(125,249,255,0.6)); transition: stroke 0.15s ease 0.24s, filter 0.15s ease 0.24s; }
+
+.rack-icon.patch-panel-wired .sw-port-c1 { stroke: #7DF9FF; filter: drop-shadow(0 0 3px rgba(125,249,255,0.6)); transition: stroke 0.15s ease 0.25s, filter 0.15s ease 0.25s; }
+.rack-icon.patch-panel-wired .sw-port-c3 { stroke: #7DF9FF; filter: drop-shadow(0 0 3px rgba(125,249,255,0.6)); transition: stroke 0.15s ease 0.33s, filter 0.15s ease 0.33s; }
+.rack-icon.patch-panel-wired .sw-port-c4 { stroke: #7DF9FF; filter: drop-shadow(0 0 3px rgba(125,249,255,0.6)); transition: stroke 0.15s ease 0.41s, filter 0.15s ease 0.41s; }
+.rack-icon.patch-panel-wired .sw-port-c5 { stroke: #7DF9FF; filter: drop-shadow(0 0 3px rgba(125,249,255,0.6)); transition: stroke 0.15s ease 0.49s, filter 0.15s ease 0.49s; }
+
+/* Red patch cables — switch port lights when cable starts, FW LAN when cable arrives */
+.rack-icon.cables-active .sw-red-1 { stroke: #FF0000; filter: drop-shadow(0 0 3px rgba(255,0,0,0.8)); transition: stroke 0.15s ease 0s,    filter 0.15s ease 0s; }
+.rack-icon.cables-active .sw-red-2 { stroke: #FF0000; filter: drop-shadow(0 0 3px rgba(255,0,0,0.8)); transition: stroke 0.15s ease 0.35s, filter 0.15s ease 0.35s; }
+.rack-icon.cables-active .fw-lan-1 { stroke: #FF0000; filter: drop-shadow(0 0 3px rgba(255,0,0,0.8)); transition: stroke 0.15s ease 0.3s,  filter 0.15s ease 0.3s; }
+.rack-icon.cables-active .fw-lan-2 { stroke: #FF0000; filter: drop-shadow(0 0 3px rgba(255,0,0,0.8)); transition: stroke 0.15s ease 0.65s, filter 0.15s ease 0.65s; }
+.rack-icon.cables-active .fw-lan-label { fill: #FF0000; transition: fill 0.15s ease 0.3s; }
+
+/* Yellow cables — FW WAN ports light when cable starts, modem ETH when cable arrives */
+.rack-icon.modem-wired .fw-wan-1 { stroke: #FFD700; filter: drop-shadow(0 0 3px rgba(255,215,0,0.8)); transition: stroke 0.15s ease 0s,    filter 0.15s ease 0s; }
+.rack-icon.modem-wired .fw-wan-2 { stroke: #FFD700; filter: drop-shadow(0 0 3px rgba(255,215,0,0.8)); transition: stroke 0.15s ease 0.15s, filter 0.15s ease 0.15s; }
+.rack-icon.modem-wired .modem-eth-1 { stroke: #FFD700; filter: drop-shadow(0 0 3px rgba(255,215,0,0.8)); transition: stroke 0.15s ease 0.25s, filter 0.15s ease 0.25s; }
+.rack-icon.modem-wired .modem-eth-2 { stroke: #FFD700; filter: drop-shadow(0 0 3px rgba(255,215,0,0.8)); transition: stroke 0.15s ease 0.4s,  filter 0.15s ease 0.4s; }
+
+/* Yellow cable data packets */
+.modem-data-pkt { opacity: 0; filter: drop-shadow(0 0 4px rgba(255,215,0,0.9)); }
+.rack-icon.modem-wired .modem-data-pkt-1 { animation: pktYFade 1.0s ease-in-out 0s infinite; }
+.rack-icon.modem-wired .modem-data-pkt-2 { animation: pktYFade 1.0s ease-in-out 0.5s infinite; }
+
+/* ═══ FULL CONNECTION (leds-active): ports flash + data packets activate ═══ */
+
+@keyframes portFlashBlue {
+  0%, 49% { stroke: #7DF9FF; filter: drop-shadow(0 0 5px rgba(125,249,255,0.9)); }
+  50%, 100% { stroke: #2a6a7a; filter: none; }
 }
-.rack-icon.cables-active .fw-lan-port {
-  stroke: #7DF9FF;
-  filter: drop-shadow(0 0 3px rgba(125,249,255,0.8));
-  transition: stroke 0.4s ease, filter 0.4s ease;
+@keyframes portFlashRed {
+  0%, 49% { stroke: #FF0000; filter: drop-shadow(0 0 5px rgba(255,0,0,0.9)); }
+  50%, 100% { stroke: #7a1a1a; filter: none; }
 }
-.rack-icon.cables-active .fw-lan-label {
-  fill: #7DF9FF;
-  transition: fill 0.4s ease;
+@keyframes ppInnerPulse {
+  0%, 49% { opacity: 0.7; }
+  50%, 100% { opacity: 0; }
 }
 
-/* When red cables connect: light up the firewall WAN ports */
-.rack-icon.leds-active .fw-wan-port {
-  stroke: #FF6030;
-  filter: drop-shadow(0 0 3px rgba(255,80,30,0.9));
-  transition: stroke 0.4s ease, filter 0.4s ease;
+/* PP cable data packets — visible at leds-active (patch-panel-wired data starts at cables-active below) */
+.pp-data-pkt { opacity: 0; filter: drop-shadow(0 0 4px rgba(125,249,255,0.9)); }
+.rack-icon.patch-panel-wired .pp-data-pkt-1 { animation: pktYFade 1.0s ease-in-out 0s    infinite; }
+.rack-icon.patch-panel-wired .pp-data-pkt-3 { animation: pktYFade 1.0s ease-in-out 0.25s infinite; }
+.rack-icon.patch-panel-wired .pp-data-pkt-4 { animation: pktYFade 1.0s ease-in-out 0.5s  infinite; }
+.rack-icon.patch-panel-wired .pp-data-pkt-5 { animation: pktYFade 1.0s ease-in-out 0.75s infinite; }
+
+/* === Full connection: RJ45 connectors flash, ports stay steady === */
+@keyframes connFlash {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.2; }
 }
-.rack-icon.leds-active .fw-wan-label {
-  fill: #FF6030;
-  transition: fill 0.4s ease;
-}
+.rack-icon.leds-active .rj45-plug-pp     { animation: connFlash 0.45s step-end infinite; }
+.rack-icon.leds-active .rj45-plug-patch  { animation: connFlash 0.45s step-end 0.15s infinite; }
+.rack-icon.leds-active .rj45-plug-modem  { animation: connFlash 0.5s  step-end 0.25s infinite; }
+.rj45-plug-fw-lan { opacity: 0; }
+.rack-icon.fw-cables-active .rj45-plug-fw-lan { opacity: 1; transition: opacity 0.15s ease 0.3s; }
+.rack-icon.leds-active .rj45-plug-fw-lan { animation: connFlash 0.5s step-end 0.35s infinite; }
+
+/* Ports stay at cable color, no flash */
+.rack-icon.leds-active .fw-lan-label { fill: #FF0000; }
 
 /* Default: all rack LEDs solid red until cables connect */
 .rack-icon .led-green,
@@ -336,21 +376,18 @@
 .rack-icon.leds-active .led-yellow:nth-of-type(3) { animation-delay: 0.4s; }
 .rack-icon.leds-active .led-yellow:nth-of-type(4) { animation-delay: 0.15s; }
 .rack-icon.leds-active .led-power {
-  animation: flashPower 1.8s ease-in-out infinite;
-}
-
-@keyframes flashPower {
-  0%, 100% { fill: #27c93f; filter: drop-shadow(0 0 5px rgba(39,201,63,0.9)); }
-  50%       { fill: #0d2e13; filter: none; }
+  fill: #FF3333;
+  filter: drop-shadow(0 0 4px rgba(255,50,50,0.8));
+  animation: none;
 }
 
 @keyframes flashLan {
-  0%  { fill: #27c93f; filter: drop-shadow(0 0 4px #27c93f); }
+  0%  { fill: #FF4500; filter: drop-shadow(0 0 4px #FF4500); }
   50% { fill: #FFE000; filter: drop-shadow(0 0 4px #FFE000); }
 }
 
 @keyframes flashWan {
-  0%  { fill: #ff5f56; filter: drop-shadow(0 0 4px #ff5f56); }
+  0%  { fill: #FFD700; filter: drop-shadow(0 0 4px #FFD700); }
   50% { fill: #27c93f; filter: drop-shadow(0 0 4px #27c93f); }
 }
 
@@ -364,14 +401,7 @@
   50% { fill: #7a5a00; filter: none; }
 }
 
-/* Modem ETH IN ports — continuous green flash when green cables connected */
-.rack-icon.modem-wired .modem-eth-port {
-  animation: portFlashGreen 0.6s step-end infinite;
-}
-/* FW WAN ports — continuous green flash when green cables leave from here */
-.rack-icon.modem-wired .fw-wan-port {
-  animation: portFlashGreen 0.6s step-end infinite;
-}
+/* Modem ETH IN ports and FW WAN ports — handled by per-port transition rules above */
 
 @keyframes portFlashGreen {
   0%   { stroke: #FFD700; filter: drop-shadow(0 0 6px rgba(255,215,0,0.95)); opacity: 1; }
@@ -379,16 +409,9 @@
   100% { stroke: #FFD700; filter: drop-shadow(0 0 6px rgba(255,215,0,0.95)); opacity: 1; }
 }
 
-/* Modem LAN OUT ports — continuous orange flash when red cables plugged in */
-.rack-icon.leds-active .modem-lan-port {
-  animation: portFlashOrange 0.5s step-end infinite;
-}
-
-@keyframes portFlashOrange {
-  0%   { stroke: #27c93f; filter: drop-shadow(0 0 6px rgba(39,201,63,0.95)); opacity: 1; }
-  50%  { stroke: #0d2e13; filter: none; opacity: 0.4; }
-  100% { stroke: #27c93f; filter: drop-shadow(0 0 6px rgba(39,201,63,0.95)); opacity: 1; }
-}
+/* Modem LAN OUT ports — light up when green cables start drawing */
+.rack-icon.fw-cables-active .modem-lan-1 { stroke: #27c93f; filter: drop-shadow(0 0 3px rgba(39,201,63,0.8)); transition: stroke 0.15s ease 0s,    filter 0.15s ease 0s; }
+.rack-icon.fw-cables-active .modem-lan-2 { stroke: #27c93f; filter: drop-shadow(0 0 3px rgba(39,201,63,0.8)); transition: stroke 0.15s ease 0.45s, filter 0.15s ease 0.45s; }
 
 /* FW → Modem inner cables: hidden until modem-wired class added */
 .fw-modem-cable {

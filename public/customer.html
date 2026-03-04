@@ -277,18 +277,18 @@
           <!-- ── 8 front RJ45 jacks (aligned with switch ports below) ── -->
           <text x="130" y="9" font-size="2.8" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">■ CAT6 FRONT JACKS ■</text>
           <!-- Port 1 -->
-          <rect class="pp-port" x="71" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="pp-port pp-port-c1" x="71" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
           <rect class="pp-port-active" x="71.5" y="11.5" width="4" height="4" rx="0.2" fill="#7DF9FF" opacity="0"/>
           <!-- Port 2 (spare) -->
           <rect class="pp-port" x="77" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
           <!-- Port 3 -->
-          <rect class="pp-port" x="83" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="pp-port pp-port-c3" x="83" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
           <rect class="pp-port-active" x="83.5" y="11.5" width="4" height="4" rx="0.2" fill="#7DF9FF" opacity="0"/>
           <!-- Port 4 -->
-          <rect class="pp-port" x="89" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="pp-port pp-port-c4" x="89" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
           <rect class="pp-port-active" x="89.5" y="11.5" width="4" height="4" rx="0.2" fill="#7DF9FF" opacity="0"/>
           <!-- Port 5 -->
-          <rect class="pp-port" x="95" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="pp-port pp-port-c5" x="95" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
           <rect class="pp-port-active" x="95.5" y="11.5" width="4" height="4" rx="0.2" fill="#7DF9FF" opacity="0"/>
           <!-- Port 6 (spare) -->
           <rect class="pp-port" x="101" y="11" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
@@ -325,8 +325,12 @@
           <line x1="241" y1="7" x2="241" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
           <line x1="244" y1="7" x2="244" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
           <!-- BLUE-NET sticker label -->
-          <rect x="245" y="11" width="35" height="9" rx="2" fill="#0d0500" stroke="#FF4500" stroke-width="0.7"/>
-          <text x="262" y="18" font-size="4.5" fill="#FF4500" font-family="'Share Tech Mono', monospace" font-weight="bold" text-anchor="middle">BLUE-NET</text>
+          <rect x="245" y="11" width="35" height="9" rx="1.5" fill="#0a0300" stroke="#FF4500" stroke-width="0.5" opacity="0.95"/>
+          <rect x="245" y="11" width="35" height="1.2" rx="1" fill="#FF4500" opacity="0.35"/>
+          <rect x="247" y="13" width="1.2" height="5" rx="0.3" fill="#FF4500" opacity="0.85"/>
+          <rect x="249.5" y="14.5" width="1.2" height="3.5" rx="0.3" fill="#FF4500" opacity="0.6"/>
+          <rect x="252" y="15.5" width="1.2" height="2.5" rx="0.3" fill="#FF4500" opacity="0.4"/>
+          <text x="265.5" y="17.5" font-size="3.8" fill="#FF4500" font-family="'Share Tech Mono', monospace" letter-spacing="0.6" text-anchor="middle" opacity="0.95">BLUE-NET</text>
           <!-- PWR LED -->
           <circle class="led-power" cx="278" cy="27" r="1.5" fill="currentColor"/>
           <text x="266" y="28" font-size="3.5" fill="currentColor" font-family="monospace">PWR</text>
@@ -339,36 +343,50 @@
         <!-- Cable 1: port 1 (x=73.5), PP bottom y=16 → switch port top y=58 -->
         <path class="pp-cable pp-cable-1" d="M 73.5 16 C 73.5 30 73.5 44 73.5 58" stroke="#1a5f7f" stroke-width="3" fill="none" stroke-linecap="round"/>
         <path class="pp-cable pp-cable-1" d="M 73.5 16 C 73.5 30 73.5 44 73.5 58" stroke="#7DF9FF" stroke-width="1.8" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 3px rgba(125,249,255,0.8))"/>
-        <!-- RJ45 plug top (at PP port 1) -->
-        <rect class="rj45-plug rj45-plug-pp" x="70.5" y="14" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
-        <rect class="rj45-plug rj45-plug-pp" x="71.5" y="14.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
-        <!-- RJ45 plug bottom (at switch port 1) -->
-        <rect class="rj45-plug rj45-plug-pp" x="70.5" y="56" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
-        <rect class="rj45-plug rj45-plug-pp" x="71.5" y="56.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+        <!-- RJ45 plug top (inside PP port 1: x=71,y=11,5x5) -->
+        <rect class="rj45-plug rj45-plug-pp" x="71.5" y="11.5" width="4" height="4" rx="0.5" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="72.25" y="12.25" width="2.5" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+        <!-- RJ45 plug bottom (inside switch port 1: x=71,y=58,5x5 absolute) -->
+        <rect class="rj45-plug rj45-plug-pp" x="71.5" y="58.5" width="4" height="4" rx="0.5" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="72.25" y="59.25" width="2.5" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
 
         <!-- Cable 3: port 3 (x=85.5) -->
         <path class="pp-cable pp-cable-3" d="M 85.5 16 C 85.5 30 85.5 44 85.5 58" stroke="#1a5f7f" stroke-width="3" fill="none" stroke-linecap="round"/>
         <path class="pp-cable pp-cable-3" d="M 85.5 16 C 85.5 30 85.5 44 85.5 58" stroke="#7DF9FF" stroke-width="1.8" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 3px rgba(125,249,255,0.8))"/>
-        <rect class="rj45-plug rj45-plug-pp" x="82.5" y="14" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
-        <rect class="rj45-plug rj45-plug-pp" x="83.5" y="14.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
-        <rect class="rj45-plug rj45-plug-pp" x="82.5" y="56" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
-        <rect class="rj45-plug rj45-plug-pp" x="83.5" y="56.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+        <rect class="rj45-plug rj45-plug-pp" x="83.5" y="11.5" width="4" height="4" rx="0.5" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="84.25" y="12.25" width="2.5" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+        <rect class="rj45-plug rj45-plug-pp" x="83.5" y="58.5" width="4" height="4" rx="0.5" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="84.25" y="59.25" width="2.5" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
 
         <!-- Cable 4: port 4 (x=91.5) -->
         <path class="pp-cable pp-cable-4" d="M 91.5 16 C 91.5 30 91.5 44 91.5 58" stroke="#1a5f7f" stroke-width="3" fill="none" stroke-linecap="round"/>
         <path class="pp-cable pp-cable-4" d="M 91.5 16 C 91.5 30 91.5 44 91.5 58" stroke="#7DF9FF" stroke-width="1.8" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 3px rgba(125,249,255,0.8))"/>
-        <rect class="rj45-plug rj45-plug-pp" x="88.5" y="14" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
-        <rect class="rj45-plug rj45-plug-pp" x="89.5" y="14.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
-        <rect class="rj45-plug rj45-plug-pp" x="88.5" y="56" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
-        <rect class="rj45-plug rj45-plug-pp" x="89.5" y="56.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+        <rect class="rj45-plug rj45-plug-pp" x="89.5" y="11.5" width="4" height="4" rx="0.5" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="90.25" y="12.25" width="2.5" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+        <rect class="rj45-plug rj45-plug-pp" x="89.5" y="58.5" width="4" height="4" rx="0.5" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="90.25" y="59.25" width="2.5" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
 
         <!-- Cable 5: port 5 (x=97.5) -->
         <path class="pp-cable pp-cable-5" d="M 97.5 16 C 97.5 30 97.5 44 97.5 58" stroke="#1a5f7f" stroke-width="3" fill="none" stroke-linecap="round"/>
         <path class="pp-cable pp-cable-5" d="M 97.5 16 C 97.5 30 97.5 44 97.5 58" stroke="#7DF9FF" stroke-width="1.8" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 3px rgba(125,249,255,0.8))"/>
-        <rect class="rj45-plug rj45-plug-pp" x="94.5" y="14" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
-        <rect class="rj45-plug rj45-plug-pp" x="95.5" y="14.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
-        <rect class="rj45-plug rj45-plug-pp" x="94.5" y="56" width="6" height="4" rx="0.8" fill="#1a5f7f"/>
-        <rect class="rj45-plug rj45-plug-pp" x="95.5" y="56.5" width="4" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+        <rect class="rj45-plug rj45-plug-pp" x="95.5" y="11.5" width="4" height="4" rx="0.5" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="96.25" y="12.25" width="2.5" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+        <rect class="rj45-plug rj45-plug-pp" x="95.5" y="58.5" width="4" height="4" rx="0.5" fill="#1a5f7f"/>
+        <rect class="rj45-plug rj45-plug-pp" x="96.25" y="59.25" width="2.5" height="2.5" rx="0.3" fill="#7DF9FF" opacity="0.7"/>
+
+        <!-- PP cable data packets (animate along cable path, visible at full connection) -->
+        <circle class="pp-data-pkt pp-data-pkt-1" cx="0" cy="0" r="2.5" fill="#7DF9FF">
+          <animateMotion dur="1.0s" begin="0s" repeatCount="indefinite" path="M 73.5 16 C 73.5 30 73.5 44 73.5 58"/>
+        </circle>
+        <circle class="pp-data-pkt pp-data-pkt-3" cx="0" cy="0" r="2.5" fill="#7DF9FF">
+          <animateMotion dur="1.0s" begin="0.45s" repeatCount="indefinite" path="M 85.5 16 C 85.5 30 85.5 44 85.5 58"/>
+        </circle>
+        <circle class="pp-data-pkt pp-data-pkt-4" cx="0" cy="0" r="2.5" fill="#7DF9FF">
+          <animateMotion dur="1.0s" begin="0.9s" repeatCount="indefinite" path="M 91.5 16 C 91.5 30 91.5 44 91.5 58"/>
+        </circle>
+        <circle class="pp-data-pkt pp-data-pkt-5" cx="0" cy="0" r="2.5" fill="#7DF9FF">
+          <animateMotion dur="1.0s" begin="1.35s" repeatCount="indefinite" path="M 97.5 16 C 97.5 30 97.5 44 97.5 58"/>
+        </circle>
 
         <!-- Shift switch/firewall/modem down 48 SVG units (patch panel occupies top 1U) -->
         <g transform="translate(0,48)">
@@ -404,13 +422,13 @@
           <!-- ── 1G PORT SECTION ── -->
           <text x="95" y="9" font-size="2.8" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">■ 1G ETHERNET ■</text>
           <!-- Ports 1-8 (EXACT POSITIONS PRESERVED) -->
-          <rect class="network-port" x="71" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
-          <rect class="network-port network-port-active" x="77" y="10" width="5" height="5" rx="0.5" fill="none" stroke="white" stroke-width="0.8"/>
-          <rect class="network-port" x="83" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
-          <rect class="network-port" x="89" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
-          <rect class="network-port" x="95" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port sw-port-c1" x="71" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port network-port-active sw-red-1" x="77" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port sw-port-c3" x="83" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port sw-port-c4" x="89" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
+          <rect class="network-port sw-port-c5" x="95" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
           <rect class="network-port" x="101" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
-          <rect class="network-port network-port-active" x="107" y="10" width="5" height="5" rx="0.5" fill="none" stroke="white" stroke-width="0.8"/>
+          <rect class="network-port network-port-active sw-red-2" x="107" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
           <rect class="network-port" x="113" y="10" width="5" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="0.8"/>
           <!-- LEDs 1-8 (EXACT POSITIONS PRESERVED) -->
           <circle class="led-green"  cx="74"  cy="21" r="1" fill="#27c93f"/>
@@ -489,8 +507,12 @@
           <line x1="241" y1="7" x2="241" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
           <line x1="244" y1="7" x2="244" y2="39" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
           <!-- BLUE-NET sticker label -->
-          <rect x="245" y="11" width="35" height="9" rx="2" fill="#0d0500" stroke="#FF4500" stroke-width="0.7"/>
-          <text x="262" y="18" font-size="4.5" fill="#FF4500" font-family="'Share Tech Mono', monospace" font-weight="bold" text-anchor="middle">BLUE-NET</text>
+          <rect x="245" y="11" width="35" height="9" rx="1.5" fill="#0a0300" stroke="#FF4500" stroke-width="0.5" opacity="0.95"/>
+          <rect x="245" y="11" width="35" height="1.2" rx="1" fill="#FF4500" opacity="0.35"/>
+          <rect x="247" y="13" width="1.2" height="5" rx="0.3" fill="#FF4500" opacity="0.85"/>
+          <rect x="249.5" y="14.5" width="1.2" height="3.5" rx="0.3" fill="#FF4500" opacity="0.6"/>
+          <rect x="252" y="15.5" width="1.2" height="2.5" rx="0.3" fill="#FF4500" opacity="0.4"/>
+          <text x="265.5" y="17.5" font-size="3.8" fill="#FF4500" font-family="'Share Tech Mono', monospace" letter-spacing="0.6" text-anchor="middle" opacity="0.95">BLUE-NET</text>
           <!-- PWR LED (EXACT POSITION PRESERVED) -->
           <circle class="led-power" cx="278" cy="27" r="1.5" fill="currentColor"/>
           <text x="266" y="28" font-size="3.5" fill="currentColor" font-family="monospace">PWR</text>
@@ -503,34 +525,34 @@
         <path class="patch-cable patch-cable-1" d="M 79 15 C 73 28 74 48 80 61" stroke="#7a0000" stroke-width="3.5" fill="none" stroke-linecap="round"/>
         <path class="patch-cable patch-cable-1" d="M 79 15 C 73 28 74 48 80 61" stroke="#FF0000" stroke-width="2.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 4px rgba(255,0,0,0.7))"/>
         <path class="patch-cable patch-cable-1" d="M 78.2 15 C 72.2 28 73.2 48 79.2 61" stroke="rgba(255,160,160,0.4)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
-        <!-- RJ45 plug at switch port 2 (cable exits downward) -->
-        <rect class="rj45-plug rj45-plug-patch" x="75.5" y="13.5" width="7" height="3.5" rx="0.8" fill="#7a0000"/>
-        <rect class="rj45-plug rj45-plug-patch" x="76.5" y="14" width="5" height="2.5" rx="0.3" fill="#FF2020" opacity="0.8"/>
-        <!-- RJ45 plug at FW LAN1 (cable arrives from above) -->
-        <rect class="rj45-plug rj45-plug-patch" x="74" y="58.5" width="10" height="4" rx="0.8" fill="#7a0000"/>
-        <rect class="rj45-plug rj45-plug-patch" x="75" y="59" width="8" height="2.5" rx="0.3" fill="#FF2020" opacity="0.8"/>
+        <!-- RJ45 plug inside switch port 2 (x=77,y=10,5x5 in group) -->
+        <rect class="rj45-plug rj45-plug-patch" x="77.5" y="10.5" width="4" height="4" rx="0.5" fill="#7a0000"/>
+        <rect class="rj45-plug rj45-plug-patch" x="78.25" y="11.25" width="2.5" height="2.5" rx="0.3" fill="#FF2020" opacity="0.8"/>
+        <!-- RJ45 plug inside FW LAN1 (x=76,y=61,8x5 in group) -->
+        <rect class="rj45-plug rj45-plug-patch" x="76.5" y="61.5" width="7" height="4" rx="0.5" fill="#7a0000"/>
+        <rect class="rj45-plug rj45-plug-patch" x="77.5" y="62.25" width="5" height="2.5" rx="0.3" fill="#FF2020" opacity="0.8"/>
         <!-- Cable 2: bows slightly right -->
         <path class="patch-cable patch-cable-2" d="M 109 15 C 115 28 116 48 110 61" stroke="#7a0000" stroke-width="3.5" fill="none" stroke-linecap="round"/>
         <path class="patch-cable patch-cable-2" d="M 109 15 C 115 28 116 48 110 61" stroke="#FF0000" stroke-width="2.5" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 4px rgba(255,0,0,0.7))"/>
         <path class="patch-cable patch-cable-2" d="M 109.8 15 C 115.8 28 116.8 48 110.8 61" stroke="rgba(255,160,160,0.4)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
-        <!-- RJ45 plug at switch port 7 -->
-        <rect class="rj45-plug rj45-plug-patch" x="105.5" y="13.5" width="7" height="3.5" rx="0.8" fill="#7a0000"/>
-        <rect class="rj45-plug rj45-plug-patch" x="106.5" y="14" width="5" height="2.5" rx="0.3" fill="#FF2020" opacity="0.8"/>
-        <!-- RJ45 plug at FW LAN2 -->
-        <rect class="rj45-plug rj45-plug-patch" x="104" y="58.5" width="10" height="4" rx="0.8" fill="#7a0000"/>
-        <rect class="rj45-plug rj45-plug-patch" x="105" y="59" width="8" height="2.5" rx="0.3" fill="#FF2020" opacity="0.8"/>
+        <!-- RJ45 plug inside switch port 7 (x=107,y=10,5x5 in group) -->
+        <rect class="rj45-plug rj45-plug-patch" x="107.5" y="10.5" width="4" height="4" rx="0.5" fill="#7a0000"/>
+        <rect class="rj45-plug rj45-plug-patch" x="108.25" y="11.25" width="2.5" height="2.5" rx="0.3" fill="#FF2020" opacity="0.8"/>
+        <!-- RJ45 plug inside FW LAN2 (x=106,y=61,8x5 in group) -->
+        <rect class="rj45-plug rj45-plug-patch" x="106.5" y="61.5" width="7" height="4" rx="0.5" fill="#7a0000"/>
+        <rect class="rj45-plug rj45-plug-patch" x="107.5" y="62.25" width="5" height="2.5" rx="0.3" fill="#FF2020" opacity="0.8"/>
         <!-- Data packets on yellow cables (follow bezier path via animateMotion) -->
-        <circle class="data-pkt-yellow data-pkt-y-down-1" cx="0" cy="0" r="1.5" fill="#FF0000">
-          <animateMotion dur="1.4s" begin="0.5s" repeatCount="indefinite" path="M 79 15 C 73 28 74 48 80 61"/>
+        <circle class="data-pkt-yellow data-pkt-y-down-1" cx="0" cy="0" r="2.5" fill="#FF0000">
+          <animateMotion dur="1.0s" begin="0s"    repeatCount="indefinite" path="M 79 15 C 73 28 74 48 80 61"/>
         </circle>
-        <circle class="data-pkt-yellow data-pkt-y-up-1" cx="0" cy="0" r="1.5" fill="#FF0000">
-          <animateMotion dur="1.4s" begin="1.2s" repeatCount="indefinite" path="M 80 61 C 74 48 73 28 79 15"/>
+        <circle class="data-pkt-yellow data-pkt-y-up-1" cx="0" cy="0" r="2.5" fill="#FF0000">
+          <animateMotion dur="1.0s" begin="0.5s"  repeatCount="indefinite" path="M 80 61 C 74 48 73 28 79 15"/>
         </circle>
-        <circle class="data-pkt-yellow data-pkt-y-down-2" cx="0" cy="0" r="1.5" fill="#FF0000">
-          <animateMotion dur="1.4s" begin="1.0s" repeatCount="indefinite" path="M 109 15 C 115 28 116 48 110 61"/>
+        <circle class="data-pkt-yellow data-pkt-y-down-2" cx="0" cy="0" r="2.5" fill="#FF0000">
+          <animateMotion dur="1.0s" begin="0.25s" repeatCount="indefinite" path="M 109 15 C 115 28 116 48 110 61"/>
         </circle>
-        <circle class="data-pkt-yellow data-pkt-y-up-2" cx="0" cy="0" r="1.5" fill="#FF0000">
-          <animateMotion dur="1.4s" begin="1.7s" repeatCount="indefinite" path="M 110 61 C 116 48 115 28 109 15"/>
+        <circle class="data-pkt-yellow data-pkt-y-up-2" cx="0" cy="0" r="2.5" fill="#FF0000">
+          <animateMotion dur="1.0s" begin="0.75s" repeatCount="indefinite" path="M 110 61 C 116 48 115 28 109 15"/>
         </circle>
 
         <!-- ═══ FIREWALL UNIT ═══ -->
@@ -568,14 +590,14 @@
           <circle cx="69" cy="68" r="1.3" fill="currentColor" opacity="0.15"/>
           <!-- ── LAN PORTS (EXACT POSITIONS PRESERVED) ── -->
           <text x="80" y="60" font-size="2.5" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">LAN</text>
-          <rect class="fw-lan-port" x="76" y="61" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
-          <rect class="fw-lan-port" x="106" y="61" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="fw-lan-port fw-lan-1" x="76" y="61" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="fw-lan-port fw-lan-2" x="106" y="61" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
           <text class="fw-lan-label" x="80"  y="73" font-size="4.5" fill="currentColor" font-family="monospace" opacity="0.7" text-anchor="middle">LAN1</text>
           <text class="fw-lan-label" x="110" y="73" font-size="4.5" fill="currentColor" font-family="monospace" opacity="0.7" text-anchor="middle">LAN2</text>
           <!-- ── WAN PORTS (EXACT POSITIONS PRESERVED) ── -->
           <text x="134" y="60" font-size="2.5" fill="#FF4500" font-family="monospace" opacity="0.7" text-anchor="middle">WAN</text>
-          <rect class="fw-wan-port" x="130" y="61" width="8" height="5" rx="0.5" fill="none" stroke="#FF4500" stroke-width="1"/>
-          <rect class="fw-wan-port" x="162" y="61" width="8" height="5" rx="0.5" fill="none" stroke="#FF4500" stroke-width="1"/>
+          <rect class="fw-wan-port fw-wan-1" x="130" y="61" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="fw-wan-port fw-wan-2" x="162" y="61" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
           <text class="fw-wan-label" x="134" y="73" font-size="4.5" fill="#FF4500" font-family="monospace" opacity="0.9" text-anchor="middle">WAN1</text>
           <text class="fw-wan-label" x="166" y="73" font-size="4.5" fill="#FF4500" font-family="monospace" opacity="0.9" text-anchor="middle">WAN2</text>
           <!-- ── DMZ PORT ── -->
@@ -598,8 +620,12 @@
           <line x1="241" y1="57" x2="241" y2="91" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
           <line x1="244" y1="57" x2="244" y2="91" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
           <!-- BLUE-NET sticker label -->
-          <rect x="245" y="63" width="35" height="9" rx="2" fill="#0d0500" stroke="#FF4500" stroke-width="0.7"/>
-          <text x="262" y="70" font-size="4.5" fill="#FF4500" font-family="'Share Tech Mono', monospace" font-weight="bold" text-anchor="middle">BLUE-NET</text>
+          <rect x="245" y="63" width="35" height="9" rx="1.5" fill="#0a0300" stroke="#FF4500" stroke-width="0.5" opacity="0.95"/>
+          <rect x="245" y="63" width="35" height="1.2" rx="1" fill="#FF4500" opacity="0.35"/>
+          <rect x="247" y="65" width="1.2" height="5" rx="0.3" fill="#FF4500" opacity="0.85"/>
+          <rect x="249.5" y="66.5" width="1.2" height="3.5" rx="0.3" fill="#FF4500" opacity="0.6"/>
+          <rect x="252" y="67.5" width="1.2" height="2.5" rx="0.3" fill="#FF4500" opacity="0.4"/>
+          <text x="265.5" y="69.5" font-size="3.8" fill="#FF4500" font-family="'Share Tech Mono', monospace" letter-spacing="0.6" text-anchor="middle" opacity="0.95">BLUE-NET</text>
           <!-- PWR LED (EXACT POSITION PRESERVED) -->
           <circle class="led-power" cx="278" cy="78" r="1.5" fill="currentColor"/>
           <text x="266" y="79" font-size="3.5" fill="currentColor" font-family="monospace">PWR</text>
@@ -612,19 +638,32 @@
         <!-- Cable 1: FW WAN1 (134,66) → Modem ETH1 (101,103) — fans left -->
         <path class="fw-modem-cable fw-modem-cable-1" d="M 134 66 L 101 103" stroke="#B8860B" stroke-width="3" fill="none" stroke-linecap="round"/>
         <path class="fw-modem-cable fw-modem-cable-1" d="M 134 66 L 101 103" stroke="#FFD700" stroke-width="1.8" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 3px rgba(255,215,0,0.8))"/>
-        <!-- RJ45 plugs for cable 1 -->
-        <rect class="rj45-plug rj45-plug-modem" x="130" y="64.5" width="10" height="3.5" rx="0.8" fill="#B8860B"/>
-        <rect class="rj45-plug rj45-plug-modem" x="131" y="65" width="8" height="2" rx="0.3" fill="#FFD700" opacity="0.8"/>
-        <rect class="rj45-plug rj45-plug-modem" x="97" y="100.5" width="10" height="4" rx="0.8" fill="#B8860B"/>
-        <rect class="rj45-plug rj45-plug-modem" x="98" y="101" width="8" height="2.5" rx="0.3" fill="#FFD700" opacity="0.8"/>
+        <!-- RJ45 plugs for cable 1: inside FW WAN1 (x=130,y=61,8x5) and modem ETH1 (x=97,y=103,8x5) -->
+        <rect class="rj45-plug rj45-plug-modem" x="130.5" y="61.5" width="7" height="4" rx="0.5" fill="#B8860B"/>
+        <rect class="rj45-plug rj45-plug-modem" x="131.5" y="62.25" width="5" height="2.5" rx="0.3" fill="#FFD700" opacity="0.8"/>
+        <rect class="rj45-plug rj45-plug-modem" x="97.5" y="103.5" width="7" height="4" rx="0.5" fill="#B8860B"/>
+        <rect class="rj45-plug rj45-plug-modem" x="98.5" y="104.25" width="5" height="2.5" rx="0.3" fill="#FFD700" opacity="0.8"/>
         <!-- Cable 2: FW WAN2 (166,66) → Modem ETH2 (186,103) — fans right -->
         <path class="fw-modem-cable fw-modem-cable-2" d="M 166 66 L 186 103" stroke="#B8860B" stroke-width="3" fill="none" stroke-linecap="round"/>
         <path class="fw-modem-cable fw-modem-cable-2" d="M 166 66 L 186 103" stroke="#FFD700" stroke-width="1.8" fill="none" stroke-linecap="round" style="filter: drop-shadow(0 0 3px rgba(255,215,0,0.8))"/>
-        <!-- RJ45 plugs for cable 2 -->
-        <rect class="rj45-plug rj45-plug-modem" x="162" y="64.5" width="10" height="3.5" rx="0.8" fill="#B8860B"/>
-        <rect class="rj45-plug rj45-plug-modem" x="163" y="65" width="8" height="2" rx="0.3" fill="#FFD700" opacity="0.8"/>
-        <rect class="rj45-plug rj45-plug-modem" x="182" y="100.5" width="10" height="4" rx="0.8" fill="#B8860B"/>
-        <rect class="rj45-plug rj45-plug-modem" x="183" y="101" width="8" height="2.5" rx="0.3" fill="#FFD700" opacity="0.8"/>
+        <!-- RJ45 plugs for cable 2: inside FW WAN2 (x=162,y=61,8x5) and modem ETH2 (x=182,y=103,8x5) -->
+        <rect class="rj45-plug rj45-plug-modem" x="162.5" y="61.5" width="7" height="4" rx="0.5" fill="#B8860B"/>
+        <rect class="rj45-plug rj45-plug-modem" x="163.5" y="62.25" width="5" height="2.5" rx="0.3" fill="#FFD700" opacity="0.8"/>
+        <rect class="rj45-plug rj45-plug-modem" x="182.5" y="103.5" width="7" height="4" rx="0.5" fill="#B8860B"/>
+        <rect class="rj45-plug rj45-plug-modem" x="183.5" y="104.25" width="5" height="2.5" rx="0.3" fill="#FFD700" opacity="0.8"/>
+        <!-- RJ45 plugs for modem LAN OUT ports (x=130/162, y=103, 8x5) — green fw-cables origin -->
+        <rect class="rj45-plug rj45-plug-fw-lan" x="130.5" y="103.5" width="7" height="4" rx="0.5" fill="#1a5c2a"/>
+        <rect class="rj45-plug rj45-plug-fw-lan" x="131.5" y="104.25" width="5" height="2.5" rx="0.3" fill="#27c93f" opacity="0.8"/>
+        <rect class="rj45-plug rj45-plug-fw-lan" x="162.5" y="103.5" width="7" height="4" rx="0.5" fill="#1a5c2a"/>
+        <rect class="rj45-plug rj45-plug-fw-lan" x="163.5" y="104.25" width="5" height="2.5" rx="0.3" fill="#27c93f" opacity="0.8"/>
+
+        <!-- Yellow cable data packets (FW WAN → Modem ETH, visible at modem-wired) -->
+        <circle class="modem-data-pkt modem-data-pkt-1" cx="0" cy="0" r="2.5" fill="#FFD700">
+          <animateMotion dur="1.0s" begin="0s" repeatCount="indefinite" path="M 134 66 L 101 103"/>
+        </circle>
+        <circle class="modem-data-pkt modem-data-pkt-2" cx="0" cy="0" r="2.5" fill="#FFD700">
+          <animateMotion dur="1.0s" begin="0.9s" repeatCount="indefinite" path="M 166 66 L 186 103"/>
+        </circle>
 
         <!-- ═══ MODEM UNIT (CM-1000) ═══ -->
         <g class="modem-group">
@@ -664,14 +703,14 @@
           <text x="82" y="127" font-size="2.5" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">COAX</text>
           <!-- ── ETH IN PORTS (from firewall green cables) ── -->
           <text x="101" y="102" font-size="2.5" fill="currentColor" font-family="monospace" opacity="0.35" text-anchor="middle">ETH IN</text>
-          <rect class="modem-eth-port" x="97" y="103" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1" opacity="0.7"/>
+          <rect class="modem-eth-port modem-eth-1" x="97" y="103" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
           <text x="101" y="113" font-size="3.5" fill="currentColor" font-family="monospace" opacity="0.6" text-anchor="middle">ETH1</text>
-          <rect class="modem-eth-port" x="182" y="103" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1" opacity="0.7"/>
+          <rect class="modem-eth-port modem-eth-2" x="182" y="103" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
           <text x="186" y="113" font-size="3.5" fill="currentColor" font-family="monospace" opacity="0.6" text-anchor="middle">ETH2</text>
           <!-- ── LAN OUT PORTS (feed red cables to chat/contact boxes) ── -->
           <text x="150" y="102" font-size="2.5" fill="#FF4500" font-family="monospace" opacity="0.8" text-anchor="middle">LAN OUT</text>
-          <rect class="modem-lan-port" x="130" y="103" width="8" height="5" rx="0.5" fill="none" stroke="#27c93f" stroke-width="1"/>
-          <rect class="modem-lan-port" x="162" y="103" width="8" height="5" rx="0.5" fill="none" stroke="#27c93f" stroke-width="1"/>
+          <rect class="modem-lan-port modem-lan-1" x="130" y="103" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="modem-lan-port modem-lan-2" x="162" y="103" width="8" height="5" rx="0.5" fill="none" stroke="currentColor" stroke-width="1"/>
           <text x="134" y="113" font-size="3.5" fill="#FF4500" font-family="monospace" opacity="0.8" text-anchor="middle">LAN1</text>
           <text x="166" y="113" font-size="3.5" fill="#FF4500" font-family="monospace" opacity="0.8" text-anchor="middle">LAN2</text>
           <circle cx="134" cy="124" r="1.2" fill="#FF4500" opacity="0.7"/>
@@ -696,8 +735,12 @@
           <line x1="241" y1="100" x2="241" y2="134" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
           <line x1="244" y1="100" x2="244" y2="134" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
           <!-- BLUE-NET sticker label -->
-          <rect x="245" y="106" width="35" height="9" rx="2" fill="#0d0500" stroke="#FF4500" stroke-width="0.7"/>
-          <text x="262" y="113" font-size="4.5" fill="#FF4500" font-family="'Share Tech Mono', monospace" font-weight="bold" text-anchor="middle">BLUE-NET</text>
+          <rect x="245" y="106" width="35" height="9" rx="1.5" fill="#0a0300" stroke="#FF4500" stroke-width="0.5" opacity="0.95"/>
+          <rect x="245" y="106" width="35" height="1.2" rx="1" fill="#FF4500" opacity="0.35"/>
+          <rect x="247" y="108" width="1.2" height="5" rx="0.3" fill="#FF4500" opacity="0.85"/>
+          <rect x="249.5" y="109.5" width="1.2" height="3.5" rx="0.3" fill="#FF4500" opacity="0.6"/>
+          <rect x="252" y="110.5" width="1.2" height="2.5" rx="0.3" fill="#FF4500" opacity="0.4"/>
+          <text x="265.5" y="112.5" font-size="3.8" fill="#FF4500" font-family="'Share Tech Mono', monospace" letter-spacing="0.6" text-anchor="middle" opacity="0.95">BLUE-NET</text>
           <!-- PWR LED -->
           <circle class="led-power" cx="278" cy="121" r="1.5" fill="currentColor"/>
           <text x="266" y="122" font-size="3.5" fill="currentColor" font-family="monospace">PWR</text>
