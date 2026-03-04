@@ -351,6 +351,11 @@ document.addEventListener('DOMContentLoaded', () => {
     systemCard?.classList.add('active');
   });
 
+  // MESHTASTIC chooser button → navigate to mesh page
+  document.getElementById('chooser-mesh')?.addEventListener('click', () => {
+    window.location.href = '/mesh';
+  });
+
   // ── Admin Profile Form ──────────────────────────────────────────────────
   const apSubmit = document.getElementById('ap-submit');
   if (apSubmit) {

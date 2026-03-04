@@ -462,11 +462,10 @@
 
   <script type="module">
     import { initMatrixRain } from '/js/matrix-rain.js';
-    import { getToken, clearAuth } from '/js/auth.js';
+    import { getToken, getRole, clearAuth } from '/js/auth.js';
 
     // Auth guard — redirect to login if not admin
-    const token = getToken();
-    if (!token || !token.startsWith('admin-')) {
+    if (!getToken() || getRole() !== 'admin') {
       window.location.href = '/login';
     }
 
