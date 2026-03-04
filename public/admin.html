@@ -43,10 +43,42 @@
       </a>
       <span class="admin-label">ADMIN PANEL</span>
     </div>
-    <div class="nav-status">
-      <span class="status-dot"></span> ONLINE
+    <div class="nav-right" style="display:flex;align-items:center;gap:16px;">
+      <div class="nav-status">
+        <span class="status-dot"></span> ONLINE
+      </div>
+      <button id="signout-btn" style="
+        font-family:'Share Tech Mono',monospace;
+        font-size:11px;
+        letter-spacing:1.5px;
+        color:var(--blue-dim);
+        background:none;
+        border:1px solid var(--blue-dark);
+        padding:5px 14px;
+        border-radius:3px;
+        cursor:pointer;
+        transition:color 0.2s,border-color 0.2s,box-shadow 0.2s;
+      ">SIGN OUT</button>
     </div>
   </nav>
+
+  <script type="module">
+    import { clearAuth } from '/js/auth.js';
+    document.getElementById('signout-btn').addEventListener('click', () => {
+      clearAuth();
+      window.location.href = '/login';
+    });
+    document.getElementById('signout-btn').addEventListener('mouseover', function() {
+      this.style.color = 'var(--blue)';
+      this.style.borderColor = 'var(--blue)';
+      this.style.boxShadow = '0 0 8px var(--blue-glow)';
+    });
+    document.getElementById('signout-btn').addEventListener('mouseout', function() {
+      this.style.color = 'var(--blue-dim)';
+      this.style.borderColor = 'var(--blue-dark)';
+      this.style.boxShadow = 'none';
+    });
+  </script>
 
   <!-- Mobile Tab Navigation -->
   <div class="mobile-tabs">

@@ -90,6 +90,11 @@
         <div class="action-title">PAST CHATS</div>
         <div class="action-desc">Review your previous support conversations.</div>
       </div>
+      <div class="action-card" id="card-edit-profile">
+        <div class="action-icon">✏️</div>
+        <div class="action-title">EDIT PROFILE</div>
+        <div class="action-desc">Update your name, email, phone, or password.</div>
+      </div>
     </div>
 
     <!-- Chat panel -->
@@ -188,6 +193,43 @@
     </div>
   </div>
 
+  <!-- Edit Profile Modal -->
+  <div class="modal-overlay" id="modal-edit-profile">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">✏️ EDIT PROFILE</span>
+        <button class="modal-close" data-close="modal-edit-profile">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label class="modal-label">FULL NAME</label>
+          <input class="modal-input" type="text" id="ep-name" placeholder="Full name"/>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">EMAIL</label>
+          <input class="modal-input" type="email" id="ep-email" placeholder="Email address"/>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">PHONE</label>
+          <input class="modal-input" type="tel" id="ep-phone" placeholder="+1 (555) 000-0000"/>
+        </div>
+        <div class="modal-field" style="margin-top:18px;border-top:1px solid var(--blue-dark);padding-top:18px;">
+          <label class="modal-label">CHANGE PASSWORD</label>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">CURRENT PASSWORD</label>
+          <input class="modal-input" type="password" id="ep-current-pw" placeholder="Leave blank to keep unchanged"/>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">NEW PASSWORD</label>
+          <input class="modal-input" type="password" id="ep-new-pw" placeholder="New password"/>
+        </div>
+        <div class="modal-status" id="ep-status"></div>
+        <button class="modal-btn" id="ep-submit">SAVE CHANGES</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initMatrixRain } from '/js/matrix-rain.js';
     import { requireAuth, getUser, getToken, clearAuth, authFetch } from '/js/auth.js';
@@ -244,6 +286,65 @@
     });
 
     // ── Action cards ────────────────────────────────────────────────────────
+    document.getElementById('card-edit-profile').addEventListener('click', () => {
+      const u = getUser();
+      if (u) {
+        document.getElementById('ep-name').value  = u.name  || '';
+        document.getElementById('ep-email').value = u.email || '';
+        document.getElementById('ep-phone').value = u.phone || '';
+      }
+      document.getElementById('ep-current-pw').value = '';
+      document.getElementById('ep-new-pw').value = '';
+      document.getElementById('ep-status').textContent = '';
+      document.getElementById('ep-status').className = 'modal-status';
+      openModal('modal-edit-profile');
+    });
+
+    document.getElementById('ep-submit').addEventListener('click', async () => {
+      const name        = document.getElementById('ep-name').value.trim();
+      const email       = document.getElementById('ep-email').value.trim();
+      const phone       = document.getElementById('ep-phone').value.trim();
+      const currentPassword = document.getElementById('ep-current-pw').value;
+      const newPassword     = document.getElementById('ep-new-pw').value;
+      const statusEl = document.getElementById('ep-status');
+      const btn = document.getElementById('ep-submit');
+
+      btn.disabled = true; btn.textContent = 'SAVING...';
+      statusEl.textContent = ''; statusEl.className = 'modal-status';
+
+      try {
+        const body = { name, email, phone };
+        if (newPassword) { body.currentPassword = currentPassword; body.newPassword = newPassword; }
+
+        const res = await authFetch('/api/auth/profile', { method: 'PUT', body: JSON.stringify(body) });
+        const data = await res.json();
+        if (res.ok) {
+          // Update localStorage with new user data
+          const { saveAuth, getToken, getRole } = await import('/js/auth.js');
+          saveAuth(getToken(), data.user, getRole());
+
+          // Refresh displayed info
+          document.getElementById('info-name').textContent  = data.user.name  || '—';
+          document.getElementById('info-email').textContent = data.user.email || '—';
+          document.getElementById('info-phone').textContent = data.user.phone || '—';
+          const initials = (data.user.name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+          document.getElementById('user-avatar').textContent = initials;
+          document.getElementById('user-displayname').textContent = (data.user.username || data.user.name || '').toUpperCase();
+          document.getElementById('welcome-name').textContent = (data.user.name || data.user.username || '').toUpperCase();
+
+          statusEl.textContent = 'Profile updated!';
+          statusEl.className = 'modal-status success';
+          setTimeout(() => closeModal('modal-edit-profile'), 1500);
+        } else {
+          statusEl.textContent = data.error || 'Update failed.';
+          statusEl.className = 'modal-status error';
+        }
+      } catch {
+        statusEl.textContent = 'Connection error.'; statusEl.className = 'modal-status error';
+      }
+      btn.disabled = false; btn.textContent = 'SAVE CHANGES';
+    });
+
     document.getElementById('card-service').addEventListener('click', () => openModal('modal-service'));
     document.getElementById('card-callback').addEventListener('click', () => {
       const phone = user?.phone || '';

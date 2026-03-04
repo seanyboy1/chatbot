@@ -182,6 +182,38 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
   res.json({ role: 'user', user: { id: u._id, name: u.name, email: u.email, username: u.username, phone: u.phone, createdAt: u.createdAt } });
 });
 
+// ── Auth: Update Profile ─────────────────────────────────────────────────────
+app.put('/api/auth/profile', requireAuth, async (req, res) => {
+  if (req.isAdmin) return res.status(403).json({ error: 'Not allowed for admin.' });
+  const { name, email, phone, currentPassword, newPassword } = req.body;
+  try {
+    await connectDB();
+    const user = req.user;
+
+    if (email && email.toLowerCase() !== user.email) {
+      const exists = await User.findOne({ email: email.toLowerCase(), _id: { $ne: user._id } });
+      if (exists) return res.status(409).json({ error: 'That email is already in use.' });
+      user.email = email.toLowerCase();
+    }
+    if (name) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+
+    if (newPassword) {
+      if (!currentPassword) return res.status(400).json({ error: 'Current password is required.' });
+      const check = hashPassword(currentPassword, user.salt);
+      if (check !== user.passwordHash) return res.status(401).json({ error: 'Current password is incorrect.' });
+      user.salt = crypto.randomBytes(16).toString('hex');
+      user.passwordHash = hashPassword(newPassword, user.salt);
+    }
+
+    await user.save();
+    res.json({ user: { id: user._id, name: user.name, email: user.email, username: user.username, phone: user.phone, createdAt: user.createdAt } });
+  } catch (err) {
+    console.error('Profile update error:', err);
+    res.status(500).json({ error: 'Update failed.' });
+  }
+});
+
 // ── Chats: List sessions ────────────────────────────────────────────────────
 app.get('/api/chats', requireAuth, async (req, res) => {
   if (req.isAdmin) return res.json({ sessions: [] });

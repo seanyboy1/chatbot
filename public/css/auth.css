@@ -449,6 +449,40 @@
   padding: 10px 16px;
 }
 
+#chat-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--blue);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  caret-color: #FF4500;
+}
+
+#chat-input::placeholder {
+  color: #FF4500;
+  opacity: 0.75;
+}
+
+#chat-send {
+  background: transparent;
+  border: 1px solid var(--blue-dark);
+  color: #FF4500;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  padding: 5px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#chat-send:hover {
+  border-color: #FF4500;
+  box-shadow: 0 0 8px rgba(255, 69, 0, 0.4);
+}
+
 /* ── Past chats list ──────────────────────────────────────────────────── */
 .past-chats-list { padding: 0; }
 
