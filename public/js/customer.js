@@ -46,10 +46,12 @@ async function playSplashAnimation() {
   if (rackIcon) initNetworkAnimation(rackIcon);
 
   // Show "ESTABLISHING CONNECTION..." blinking
-  if (preStatus) preStatus.style.opacity = '1';
-  await wait(900);
-  if (preStatus) preStatus.style.opacity = '0';
-  await wait(150);
+  for (let i = 0; i < 4; i++) {
+    if (preStatus) preStatus.style.opacity = '1';
+    await wait(700);
+    if (preStatus) preStatus.style.opacity = '0';
+    await wait(400);
+  }
 
   // 1. Rack rails appear
   rackIcon.querySelector('.rack-rails-group')?.classList.add('show');
