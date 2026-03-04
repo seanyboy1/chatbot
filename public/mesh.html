@@ -661,7 +661,7 @@
         if (!el || attached) return;
         attached = true;
 
-        el.addEventListener('click', (ev) => {
+        el.addEventListener('click', async (ev) => {
           const btn = ev.target.closest('[data-action]');
           if (!btn) return;
           const id     = btn.dataset.id;
@@ -669,7 +669,7 @@
 
           if (action === 'delete') {
             m.closePopup();
-            deleteNode(id);
+            await deleteNode(id);
 
           } else if (action === 'toggle') {
             const idx = nodes.findIndex(x => x.id === id);
