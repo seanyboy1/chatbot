@@ -68,15 +68,6 @@
       </div>
     </div>
 
-    <!-- Service Request Status -->
-    <div class="service-status-section" id="service-status-section" style="display:none;">
-      <div class="service-status-header">
-        <span class="service-status-title">CURRENT REQUESTS</span>
-        <button class="service-status-refresh" id="svc-refresh-btn" title="Refresh">↻</button>
-      </div>
-      <div class="service-status-list" id="svc-status-list"></div>
-    </div>
-
     <!-- Action cards -->
     <div class="profile-actions">
       <div class="action-card" id="card-service">
@@ -104,6 +95,11 @@
         <div class="action-title">EDIT PROFILE</div>
         <div class="action-desc">Update your name, email, phone, or password.</div>
       </div>
+      <div class="action-card" id="card-requests">
+        <div class="action-icon">📋</div>
+        <div class="action-title">MY REQUESTS</div>
+        <div class="action-desc">View status of your service and callback requests.</div>
+      </div>
     </div>
 
     <!-- Chat panel -->
@@ -130,6 +126,18 @@
           <button id="chat-send" class="send-btn">SEND</button>
         </div>
       </div>
+    </div>
+
+    <!-- My Requests panel -->
+    <div class="profile-panel" id="panel-requests">
+      <div class="profile-panel-header">
+        <span class="profile-panel-title">MY REQUESTS</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="service-status-refresh" id="svc-refresh-btn" title="Refresh">↻</button>
+          <button class="profile-panel-close" id="close-requests">✕</button>
+        </div>
+      </div>
+      <div class="service-status-list" id="svc-status-list" style="padding:12px 16px;overflow-y:auto;flex:1;"></div>
     </div>
 
     <!-- Past chats panel -->
@@ -307,6 +315,10 @@
       closePanel('panel-history');
       document.getElementById('card-history').classList.remove('active');
     });
+    document.getElementById('close-requests').addEventListener('click', () => {
+      closePanel('panel-requests');
+      document.getElementById('card-requests').classList.remove('active');
+    });
 
     // ── Action cards ────────────────────────────────────────────────────────
     document.getElementById('card-edit-profile').addEventListener('click', () => {
@@ -385,6 +397,12 @@
       toggleCard('card-history', 'panel-history');
       if (document.getElementById('panel-history').classList.contains('open')) {
         loadChatHistory();
+      }
+    });
+    document.getElementById('card-requests').addEventListener('click', () => {
+      toggleCard('card-requests', 'panel-requests');
+      if (document.getElementById('panel-requests').classList.contains('open')) {
+        loadServiceRequests();
       }
     });
 
@@ -584,19 +602,20 @@
     };
 
     async function loadServiceRequests() {
+      const list = document.getElementById('svc-status-list');
+      if (!list) return;
+      list.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--blue-dark);padding:8px 0;">LOADING...</div>';
+
       try {
         const res = await authFetch('/api/service-requests');
         const data = await res.json();
         const requests = data.requests || [];
-        const section = document.getElementById('service-status-section');
-        const list = document.getElementById('svc-status-list');
 
         if (!requests.length) {
-          section.style.display = 'none';
+          list.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--blue-dark);padding:8px 0;">NO REQUESTS YET</div>';
           return;
         }
 
-        section.style.display = '';
         list.innerHTML = '';
         requests.forEach(r => {
           const sm = statusMeta[r.status] || { label: r.status.toUpperCase(), cls: 'svc-status-pending' };
@@ -615,17 +634,15 @@
           `;
           list.appendChild(item);
         });
-      } catch { /* silently ignore */ }
+      } catch {
+        list.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:#FF4500;padding:8px 0;">FAILED TO LOAD</div>';
+      }
     }
-
-    // Load on page init and after submitting a request
-    loadServiceRequests();
 
     document.getElementById('svc-refresh-btn').addEventListener('click', loadServiceRequests);
 
     // Reload after successful service/callback submit
-    const origSvcSubmit = document.getElementById('svc-submit');
-    origSvcSubmit.addEventListener('click', () => setTimeout(loadServiceRequests, 2000));
+    document.getElementById('svc-submit').addEventListener('click', () => setTimeout(loadServiceRequests, 2000));
     document.getElementById('cb-submit').addEventListener('click', () => setTimeout(loadServiceRequests, 2000));
 
     // ── Chat history ─────────────────────────────────────────────────────────

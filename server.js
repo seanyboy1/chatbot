@@ -420,9 +420,11 @@ app.post('/api/service-request', requireAuth, async (req, res) => {
 
 // ── Get Service Requests for current user ───────────────────────────────────
 app.get('/api/service-requests', requireAuth, async (req, res) => {
+  if (req.isAdmin) return res.json({ requests: [] });
   try {
     await connectDB();
-    const requests = await ServiceRequest.find({ userId: req.user._id }).sort({ createdAt: -1 }).limit(10);
+    const query = { $or: [{ userId: req.user._id }, { email: req.user.email }] };
+    const requests = await ServiceRequest.find(query).sort({ createdAt: -1 }).limit(10);
     res.json({ requests });
   } catch (err) {
     res.status(500).json({ error: 'Failed to load requests.' });
