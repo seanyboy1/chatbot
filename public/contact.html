@@ -118,6 +118,29 @@
       background: rgba(93,173,226,0.05);
     }
 
+    .contact-action-btn {
+      display: inline-block;
+      margin-top: 10px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 2px;
+      color: var(--blue-dim);
+      text-decoration: none;
+      border: 1px solid var(--blue-dark);
+      padding: 8px 20px;
+      border-radius: 2px;
+      cursor: pointer;
+      background: transparent;
+      transition: all 0.2s;
+    }
+
+    .contact-action-btn:hover {
+      color: var(--blue);
+      border-color: var(--blue);
+      box-shadow: 0 0 10px var(--blue-glow);
+      background: rgba(93,173,226,0.05);
+    }
+
     @media (max-width: 480px) {
       .contact-card {
         padding: 32px 24px;
@@ -166,6 +189,7 @@
         <div>
           <div class="contact-row-value">support@bluenet.com</div>
           <div class="contact-row-note">Response within 2 business hours</div>
+          <a class="contact-action-btn" href="mailto:support@bluenet.com">SEND EMAIL</a>
         </div>
       </div>
 
@@ -182,6 +206,7 @@
         <div>
           <div class="contact-row-value">24 / 7 AI CHAT</div>
           <div class="contact-row-note">Instant responses via our AI assistant</div>
+          <a class="contact-action-btn" href="/chat">START CHAT</a>
         </div>
       </div>
 
