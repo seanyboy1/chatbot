@@ -901,7 +901,8 @@ body {
 .activity-card,
 .actions-card,
 .profile-card,
-.customers-card {
+.customers-card,
+.requests-card {
   display: none;
   min-width: 100%;
   width: 100%;
@@ -914,11 +915,13 @@ body {
 .activity-card.active,
 .actions-card.active,
 .profile-card.active,
-.customers-card.active {
+.customers-card.active,
+.requests-card.active {
   display: block;
 }
 
-.customers-card {
+.customers-card,
+.requests-card {
   background: var(--bg-terminal);
   border: 1px solid var(--blue-dark);
   border-radius: 4px;
@@ -927,7 +930,8 @@ body {
   position: relative;
 }
 
-.customers-card h3 {
+.customers-card h3,
+.requests-card h3 {
   color: var(--blue);
   font-size: 11px;
   letter-spacing: 2px;

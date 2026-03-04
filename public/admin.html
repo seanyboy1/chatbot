@@ -88,6 +88,8 @@
     <button class="tab-btn" data-tab="activity">Activity</button>
     <button class="tab-btn" data-tab="profile">Profile</button>
     <button class="tab-btn" data-tab="customers">Customers</button>
+    <button class="tab-btn" data-tab="requests">Requests</button>
+    <button class="tab-btn" data-tab="chat">Chat</button>
   </div>
 
   <!-- Dashboard Grid -->
@@ -171,6 +173,19 @@
             </div>
           </div>
           <div id="customer-chats-section" style="margin-top:16px;"></div>
+        </div>
+      </div>
+
+      <div class="requests-card">
+        <h3>Service Requests</h3>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+          <button class="action-btn req-filter-btn active" data-filter="all"  style="padding:4px 10px;font-size:10px;">ALL</button>
+          <button class="action-btn req-filter-btn"        data-filter="pending"     style="padding:4px 10px;font-size:10px;">PENDING</button>
+          <button class="action-btn req-filter-btn"        data-filter="in_progress" style="padding:4px 10px;font-size:10px;">IN PROGRESS</button>
+          <button class="action-btn req-filter-btn"        data-filter="resolved"    style="padding:4px 10px;font-size:10px;">RESOLVED</button>
+        </div>
+        <div id="requests-list" class="customers-list">
+          <div class="customers-loading">LOADING...</div>
         </div>
       </div>
 

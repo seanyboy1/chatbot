@@ -301,23 +301,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const activityCard = document.querySelector('.activity-card');
   const profileCard = document.querySelector('.profile-card');
   const customersCard = document.querySelector('.customers-card');
+  const requestsCard = document.querySelector('.requests-card');
 
-  const allCards = [systemCard, statsCard, actionsCard, activityCard, profileCard, customersCard];
+  const dashMain = document.querySelector('.dashboard-main');
+  const allCards = [systemCard, statsCard, actionsCard, activityCard, profileCard, customersCard, requestsCard];
 
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       tabBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       allCards.forEach(c => c?.classList.remove('active'));
+      dashMain?.classList.remove('active');
 
       const tab = btn.getAttribute('data-tab');
       if (tab === 'system')     systemCard?.classList.add('active');
       else if (tab === 'statistics') statsCard?.classList.add('active');
       else if (tab === 'actions')    actionsCard?.classList.add('active');
       else if (tab === 'activity')   activityCard?.classList.add('active');
+      else if (tab === 'chat')       dashMain?.classList.add('active');
       else if (tab === 'customers') {
         customersCard?.classList.add('active');
         loadCustomerList();
+      }
+      else if (tab === 'requests') {
+        requestsCard?.classList.add('active');
+        loadServiceRequests();
       }
       else if (tab === 'profile') {
         profileCard?.classList.add('active');
@@ -519,6 +527,95 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('ce-cancel')?.addEventListener('click', () => {
     document.getElementById('customer-edit-form').style.display = 'none';
     document.getElementById('ce-edit-btn').style.display = '';
+  });
+
+  // ── Service Requests Tab ──────────────────────────────────────────────────
+  const typeLabels = { new_install: 'NEW INSTALL', upgrade: 'UPGRADE', support: 'SUPPORT', callback: 'CALLBACK', other: 'OTHER' };
+  const statusOptions = ['pending', 'in_progress', 'resolved', 'cancelled'];
+  const statusColors  = { pending: '#FFD700', in_progress: '#FF8C00', resolved: '#27c93f', cancelled: 'var(--blue-dim)' };
+
+  let allRequests = [];
+  let activeFilter = 'all';
+
+  async function loadServiceRequests() {
+    const listEl = document.getElementById('requests-list');
+    if (!listEl) return;
+    listEl.innerHTML = '<div class="customers-loading">LOADING...</div>';
+
+    try {
+      const res = await adminFetch('/api/admin/service-requests');
+      const data = await res.json();
+      if (!res.ok) { listEl.innerHTML = `<div class="customers-loading">${data.error}</div>`; return; }
+      allRequests = data.requests || [];
+      renderRequests();
+    } catch {
+      listEl.innerHTML = '<div class="customers-loading">CONNECTION ERROR</div>';
+    }
+  }
+
+  function renderRequests() {
+    const listEl = document.getElementById('requests-list');
+    if (!listEl) return;
+
+    const filtered = activeFilter === 'all' ? allRequests : allRequests.filter(r => r.status === activeFilter);
+
+    if (!filtered.length) {
+      listEl.innerHTML = '<div class="customers-loading">NO REQUESTS</div>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    filtered.forEach(r => {
+      const date = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const typeLabel = typeLabels[r.type] || (r.type || '').toUpperCase();
+      const statusColor = statusColors[r.status] || 'var(--blue-dim)';
+
+      const item = document.createElement('div');
+      item.className = 'customer-row';
+      item.style.cssText = 'padding:10px 0;border-bottom:1px solid rgba(93,173,226,0.1);cursor:default;';
+      item.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+          <div>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--blue);background:rgba(93,173,226,0.08);border:1px solid var(--blue-dark);padding:2px 6px;border-radius:2px;">${typeLabel}</span>
+            ${r.name ? `<span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--blue-dim);margin-left:8px;">${escHtml(r.name)}</span>` : ''}
+          </div>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--blue-dark);">${date}</span>
+        </div>
+        ${r.details ? `<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--blue-dim);margin:5px 0 6px;white-space:pre-wrap;word-break:break-word;">${escHtml(r.details)}</div>` : ''}
+        ${r.phone ? `<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--blue-dim);margin-bottom:4px;">📞 ${escHtml(r.phone)}${r.preferredTime ? ' · ' + escHtml(r.preferredTime) : ''}</div>` : ''}
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+          <span style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:${statusColor};">● ${(r.status || 'pending').toUpperCase().replace('_',' ')}</span>
+          <select class="req-status-select" data-id="${r._id}" style="background:transparent;border:1px solid var(--blue-dark);color:var(--blue-dim);font-family:'Share Tech Mono',monospace;font-size:10px;padding:2px 4px;border-radius:2px;cursor:pointer;">
+            ${statusOptions.map(s => `<option value="${s}" ${r.status === s ? 'selected' : ''}>${s.toUpperCase().replace('_',' ')}</option>`).join('')}
+          </select>
+        </div>
+      `;
+      listEl.appendChild(item);
+    });
+
+    // Status change handlers
+    listEl.querySelectorAll('.req-status-select').forEach(sel => {
+      sel.addEventListener('change', async () => {
+        const id = sel.dataset.id;
+        const newStatus = sel.value;
+        try {
+          await adminFetch(`/api/admin/service-requests/${id}`, { method: 'PUT', body: JSON.stringify({ status: newStatus }) });
+          const req = allRequests.find(r => r._id === id);
+          if (req) req.status = newStatus;
+          renderRequests();
+        } catch { /* ignore */ }
+      });
+    });
+  }
+
+  // Filter buttons
+  document.querySelectorAll('.req-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.req-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      renderRequests();
+    });
   });
 
   function escHtml(s) {

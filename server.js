@@ -268,6 +268,32 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
   res.json({ role: 'user', user: { id: u._id, name: u.name, email: u.email, username: u.username, phone: u.phone, createdAt: u.createdAt } });
 });
 
+// ── Admin: All Service Requests ──────────────────────────────────────────────
+app.get('/api/admin/service-requests', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
+  try {
+    await connectDB();
+    const requests = await ServiceRequest.find().sort({ createdAt: -1 }).limit(100);
+    res.json({ requests });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load requests.' });
+  }
+});
+
+// ── Admin: Update Service Request Status ─────────────────────────────────────
+app.put('/api/admin/service-requests/:id', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
+  const { status } = req.body;
+  try {
+    await connectDB();
+    const req_ = await ServiceRequest.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (!req_) return res.status(404).json({ error: 'Request not found.' });
+    res.json({ request: req_ });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update request.' });
+  }
+});
+
 // ── Auth: Update Profile ─────────────────────────────────────────────────────
 app.put('/api/auth/profile', requireAuth, async (req, res) => {
   if (req.isAdmin) return res.status(403).json({ error: 'Not allowed for admin.' });
