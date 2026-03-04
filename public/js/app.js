@@ -325,6 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       else if (tab === 'requests') {
         requestsCard?.classList.add('active');
+        openRequestId = null;
         loadServiceRequests();
       }
       else if (tab === 'profile') {
