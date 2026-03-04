@@ -48,9 +48,9 @@ async function playSplashAnimation() {
   // Show "ESTABLISHING CONNECTION..." blinking several times
   for (let i = 0; i < 5; i++) {
     if (preStatus) preStatus.style.opacity = '1';
-    await wait(900);
+    await wait(1100);
     if (preStatus) preStatus.style.opacity = '0';
-    await wait(500);
+    await wait(800);
   }
 
   // 1. Rack rails appear

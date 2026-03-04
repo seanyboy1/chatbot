@@ -115,7 +115,7 @@
   letter-spacing: 3px;
   text-transform: uppercase;
   opacity: 0;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.6s ease-in-out;
   z-index: 10000;
   text-shadow: 0 0 10px var(--blue-glow);
 }
