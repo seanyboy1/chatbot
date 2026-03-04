@@ -616,8 +616,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const repliedDate = r.repliedAt ? new Date(r.repliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
 
     listEl.innerHTML = `
-      <div style="margin-bottom:14px;">
-        <button id="req-back-btn" style="background:transparent;border:none;color:var(--blue-dim);font-family:'Share Tech Mono',monospace;font-size:11px;cursor:pointer;letter-spacing:1px;padding:0;">← BACK</button>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+        <button id="req-back-btn" style="background:transparent;border:1px solid var(--blue-dark);color:var(--blue-dim);font-family:'Share Tech Mono',monospace;font-size:11px;cursor:pointer;letter-spacing:1px;padding:4px 12px;border-radius:2px;">← BACK</button>
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
         <span style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--blue);background:rgba(93,173,226,0.08);border:1px solid var(--blue-dark);padding:2px 8px;border-radius:2px;">${typeLabel}</span>
