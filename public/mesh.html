@@ -634,52 +634,55 @@
       const m = L.marker([n.lat, n.lon], { icon: makeIcon(n.online !== false) })
         .addTo(map)
         .bindPopup(buildPopupView(n), { maxWidth: 240 });
-
-      m.on('popupopen', (e) => {
-        const el = e.popup.getElement();
-
-        el.addEventListener('click', (ev) => {
-          const btn = ev.target.closest('[data-action]');
-          if (!btn) return;
-          const id     = btn.dataset.id;
-          const action = btn.dataset.action;
-
-          if (action === 'delete') {
-            deleteNode(id);
-            m.closePopup();
-
-          } else if (action === 'toggle') {
-            const idx = nodes.findIndex(x => x.id === id);
-            if (idx !== -1) {
-              nodes[idx].online = !(nodes[idx].online !== false);
-              saveNodes(nodes);
-              render();
-            }
-
-          } else if (action === 'edit') {
-            const node = nodes.find(x => x.id === id);
-            if (node) m.setPopupContent(buildPopupEdit(node));
-
-          } else if (action === 'save-edit') {
-            const idx = nodes.findIndex(x => x.id === id);
-            if (idx !== -1) {
-              const inputs = el.querySelectorAll('[data-field]');
-              inputs.forEach(inp => { nodes[idx][inp.dataset.field] = inp.value.trim(); });
-              saveNodes(nodes);
-              render();
-              // Re-open popup with updated data
-              setTimeout(() => markers[id]?.openPopup(), 50);
-            }
-
-          } else if (action === 'cancel-edit') {
-            const node = nodes.find(x => x.id === id);
-            if (node) m.setPopupContent(buildPopupView(node));
-          }
-        });
-      });
-
       markers[n.id] = m;
     }
+
+    // Single global delegation handler for all popup buttons
+    document.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('[data-action]');
+      if (!btn) return;
+      const id     = btn.dataset.id;
+      const action = btn.dataset.action;
+      const m      = markers[id];
+      if (!m) return;
+
+      if (action === 'delete') {
+        m.closePopup();
+        deleteNode(id);
+
+      } else if (action === 'toggle') {
+        const idx = nodes.findIndex(x => x.id === id);
+        if (idx !== -1) {
+          nodes[idx].online = !(nodes[idx].online !== false);
+          saveNodes(nodes);
+          render();
+          setTimeout(() => markers[id]?.openPopup(), 50);
+        }
+
+      } else if (action === 'edit') {
+        const node = nodes.find(x => x.id === id);
+        if (node) m.setPopupContent(buildPopupEdit(node));
+
+      } else if (action === 'save-edit') {
+        const idx = nodes.findIndex(x => x.id === id);
+        if (idx !== -1) {
+          const popup = m.getPopup();
+          const el    = popup?.getElement();
+          if (el) {
+            el.querySelectorAll('[data-field]').forEach(inp => {
+              nodes[idx][inp.dataset.field] = inp.value.trim();
+            });
+          }
+          saveNodes(nodes);
+          render();
+          setTimeout(() => markers[id]?.openPopup(), 50);
+        }
+
+      } else if (action === 'cancel-edit') {
+        const node = nodes.find(x => x.id === id);
+        if (node) m.setPopupContent(buildPopupView(node));
+      }
+    });
 
     function renderSidebar() {
       const list = document.getElementById('mesh-node-list');
