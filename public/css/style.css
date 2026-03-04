@@ -448,6 +448,34 @@ body {
   }
 }
 
+/* ── Mobile site nav ────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .site-nav {
+    padding: 0 14px;
+    height: 54px;
+  }
+  .site-nav-logo-text {
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+  .site-nav-logo svg {
+    width: 40px;
+    height: 14px;
+  }
+  .site-nav-tabs {
+    gap: 0;
+  }
+  .site-nav-tab {
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 6px 10px;
+  }
+  .site-nav + main,
+  .site-nav ~ main {
+    padding-top: 54px;
+  }
+}
+
 /* ══════════════════════════════════════════════════════════
    DASHBOARD LAYOUT
    ══════════════════════════════════════════════════════════ */

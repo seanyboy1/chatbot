@@ -147,12 +147,19 @@
 
     @media (max-width: 480px) {
       .contact-card {
-        padding: 32px 24px;
+        padding: 28px 18px;
       }
       .contact-title {
-        font-size: 22px;
-        letter-spacing: 4px;
+        font-size: 20px;
+        letter-spacing: 3px;
       }
+      .contact-row {
+        grid-template-columns: 70px 1fr;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+      .contact-row-value { font-size: 13px; }
+      .contact-action-btn { width: 130px; font-size: 11px; }
     }
   </style>
 </head>

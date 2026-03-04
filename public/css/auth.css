@@ -794,9 +794,46 @@
 @media (max-width: 600px) {
   .auth-row-2 { grid-template-columns: 1fr; }
   .auth-card-inner { padding: 0 20px 28px; }
-  .profile-page { padding: 74px 14px 40px; }
-  .profile-topbar { padding: 0 16px; }
+  .profile-page { padding: 68px 12px 32px; }
+  .profile-topbar { padding: 0 14px; height: 54px; }
   .profile-topbar-logo-text { display: none; }
-  .profile-welcome-name { font-size: 20px; }
-  .profile-actions { grid-template-columns: 1fr 1fr; }
+  .profile-welcome-title { font-size: 10px; letter-spacing: 2px; }
+  .profile-welcome-name { font-size: 18px; letter-spacing: 3px; }
+  .profile-info-card { padding: 14px 16px; gap: 10px; flex-wrap: wrap; }
+  .profile-info-field { min-width: 120px; }
+  .profile-info-label { font-size: 9px; }
+  .profile-info-value { font-size: 12px; }
+  .profile-actions { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .action-card { padding: 16px 12px; }
+  .action-icon { font-size: 22px; margin-bottom: 6px; }
+  .action-title { font-size: 10px; letter-spacing: 1.5px; }
+  .action-desc { font-size: 10px; }
+
+  /* Chat panel — full width at bottom on mobile */
+  #panel-chat {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    max-height: 70vh;
+    border-radius: 8px 8px 0 0;
+    z-index: 300;
+  }
+
+  /* Other panels full width */
+  .profile-panel {
+    border-radius: 4px;
+  }
+
+  /* Modals */
+  .modal-card {
+    margin: 0 12px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .profile-actions { grid-template-columns: 1fr; }
+  .profile-welcome-name { font-size: 16px; }
 }
