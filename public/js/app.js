@@ -545,11 +545,18 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await adminFetch('/api/admin/service-requests');
       const data = await res.json();
-      if (!res.ok) { listEl.innerHTML = `<div class="customers-loading">${data.error}</div>`; return; }
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          listEl.innerHTML = '<div class="customers-loading">SESSION EXPIRED — SIGN OUT AND BACK IN</div>';
+        } else {
+          listEl.innerHTML = `<div class="customers-loading">${data.error || 'SERVER ERROR'}</div>`;
+        }
+        return;
+      }
       allRequests = data.requests || [];
       renderRequests();
-    } catch {
-      listEl.innerHTML = '<div class="customers-loading">CONNECTION ERROR</div>';
+    } catch (err) {
+      listEl.innerHTML = `<div class="customers-loading">CONNECTION ERROR: ${err.message}</div>`;
     }
   }
 
