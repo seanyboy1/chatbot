@@ -633,6 +633,35 @@ body {
   border-bottom: none;
 }
 
+.stat-row-link {
+  cursor: pointer;
+  transition: background 0.15s, padding-left 0.15s;
+  border-radius: 2px;
+  padding-left: 4px;
+  padding-right: 18px;
+  margin-left: -4px;
+}
+
+.stat-row-link:hover {
+  background: rgba(93, 173, 226, 0.07);
+  padding-left: 8px;
+}
+
+.stat-row-link::after {
+  content: '›';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--blue-dark);
+  font-size: 14px;
+  transition: color 0.15s;
+}
+
+.stat-row-link:hover::after {
+  color: var(--blue);
+}
+
 .stat-row span:first-child {
   color: rgba(93, 173, 226, 0.6);
 }
@@ -928,7 +957,8 @@ body {
 .stats-card,
 .activity-card,
 .actions-card,
-.profile-card {
+.profile-card,
+.system-chooser-card {
   display: none;
 }
 
@@ -968,8 +998,71 @@ body {
 .actions-card.active,
 .profile-card.active,
 .customers-card.active,
-.requests-card.active {
+.requests-card.active,
+.system-chooser-card.active {
   display: block;
+}
+
+/* System Chooser Card */
+.system-chooser-card {
+  display: none;
+  background: var(--bg-terminal);
+  border: 1px solid var(--blue-dark);
+  border-radius: 4px;
+  padding: 18px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.3);
+}
+
+.system-chooser-card h3 {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--blue-dark);
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+}
+
+.system-chooser-options {
+  display: flex;
+  gap: 12px;
+}
+
+.system-chooser-btn {
+  flex: 1;
+  background: rgba(93,173,226,0.04);
+  border: 1px solid var(--blue-dark);
+  border-radius: 3px;
+  padding: 16px 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.system-chooser-btn:hover {
+  background: rgba(93,173,226,0.1);
+  border-color: var(--blue);
+  box-shadow: 0 0 10px rgba(93,173,226,0.15);
+}
+
+.system-chooser-btn .chooser-icon {
+  font-size: 22px;
+  color: var(--blue);
+  margin-bottom: 8px;
+  text-shadow: 0 0 10px var(--blue-glow);
+}
+
+.system-chooser-btn .chooser-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--blue);
+  margin-bottom: 4px;
+}
+
+.system-chooser-btn .chooser-sub {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--blue-dark);
 }
 
 .customers-card,
@@ -1011,7 +1104,8 @@ body {
 
 .customer-row-name {
   font-size: 13px;
-  color: var(--blue);
+  color: #FF4500;
+  text-shadow: 0 0 8px rgba(255,69,0,0.5);
   letter-spacing: 1px;
   margin-bottom: 3px;
 }

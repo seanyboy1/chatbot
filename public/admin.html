@@ -97,7 +97,24 @@
 
     <!-- Cards Container -->
     <aside class="sidebar-left">
-      <div class="stats-card">
+      <!-- System Sub-Chooser (shown when System tab is clicked) -->
+      <div id="system-chooser-card" class="system-chooser-card">
+        <h3>System</h3>
+        <div class="system-chooser-options">
+          <button class="system-chooser-btn" id="chooser-bluenet">
+            <div class="chooser-icon">◈</div>
+            <div class="chooser-label">BLUE-NET</div>
+            <div class="chooser-sub">Network Status</div>
+          </button>
+          <button class="system-chooser-btn" id="chooser-mesh" onclick="window.location.href='/mesh'">
+            <div class="chooser-icon">⬡</div>
+            <div class="chooser-label">MESHTASTIC</div>
+            <div class="chooser-sub">Radio Nodes</div>
+          </button>
+        </div>
+      </div>
+
+      <div id="system-status-card" class="stats-card">
         <h3>System Status</h3>
         <div class="stat-row">
           <span>Webhook</span>
@@ -111,13 +128,25 @@
 
       <div class="stats-card">
         <h3>Statistics</h3>
-        <div class="stat-row">
+        <div class="stat-row stat-row-link" data-tab-link="chat">
           <span>Messages</span>
           <span class="stat-value" id="message-count">0</span>
         </div>
         <div class="stat-row">
           <span>Avg Response</span>
           <span class="stat-value" id="avg-response">--</span>
+        </div>
+        <div class="stat-row stat-row-link" data-req-filter="pending">
+          <span>Req Pending</span>
+          <span class="stat-value" id="req-pending" style="color:#FFD700;">--</span>
+        </div>
+        <div class="stat-row stat-row-link" data-req-filter="in_progress">
+          <span>Req In Progress</span>
+          <span class="stat-value" id="req-in-progress" style="color:#FF8C00;">--</span>
+        </div>
+        <div class="stat-row stat-row-link" data-req-filter="resolved">
+          <span>Req Resolved</span>
+          <span class="stat-value" id="req-resolved" style="color:#27c93f;">--</span>
         </div>
       </div>
 

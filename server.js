@@ -111,6 +111,10 @@ app.get('/profile', (req, res) => {
   res.sendFile(join(__dirname, 'public', 'profile.html'));
 });
 
+app.get('/mesh', (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'mesh.html'));
+});
+
 // ── Auth: Register ──────────────────────────────────────────────────────────
 app.post('/api/auth/register', async (req, res) => {
   const { name, email, username, phone, password } = req.body;

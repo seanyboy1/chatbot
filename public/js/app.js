@@ -295,7 +295,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabBtns = document.querySelectorAll('.tab-btn');
 
   // Get individual cards
-  const systemCard = document.querySelector('.stats-card:nth-child(1)'); // System Status
+  const systemCard = document.getElementById('system-status-card');     // System Status
+  const systemChooserCard = document.getElementById('system-chooser-card'); // System chooser
   const statsCard = document.querySelector('.stats-card:nth-child(2)');  // Statistics
   const actionsCard = document.querySelector('.actions-card');
   const activityCard = document.querySelector('.activity-card');
@@ -304,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const requestsCard = document.querySelector('.requests-card');
 
   const dashMain = document.querySelector('.dashboard-main');
-  const allCards = [systemCard, statsCard, actionsCard, activityCard, profileCard, customersCard, requestsCard];
+  const allCards = [systemChooserCard, systemCard, statsCard, actionsCard, activityCard, profileCard, customersCard, requestsCard];
 
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -314,8 +315,8 @@ document.addEventListener('DOMContentLoaded', () => {
       dashMain?.classList.remove('active');
 
       const tab = btn.getAttribute('data-tab');
-      if (tab === 'system')     systemCard?.classList.add('active');
-      else if (tab === 'statistics') statsCard?.classList.add('active');
+      if (tab === 'system')     systemChooserCard?.classList.add('active');
+      else if (tab === 'statistics') { statsCard?.classList.add('active'); loadServiceRequests(); }
       else if (tab === 'actions')    actionsCard?.classList.add('active');
       else if (tab === 'activity')   activityCard?.classList.add('active');
       else if (tab === 'chat')       dashMain?.classList.add('active');
@@ -340,8 +341,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Initialize: show system card by default
-  systemCard?.classList.add('active');
+  // Initialize: show system chooser by default
+  systemChooserCard?.classList.add('active');
+
+  // BLUE-NET chooser button → show system status inline
+  document.getElementById('chooser-bluenet')?.addEventListener('click', () => {
+    allCards.forEach(c => c?.classList.remove('active'));
+    dashMain?.classList.remove('active');
+    systemCard?.classList.add('active');
+  });
 
   // ── Admin Profile Form ──────────────────────────────────────────────────
   const apSubmit = document.getElementById('ap-submit');
@@ -532,8 +540,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Service Requests Tab ──────────────────────────────────────────────────
   const typeLabels = { new_install: 'NEW INSTALL', upgrade: 'UPGRADE', support: 'SUPPORT', callback: 'CALLBACK', other: 'OTHER' };
-  const statusOptions = ['pending', 'in_progress', 'resolved', 'cancelled'];
-  const statusColors  = { pending: '#FFD700', in_progress: '#FF8C00', resolved: '#27c93f', cancelled: 'var(--blue-dim)' };
+  const statusOptions = ['pending', 'in_progress', 'on_hold', 'waiting_on_customer', 'resolved', 'cancelled'];
+  const statusLabels  = { pending: 'PENDING', in_progress: 'IN PROGRESS', on_hold: 'ON HOLD', waiting_on_customer: 'WAITING ON CUSTOMER', resolved: 'RESOLVED', cancelled: 'CANCELLED' };
+  const statusColors  = { pending: '#FFD700', in_progress: '#FF8C00', on_hold: '#5D9BDB', waiting_on_customer: '#C97ADB', resolved: '#27c93f', cancelled: 'var(--blue-dim)' };
 
   let allRequests = [];
   let activeFilter = 'all';
@@ -556,6 +565,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       allRequests = data.requests || [];
       renderRequests();
+      // Update request stats in Statistics card
+      const pending    = allRequests.filter(r => r.status === 'pending').length;
+      const inProgress = allRequests.filter(r => r.status === 'in_progress').length;
+      const resolved   = allRequests.filter(r => r.status === 'resolved').length;
+      const elP = document.getElementById('req-pending');
+      const elI = document.getElementById('req-in-progress');
+      const elR = document.getElementById('req-resolved');
+      if (elP) elP.textContent = pending;
+      if (elI) elI.textContent = inProgress;
+      if (elR) elR.textContent = resolved;
     } catch (err) {
       listEl.innerHTML = `<div class="customers-loading">CONNECTION ERROR: ${err.message}</div>`;
     }
@@ -596,10 +615,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--blue);background:rgba(93,173,226,0.08);border:1px solid var(--blue-dark);padding:2px 6px;border-radius:2px;">${typeLabel}</span>
-            ${r.name ? `<span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--blue-dim);">${escHtml(r.name)}</span>` : ''}
+            ${r.name ? `<span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#FF4500;text-shadow:0 0 8px rgba(255,69,0,0.5);">${escHtml(r.name)}</span>` : ''}
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:${statusColor};">● ${(r.status||'pending').toUpperCase().replace('_',' ')}</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:${statusColor};">● ${statusLabels[r.status] || (r.status||'pending').toUpperCase().replace('_',' ')}</span>
             <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--blue-dark);">${date}</span>
             <span style="color:var(--blue-dim);font-size:12px;">›</span>
           </div>
@@ -624,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
     listEl.innerHTML = `
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
         <span style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--blue);background:rgba(93,173,226,0.08);border:1px solid var(--blue-dark);padding:2px 8px;border-radius:2px;">${typeLabel}</span>
-        <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:${statusColor};">● ${(r.status||'pending').toUpperCase().replace('_',' ')}</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:${statusColor};">● ${statusLabels[r.status] || (r.status||'pending').toUpperCase().replace('_',' ')}</span>
         <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--blue-dark);margin-left:auto;">${date}</span>
       </div>
       ${r.name || r.email ? `
@@ -646,7 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div style="margin-bottom:10px;">
         <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--blue-dark);margin-bottom:6px;">STATUS</div>
         <select id="req-detail-status" style="background:var(--bg-terminal);border:1px solid var(--blue-dark);color:var(--blue-dim);font-family:'Share Tech Mono',monospace;font-size:11px;padding:5px 8px;border-radius:2px;width:100%;cursor:pointer;">
-          ${statusOptions.map(s => `<option value="${s}" ${r.status===s?'selected':''}>${s.toUpperCase().replace('_',' ')}</option>`).join('')}
+          ${statusOptions.map(s => `<option value="${s}" ${r.status===s?'selected':''}>${statusLabels[s]}</option>`).join('')}
         </select>
       </div>
       <div style="margin-bottom:10px;">
@@ -660,10 +679,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('req-back-btn').addEventListener('click', () => { openRequestId = null; renderRequests(); });
 
     document.getElementById('req-detail-save').addEventListener('click', async () => {
-      const status = document.getElementById('req-detail-status').value;
+      let status = document.getElementById('req-detail-status').value;
       const adminReply = document.getElementById('req-detail-reply').value.trim();
       const msgEl = document.getElementById('req-detail-msg');
       const btn = document.getElementById('req-detail-save');
+      // Auto-advance to in_progress when a reply is sent and ticket is still pending
+      if (adminReply && status === 'pending') {
+        status = 'in_progress';
+        document.getElementById('req-detail-status').value = 'in_progress';
+      }
       btn.disabled = true; btn.textContent = 'SAVING...';
       try {
         const res = await adminFetch(`/api/admin/service-requests/${r._id}`, {
@@ -683,6 +707,38 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.disabled = false; btn.textContent = 'SAVE & REPLY';
     });
   }
+
+  // Stat rows that link directly to a tab
+  document.querySelectorAll('.stat-row-link[data-tab-link]').forEach(row => {
+    row.addEventListener('click', () => {
+      const tab = row.dataset.tabLink;
+      tabBtns.forEach(b => b.classList.remove('active'));
+      document.querySelector(`.tab-btn[data-tab="${tab}"]`)?.classList.add('active');
+      allCards.forEach(c => c?.classList.remove('active'));
+      dashMain?.classList.remove('active');
+      if (tab === 'chat') dashMain?.classList.add('active');
+    });
+  });
+
+  // Stat rows that link to requests tab with a preset filter
+  document.querySelectorAll('.stat-row-link[data-req-filter]').forEach(row => {
+    row.addEventListener('click', () => {
+      const filter = row.dataset.reqFilter;
+      // Switch to requests tab
+      tabBtns.forEach(b => b.classList.remove('active'));
+      document.querySelector('.tab-btn[data-tab="requests"]')?.classList.add('active');
+      allCards.forEach(c => c?.classList.remove('active'));
+      dashMain?.classList.remove('active');
+      requestsCard?.classList.add('active');
+      // Apply filter then load
+      activeFilter = filter;
+      openRequestId = null;
+      document.querySelectorAll('.req-filter-btn[data-filter]').forEach(b => {
+        b.classList.toggle('active', b.dataset.filter === filter);
+      });
+      loadServiceRequests();
+    });
+  });
 
   // Filter buttons (only those with data-filter, not the back button)
   document.querySelectorAll('.req-filter-btn[data-filter]').forEach(btn => {

@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLUE-NET - MESHTASTIC</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/logo.css">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    /* ── Page Layout ───────────────────────────────────── */
+    body { overflow: hidden; }
+
+    .mesh-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 54px);
+      margin-top: 54px;
+      padding: 16px;
+      gap: 12px;
+      box-sizing: border-box;
+    }
+
+    /* ── Top bar ───────────────────────────────────────── */
+    .mesh-topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .mesh-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--blue-dark);
+      flex: 1;
+    }
+
+    .mesh-stat-chip {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: var(--blue-dim);
+      background: rgba(93,173,226,0.06);
+      border: 1px solid var(--blue-dark);
+      padding: 4px 10px;
+      border-radius: 2px;
+    }
+
+    .mesh-stat-chip span {
+      color: var(--blue);
+    }
+
+    /* ── Main grid ─────────────────────────────────────── */
+    .mesh-grid {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ── Sidebar ───────────────────────────────────────── */
+    .mesh-sidebar {
+      background: var(--bg-terminal);
+      border: 1px solid var(--blue-dark);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .mesh-sidebar-header {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2.5px;
+      color: var(--blue-dark);
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid rgba(93,173,226,0.12);
+    }
+
+    .mesh-node-list {
+      overflow-y: auto;
+      flex: 1;
+      padding: 8px 0;
+    }
+
+    .mesh-node-list::-webkit-scrollbar { width: 4px; }
+    .mesh-node-list::-webkit-scrollbar-track { background: transparent; }
+    .mesh-node-list::-webkit-scrollbar-thumb { background: var(--blue-dark); border-radius: 2px; }
+
+    .mesh-node-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(93,173,226,0.06);
+      transition: background 0.15s;
+    }
+
+    .mesh-node-item:hover {
+      background: rgba(93,173,226,0.07);
+    }
+
+    .mesh-node-item.selected {
+      background: rgba(93,173,226,0.12);
+      border-left: 2px solid var(--blue);
+    }
+
+    .mesh-node-name {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      color: #FF4500;
+      text-shadow: 0 0 8px rgba(255,69,0,0.4);
+      letter-spacing: 1px;
+      margin-bottom: 3px;
+    }
+
+    .mesh-node-meta {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--blue-dark);
+      letter-spacing: 0.5px;
+    }
+
+    .mesh-node-status {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .mesh-node-status.online  { background: #27c93f; box-shadow: 0 0 6px #27c93f; }
+    .mesh-node-status.offline { background: var(--blue-dark); }
+
+    .mesh-no-nodes {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--blue-dark);
+      text-align: center;
+      padding: 24px 14px;
+      letter-spacing: 1px;
+    }
+
+    /* ── Add Node Form ─────────────────────────────────── */
+    .mesh-add-form {
+      border-top: 1px solid rgba(93,173,226,0.12);
+      padding: 12px 14px;
+    }
+
+    .mesh-add-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--blue-dark);
+      margin-bottom: 8px;
+    }
+
+    .mesh-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--blue-dark);
+      color: var(--blue);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      padding: 4px 0;
+      outline: none;
+      letter-spacing: 1px;
+      box-sizing: border-box;
+      margin-bottom: 8px;
+    }
+
+    .mesh-input::placeholder { color: rgba(93,173,226,0.25); }
+
+    .mesh-coords {
+      display: flex;
+      gap: 8px;
+    }
+
+    .mesh-coords .mesh-input { margin-bottom: 0; }
+
+    .mesh-add-btn {
+      width: 100%;
+      margin-top: 10px;
+      background: transparent;
+      border: 1px solid var(--blue-dark);
+      color: var(--blue-dim);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      padding: 7px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mesh-add-btn:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+      box-shadow: 0 0 8px var(--blue-glow);
+    }
+
+    .mesh-form-msg {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      min-height: 14px;
+      margin-top: 6px;
+    }
+
+    /* ── Map Panel ─────────────────────────────────────── */
+    .mesh-map-panel {
+      background: var(--bg-terminal);
+      border: 1px solid var(--blue-dark);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #mesh-map {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Override Leaflet dark theme */
+    .leaflet-container {
+      background: #0a0f1a;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .leaflet-popup-content-wrapper {
+      background: rgba(5,12,26,0.97);
+      border: 1px solid var(--blue-dark);
+      border-radius: 3px;
+      box-shadow: 0 0 20px rgba(93,173,226,0.3);
+      color: var(--blue-dim);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+    }
+
+    .leaflet-popup-tip {
+      background: var(--blue-dark);
+    }
+
+    .leaflet-popup-close-button {
+      color: var(--blue-dark) !important;
+      font-size: 16px !important;
+    }
+
+    .leaflet-control-zoom a {
+      background: rgba(5,12,26,0.9);
+      border-color: var(--blue-dark);
+      color: var(--blue-dim);
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .leaflet-control-zoom a:hover {
+      background: rgba(93,173,226,0.15);
+      color: var(--blue);
+    }
+
+    .leaflet-control-attribution {
+      background: rgba(5,12,26,0.7) !important;
+      color: rgba(93,173,226,0.3) !important;
+      font-size: 9px;
+    }
+
+    .leaflet-control-attribution a { color: rgba(93,173,226,0.4) !important; }
+
+    /* Scan line overlay on map */
+    .mesh-map-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.04) 2px,
+        rgba(0,0,0,0.04) 4px
+      );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* ── Node detail popup ─────────────────────────────── */
+    .mesh-popup-name {
+      font-size: 13px;
+      color: #FF4500;
+      text-shadow: 0 0 8px rgba(255,69,0,0.4);
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .mesh-popup-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 3px;
+    }
+
+    .mesh-popup-label { color: var(--blue-dark); font-size: 9px; letter-spacing: 1.5px; }
+    .mesh-popup-val   { color: var(--blue); font-size: 10px; }
+
+    .mesh-popup-delete {
+      margin-top: 10px;
+      background: transparent;
+      border: 1px solid rgba(255,69,0,0.3);
+      color: rgba(255,69,0,0.6);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      padding: 4px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .mesh-popup-delete:hover {
+      border-color: #FF4500;
+      color: #FF4500;
+      box-shadow: 0 0 6px rgba(255,69,0,0.3);
+    }
+
+    /* ── Map coords tooltip ────────────────────────────── */
+    .mesh-crosshair-tip {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--blue-dark);
+      letter-spacing: 1px;
+      pointer-events: none;
+      z-index: 1001;
+    }
+
+    /* ── Mobile ────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      body { overflow: auto; }
+
+      .mesh-container {
+        height: auto;
+        padding: 12px;
+      }
+
+      .mesh-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 360px;
+      }
+
+      .mesh-sidebar {
+        max-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrix-rain"></canvas>
+
+  <!-- Top Navigation -->
+  <nav class="dashboard-nav">
+    <div class="nav-left">
+      <a href="/admin" class="logo-container">
+        <svg class="logo-icon" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
+          <rect class="network-line" x="2" y="8" width="56" height="14" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <rect class="network-port" x="6" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="network-port" x="10" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="network-port" x="14" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="network-port" x="18" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="network-port" x="22" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="network-port" x="26" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="network-port" x="30" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <rect class="network-port" x="34" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
+          <circle class="led-green" cx="7.5" cy="17" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="11.5" cy="17" r="1" fill="#ffbd2e"/>
+          <circle class="led-green" cx="15.5" cy="17" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="19.5" cy="17" r="1" fill="#ffbd2e"/>
+          <circle class="led-green" cx="23.5" cy="17" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="27.5" cy="17" r="1" fill="#ffbd2e"/>
+          <circle class="led-green" cx="31.5" cy="17" r="1" fill="#27c93f"/>
+          <circle class="led-yellow" cx="35.5" cy="17" r="1" fill="#ffbd2e"/>
+          <circle class="led-power" cx="52" cy="15" r="1.5" fill="currentColor"/>
+        </svg>
+        <span class="logo-text" data-text="BLUE-NET">BLUE-NET</span>
+      </a>
+      <span class="admin-label">MESHTASTIC</span>
+    </div>
+    <div class="nav-right" style="display:flex;align-items:center;gap:16px;">
+      <div class="nav-status">
+        <span class="status-dot status-dot-green"></span> <span style="color:#FF4500;">ONLINE</span>
+      </div>
+      <button id="back-btn" style="
+        font-family:'Share Tech Mono',monospace;
+        font-size:11px;
+        letter-spacing:1.5px;
+        color:var(--blue-dim);
+        background:none;
+        border:1px solid var(--blue-dark);
+        padding:5px 14px;
+        border-radius:3px;
+        cursor:pointer;
+        transition:color 0.2s,border-color 0.2s,box-shadow 0.2s;
+      ">← ADMIN</button>
+      <button id="signout-btn" style="
+        font-family:'Share Tech Mono',monospace;
+        font-size:11px;
+        letter-spacing:1.5px;
+        color:var(--blue-dim);
+        background:none;
+        border:1px solid var(--blue-dark);
+        padding:5px 14px;
+        border-radius:3px;
+        cursor:pointer;
+        transition:color 0.2s,border-color 0.2s,box-shadow 0.2s;
+      ">SIGN OUT</button>
+    </div>
+  </nav>
+
+  <div class="mesh-container">
+    <!-- Top bar -->
+    <div class="mesh-topbar">
+      <div class="mesh-title">MESHTASTIC // RADIO NODE MAP</div>
+      <div class="mesh-stat-chip">NODES: <span id="mesh-node-count">0</span></div>
+      <div class="mesh-stat-chip">ONLINE: <span id="mesh-online-count">0</span></div>
+    </div>
+
+    <!-- Main grid -->
+    <div class="mesh-grid">
+      <!-- Sidebar -->
+      <div class="mesh-sidebar">
+        <div class="mesh-sidebar-header">REGISTERED NODES</div>
+        <div class="mesh-node-list" id="mesh-node-list">
+          <div class="mesh-no-nodes">NO NODES REGISTERED</div>
+        </div>
+        <div class="mesh-add-form">
+          <div class="mesh-add-title">ADD NODE</div>
+          <input class="mesh-input" id="node-name" type="text" placeholder="Node name / callsign" autocomplete="off" spellcheck="false"/>
+          <div class="mesh-coords">
+            <input class="mesh-input" id="node-lat" type="text" placeholder="Latitude" autocomplete="off"/>
+            <input class="mesh-input" id="node-lon" type="text" placeholder="Longitude" autocomplete="off"/>
+          </div>
+          <input class="mesh-input" id="node-desc" type="text" placeholder="Description (optional)" autocomplete="off"/>
+          <button class="mesh-add-btn" id="mesh-add-btn">+ ADD NODE</button>
+          <div class="mesh-form-msg" id="mesh-form-msg"></div>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div class="mesh-map-panel">
+        <div id="mesh-map"></div>
+        <div class="mesh-crosshair-tip" id="mesh-coords-tip">CLICK MAP TO PLACE NODE</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initMatrixRain } from '/js/matrix-rain.js';
+    import { getToken, clearAuth } from '/js/auth.js';
+
+    // Auth guard — redirect to login if not admin
+    const token = getToken();
+    if (!token || !token.startsWith('admin-')) {
+      window.location.href = '/login';
+    }
+
+    // Matrix rain
+    const rain = initMatrixRain('matrix-rain');
+    if (rain) rain.start();
+
+    // Nav buttons
+    document.getElementById('back-btn').addEventListener('click', () => { window.location.href = '/admin'; });
+    document.getElementById('signout-btn').addEventListener('click', () => { clearAuth(); window.location.href = '/login'; });
+
+    // Hover effects for nav buttons
+    ['back-btn', 'signout-btn'].forEach(id => {
+      const btn = document.getElementById(id);
+      btn.addEventListener('mouseover', function() {
+        this.style.color = 'var(--blue)';
+        this.style.borderColor = 'var(--blue)';
+        this.style.boxShadow = '0 0 8px var(--blue-glow)';
+      });
+      btn.addEventListener('mouseout', function() {
+        this.style.color = 'var(--blue-dim)';
+        this.style.borderColor = 'var(--blue-dark)';
+        this.style.boxShadow = 'none';
+      });
+    });
+
+    // ── Node Storage (localStorage) ───────────────────────
+    const STORAGE_KEY = 'mesh_nodes';
+
+    function loadNodes() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+      catch { return []; }
+    }
+
+    function saveNodes(nodes) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nodes));
+    }
+
+    // ── Leaflet Map ───────────────────────────────────────
+  </script>
+  <!-- Leaflet JS (loaded after module to avoid ordering issues) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module">
+    import { getToken } from '/js/auth.js';
+
+    const STORAGE_KEY = 'mesh_nodes';
+    function loadNodes() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+      catch { return []; }
+    }
+    function saveNodes(nodes) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nodes));
+    }
+
+    // Wait for Leaflet to load
+    await new Promise(r => {
+      if (window.L) return r();
+      const check = setInterval(() => { if (window.L) { clearInterval(check); r(); } }, 50);
+    });
+
+    // Initialize map centered on US
+    const map = L.map('mesh-map', {
+      center: [39.5, -98.35],
+      zoom: 4,
+      zoomControl: true,
+    });
+
+    // Dark tile layer (CartoDB Dark Matter)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19,
+    }).addTo(map);
+
+    // Custom node icon
+    function makeIcon(online) {
+      const color = online ? '#27c93f' : 'var(--blue-dark, #1a3a5c)';
+      const glow  = online ? '0 0 10px #27c93f' : 'none';
+      return L.divIcon({
+        className: '',
+        html: `<div style="
+          width:12px;height:12px;
+          border-radius:50%;
+          background:${color};
+          border:2px solid ${online ? '#27c93f' : '#1a3a5c'};
+          box-shadow:${glow},0 0 0 3px rgba(39,201,63,0.15);
+        "></div>`,
+        iconSize: [12, 12],
+        iconAnchor: [6, 6],
+        popupAnchor: [0, -10],
+      });
+    }
+
+    // State
+    let nodes = loadNodes();
+    const markers = {};
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function updateStats() {
+      const online = nodes.filter(n => n.online !== false).length;
+      document.getElementById('mesh-node-count').textContent  = nodes.length;
+      document.getElementById('mesh-online-count').textContent = online;
+    }
+
+    function buildPopup(n) {
+      return `
+        <div class="mesh-popup-name">${escHtml(n.name)}</div>
+        <div class="mesh-popup-row">
+          <span class="mesh-popup-label">LAT</span>
+          <span class="mesh-popup-val">${Number(n.lat).toFixed(5)}</span>
+        </div>
+        <div class="mesh-popup-row">
+          <span class="mesh-popup-label">LON</span>
+          <span class="mesh-popup-val">${Number(n.lon).toFixed(5)}</span>
+        </div>
+        ${n.desc ? `<div class="mesh-popup-row"><span class="mesh-popup-label">INFO</span><span class="mesh-popup-val">${escHtml(n.desc)}</span></div>` : ''}
+        <div class="mesh-popup-row">
+          <span class="mesh-popup-label">STATUS</span>
+          <span class="mesh-popup-val" style="color:${n.online !== false ? '#27c93f' : 'var(--blue-dark)'};">${n.online !== false ? 'ONLINE' : 'OFFLINE'}</span>
+        </div>
+        <button class="mesh-popup-delete" data-id="${escHtml(n.id)}">DELETE NODE</button>
+      `;
+    }
+
+    function addMarker(n) {
+      const m = L.marker([n.lat, n.lon], { icon: makeIcon(n.online !== false) })
+        .addTo(map)
+        .bindPopup(buildPopup(n), { maxWidth: 220 });
+
+      m.on('popupopen', () => {
+        document.querySelector(`.mesh-popup-delete[data-id="${n.id}"]`)
+          ?.addEventListener('click', () => deleteNode(n.id));
+      });
+
+      markers[n.id] = m;
+    }
+
+    function renderSidebar() {
+      const list = document.getElementById('mesh-node-list');
+      if (!nodes.length) {
+        list.innerHTML = '<div class="mesh-no-nodes">NO NODES REGISTERED</div>';
+        return;
+      }
+      list.innerHTML = '';
+      nodes.forEach(n => {
+        const item = document.createElement('div');
+        item.className = 'mesh-node-item';
+        item.dataset.id = n.id;
+        item.innerHTML = `
+          <div class="mesh-node-name">${escHtml(n.name)}</div>
+          <div class="mesh-node-meta">
+            <span class="mesh-node-status ${n.online !== false ? 'online' : 'offline'}"></span>
+            ${Number(n.lat).toFixed(4)}, ${Number(n.lon).toFixed(4)}
+          </div>
+        `;
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.mesh-node-item').forEach(el => el.classList.remove('selected'));
+          item.classList.add('selected');
+          map.flyTo([n.lat, n.lon], 12, { duration: 0.8 });
+          setTimeout(() => markers[n.id]?.openPopup(), 850);
+        });
+        list.appendChild(item);
+      });
+    }
+
+    function render() {
+      // Remove old markers
+      Object.values(markers).forEach(m => map.removeLayer(m));
+      Object.keys(markers).forEach(k => delete markers[k]);
+      // Add current nodes
+      nodes.forEach(n => addMarker(n));
+      renderSidebar();
+      updateStats();
+    }
+
+    function deleteNode(id) {
+      nodes = nodes.filter(n => n.id !== id);
+      saveNodes(nodes);
+      render();
+    }
+
+    // ── Click map to pre-fill coords ──────────────────────
+    let clickedLatLon = null;
+    const tip = document.getElementById('mesh-coords-tip');
+
+    map.on('click', (e) => {
+      clickedLatLon = e.latlng;
+      document.getElementById('node-lat').value = e.latlng.lat.toFixed(5);
+      document.getElementById('node-lon').value = e.latlng.lng.toFixed(5);
+      tip.textContent = `SELECTED: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
+      tip.style.color = 'var(--blue)';
+    });
+
+    // ── Add node form ─────────────────────────────────────
+    document.getElementById('mesh-add-btn').addEventListener('click', () => {
+      const name = document.getElementById('node-name').value.trim();
+      const lat  = parseFloat(document.getElementById('node-lat').value);
+      const lon  = parseFloat(document.getElementById('node-lon').value);
+      const desc = document.getElementById('node-desc').value.trim();
+      const msg  = document.getElementById('mesh-form-msg');
+
+      if (!name) { msg.style.color = '#FF4500'; msg.textContent = 'Node name required.'; return; }
+      if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        msg.style.color = '#FF4500'; msg.textContent = 'Valid coordinates required.'; return;
+      }
+
+      const node = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        name, lat, lon, desc,
+        online: true,
+        addedAt: new Date().toISOString(),
+      };
+
+      nodes.push(node);
+      saveNodes(nodes);
+      render();
+      map.flyTo([lat, lon], 12, { duration: 0.8 });
+      setTimeout(() => markers[node.id]?.openPopup(), 850);
+
+      // Clear form
+      document.getElementById('node-name').value = '';
+      document.getElementById('node-lat').value  = '';
+      document.getElementById('node-lon').value  = '';
+      document.getElementById('node-desc').value = '';
+      clickedLatLon = null;
+      tip.textContent = 'CLICK MAP TO PLACE NODE';
+      tip.style.color = '';
+      msg.style.color = '#27c93f'; msg.textContent = 'Node added.';
+      setTimeout(() => { msg.textContent = ''; }, 2000);
+    });
+
+    // Allow Enter key on inputs to submit
+    ['node-name','node-lat','node-lon','node-desc'].forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('mesh-add-btn').click();
+      });
+    });
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
