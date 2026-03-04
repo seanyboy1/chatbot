@@ -423,6 +423,13 @@
 #panel-chat.open {
   display: flex;
 }
+#panel-chat.minimized .profile-chat-body,
+#panel-chat.minimized .profile-chat-input-area {
+  display: none;
+}
+#panel-chat.minimized {
+  max-height: none;
+}
 
 .profile-panel-header {
   display: flex;
@@ -660,6 +667,111 @@
   background: rgba(93,173,226,0.08);
 }
 .modal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Service Request Status Section ──────────────────────────────────── */
+.service-status-section {
+  background: var(--bg-terminal);
+  border: 1px solid var(--blue-dark);
+  border-radius: 4px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 10px rgba(93,173,226,0.06);
+}
+
+.service-status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.service-status-title {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--blue-dim);
+}
+
+.service-status-refresh {
+  background: transparent;
+  border: none;
+  color: var(--blue-dim);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color 0.2s, transform 0.3s;
+}
+.service-status-refresh:hover {
+  color: var(--blue);
+  transform: rotate(180deg);
+}
+
+.svc-status-item {
+  border-top: 1px solid rgba(93,173,226,0.1);
+  padding: 10px 0;
+}
+.svc-status-item:first-child { border-top: none; }
+
+.svc-status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.svc-type-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--blue);
+  background: rgba(93,173,226,0.08);
+  border: 1px solid var(--blue-dark);
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.svc-status-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  padding: 2px 8px;
+  border-radius: 2px;
+  border: 1px solid;
+}
+.svc-status-pending  { color: #FFD700; border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.06); }
+.svc-status-progress { color: #FF8C00; border-color: rgba(255,140,0,0.3); background: rgba(255,140,0,0.06); }
+.svc-status-resolved { color: #27c93f; border-color: rgba(39,201,63,0.3);  background: rgba(39,201,63,0.06);  }
+.svc-status-cancelled{ color: var(--blue-dim); border-color: var(--blue-dark); background: transparent; }
+
+.svc-date {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--blue-dark);
+  letter-spacing: 1px;
+  margin-left: auto;
+}
+
+.svc-details {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--blue-dim);
+  margin-top: 6px;
+  padding-left: 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 48px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Chat panel minimized state ───────────────────────────────────────── */
+#panel-chat.minimized .profile-chat-body,
+#panel-chat.minimized .profile-chat-input-area {
+  display: none;
+}
+#panel-chat.minimized {
+  max-height: none;
+}
 
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 600px) {

@@ -68,6 +68,15 @@
       </div>
     </div>
 
+    <!-- Service Request Status -->
+    <div class="service-status-section" id="service-status-section" style="display:none;">
+      <div class="service-status-header">
+        <span class="service-status-title">CURRENT REQUESTS</span>
+        <button class="service-status-refresh" id="svc-refresh-btn" title="Refresh">↻</button>
+      </div>
+      <div class="service-status-list" id="svc-status-list"></div>
+    </div>
+
     <!-- Action cards -->
     <div class="profile-actions">
       <div class="action-card" id="card-service">
@@ -101,7 +110,9 @@
     <div class="profile-panel" id="panel-chat">
       <div class="profile-panel-header">
         <div class="terminal-dots" style="gap:5px;">
-          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="dot red"    id="chat-dot-red"   ></span>
+          <span class="dot yellow" id="chat-dot-yellow"></span>
+          <span class="dot green"  id="chat-dot-green" ></span>
         </div>
         <span class="profile-panel-title">AI SUPPORT TERMINAL</span>
         <div style="display:flex;align-items:center;gap:12px;">
@@ -279,6 +290,18 @@
     document.getElementById('close-chat').addEventListener('click', () => {
       closePanel('panel-chat');
       document.getElementById('card-chat').classList.remove('active');
+    });
+
+    // Window control dots
+    document.getElementById('chat-dot-red').addEventListener('click', () => {
+      closePanel('panel-chat');
+      document.getElementById('card-chat').classList.remove('active');
+    });
+    document.getElementById('chat-dot-yellow').addEventListener('click', () => {
+      document.getElementById('panel-chat').classList.toggle('minimized');
+    });
+    document.getElementById('chat-dot-green').addEventListener('click', () => {
+      document.getElementById('panel-chat').classList.remove('minimized');
     });
     document.getElementById('close-history').addEventListener('click', () => {
       closePanel('panel-history');
@@ -543,6 +566,67 @@
     document.getElementById('chat-input').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') sendChatMessage();
     });
+
+    // ── Service request status ───────────────────────────────────────────────
+    const typeLabels = {
+      new_install: 'NEW INSTALL',
+      upgrade:     'UPGRADE',
+      support:     'SUPPORT',
+      callback:    'CALLBACK',
+      other:       'OTHER',
+    };
+    const statusMeta = {
+      pending:     { label: 'PENDING',     cls: 'svc-status-pending'  },
+      in_progress: { label: 'IN PROGRESS', cls: 'svc-status-progress' },
+      resolved:    { label: 'RESOLVED',    cls: 'svc-status-resolved' },
+      completed:   { label: 'COMPLETED',   cls: 'svc-status-resolved' },
+      cancelled:   { label: 'CANCELLED',   cls: 'svc-status-cancelled'},
+    };
+
+    async function loadServiceRequests() {
+      try {
+        const res = await authFetch('/api/service-requests');
+        const data = await res.json();
+        const requests = data.requests || [];
+        const section = document.getElementById('service-status-section');
+        const list = document.getElementById('svc-status-list');
+
+        if (!requests.length) {
+          section.style.display = 'none';
+          return;
+        }
+
+        section.style.display = '';
+        list.innerHTML = '';
+        requests.forEach(r => {
+          const sm = statusMeta[r.status] || { label: r.status.toUpperCase(), cls: 'svc-status-pending' };
+          const date = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          const typeLabel = typeLabels[r.type] || (r.type || 'REQUEST').toUpperCase();
+
+          const item = document.createElement('div');
+          item.className = 'svc-status-item';
+          item.innerHTML = `
+            <div class="svc-status-row">
+              <span class="svc-type-badge">${typeLabel}</span>
+              <span class="svc-status-badge ${sm.cls}">${sm.label}</span>
+              <span class="svc-date">${date}</span>
+            </div>
+            ${r.details ? `<div class="svc-details">${escHtml(r.details)}</div>` : ''}
+          `;
+          list.appendChild(item);
+        });
+      } catch { /* silently ignore */ }
+    }
+
+    // Load on page init and after submitting a request
+    loadServiceRequests();
+
+    document.getElementById('svc-refresh-btn').addEventListener('click', loadServiceRequests);
+
+    // Reload after successful service/callback submit
+    const origSvcSubmit = document.getElementById('svc-submit');
+    origSvcSubmit.addEventListener('click', () => setTimeout(loadServiceRequests, 2000));
+    document.getElementById('cb-submit').addEventListener('click', () => setTimeout(loadServiceRequests, 2000));
 
     // ── Chat history ─────────────────────────────────────────────────────────
     async function loadChatHistory() {

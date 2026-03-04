@@ -392,6 +392,17 @@ app.post('/api/service-request', requireAuth, async (req, res) => {
   }
 });
 
+// ── Get Service Requests for current user ───────────────────────────────────
+app.get('/api/service-requests', requireAuth, async (req, res) => {
+  try {
+    await connectDB();
+    const requests = await ServiceRequest.find({ userId: req.user._id }).sort({ createdAt: -1 }).limit(10);
+    res.json({ requests });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load requests.' });
+  }
+});
+
 // ── Callback Request ────────────────────────────────────────────────────────
 app.post('/api/callback-request', requireAuth, async (req, res) => {
   const { phone, preferredTime, details } = req.body;
