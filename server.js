@@ -22,6 +22,28 @@ if (!N8N_WEBHOOK_URL) {
 
 app.use(express.json());
 
+// ── SMS via Twilio ───────────────────────────────────────────────────────────
+async function sendSMS(body) {
+  const sid  = process.env.TWILIO_ACCOUNT_SID;
+  const auth = process.env.TWILIO_AUTH_TOKEN;
+  const from = process.env.TWILIO_FROM_NUMBER;
+  const to   = process.env.TWILIO_TO_NUMBER;
+  if (!sid || !auth || !from || !to) return; // SMS not configured — skip silently
+  try {
+    const payload = new URLSearchParams({ To: to, From: from, Body: body });
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(`${sid}:${auth}`).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: payload,
+    });
+  } catch (err) {
+    console.error('SMS send error:', err.message);
+  }
+}
+
 // ── Password utilities ──────────────────────────────────────────────────────
 function hashPassword(password, salt) {
   return crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha256').toString('hex');
@@ -424,8 +446,10 @@ app.post('/api/chats/:sessionId/message', requireAuth, async (req, res) => {
     if (!session) return res.status(404).json({ error: 'Session not found.' });
 
     // Auto-title from first message
-    if (session.messages.length === 0) {
+    const isFirstMessage = session.messages.length === 0;
+    if (isFirstMessage) {
       session.title = message.slice(0, 48) + (message.length > 48 ? '…' : '');
+      sendSMS(`BLUE-NET: New chat started\nFrom: ${req.user.name || req.user.username}\n"${message.slice(0, 100)}"`);
     }
 
     session.messages.push({ role: 'user', content: message });
@@ -472,6 +496,7 @@ app.post('/api/service-request', requireAuth, async (req, res) => {
       details,
       phone: user?.phone,
     });
+    sendSMS(`BLUE-NET: New service request\nType: ${type.toUpperCase().replace('_',' ')}\nFrom: ${user?.name || 'Guest'}\n${details.slice(0, 100)}`);
     res.json({ success: true, message: 'Service request submitted successfully.' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to submit request.' });
@@ -507,6 +532,7 @@ app.post('/api/callback-request', requireAuth, async (req, res) => {
       phone,
       preferredTime,
     });
+    sendSMS(`BLUE-NET: Callback request\nFrom: ${user?.name || 'Guest'}\nPhone: ${phone}${preferredTime ? '\nTime: ' + preferredTime : ''}`);
     res.json({ success: true, message: 'Callback request submitted. We will contact you shortly.' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to submit callback request.' });
@@ -704,6 +730,10 @@ app.post('/api/chat', async (req, res) => {
         sessionId: sessionId || 'unknown',
         userType,
       });
+      // SMS on first message from a guest/customer (sessionId absent = new session)
+      if (!sessionId || sessionId === 'unknown') {
+        sendSMS(`BLUE-NET: Guest chat message\nFrom: ${ip}\n"${message.slice(0, 100)}"`);
+      }
 
       // Update session message count
       await Session.findOneAndUpdate(
