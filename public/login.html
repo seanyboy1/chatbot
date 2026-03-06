@@ -148,7 +148,7 @@
       document.getElementById('auth-tagline').textContent = 'MOBILE WELDING SERVICES - CLIENT PORTAL';
     }
     if (isLoggedIn() && mode !== 'customer') {
-      window.location.href = getRole() === 'admin' ? '/dashboard' : '/customer.html';
+      window.location.href = getRole() === 'admin' ? '/dashboard' : '/profile';
     }
 
     const rain = initMatrixRain('matrix-rain');
@@ -207,7 +207,7 @@
           if (data.role === 'admin') {
             window.location.href = '/dashboard';
           } else {
-            window.location.href = mode === 'customer' ? next : '/customer.html';
+            window.location.href = '/profile';
           }
         }, 800);
       } catch {
