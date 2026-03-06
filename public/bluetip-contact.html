@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLUE-TIP - REQUEST SERVICE</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .contact-page {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .contact-card {
+      background: var(--bg-terminal);
+      border: 1px solid var(--blue-dark);
+      border-radius: 4px;
+      padding: 48px 56px;
+      max-width: 560px;
+      width: 100%;
+      box-shadow: 0 0 15px var(--blue-glow), inset 0 0 30px rgba(0,0,0,0.5);
+      position: relative;
+      z-index: 1;
+    }
+
+    .contact-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.1) 2px,
+        rgba(0,0,0,0.1) 4px
+      );
+      pointer-events: none;
+      border-radius: 4px;
+    }
+
+    .contact-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 28px;
+      font-weight: bold;
+      letter-spacing: 6px;
+      color: #FF4500;
+      text-shadow: 0 0 15px rgba(255,69,0,0.4);
+      margin-bottom: 6px;
+    }
+
+    .contact-subtitle {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--blue-dark);
+      margin-bottom: 28px;
+    }
+
+    .contact-divider {
+      border: none;
+      border-top: 1px solid var(--blue-dark);
+      margin-bottom: 28px;
+    }
+
+    .contact-row {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 12px;
+      margin-bottom: 6px;
+      align-items: start;
+    }
+
+    .contact-row-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--blue-dark);
+      padding-top: 3px;
+    }
+
+    .contact-row-value {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 15px;
+      color: var(--blue);
+    }
+
+    .contact-row-note {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--blue-dark);
+      margin-top: 3px;
+    }
+
+    .contact-action-btn {
+      display: inline-block;
+      margin: 10px 0 24px 102px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--blue-dim);
+      text-decoration: none;
+      border: 1px solid var(--blue-dark);
+      padding: 8px 28px;
+      border-radius: 2px;
+      cursor: pointer;
+      background: transparent;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .contact-action-btn:hover {
+      color: #FF4500;
+      border-color: #FF4500;
+      box-shadow: 0 0 10px rgba(255,69,0,0.3);
+    }
+
+    .service-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 18px 0 28px;
+    }
+
+    .service-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: var(--blue-dark);
+      border: 1px solid var(--blue-dark);
+      padding: 4px 12px;
+      border-radius: 2px;
+    }
+
+    @media (max-width: 480px) {
+      .contact-card { padding: 28px 18px; }
+      .contact-title { font-size: 20px; letter-spacing: 3px; }
+      .contact-row { grid-template-columns: 70px 1fr; gap: 10px; margin-bottom: 18px; }
+      .contact-row-value { font-size: 13px; }
+      .contact-action-btn { margin-left: 82px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrix-rain"></canvas>
+
+  <nav class="site-nav">
+    <a href="/bluetip-home" class="site-nav-logo" style="color:#FF4500;">
+      <svg viewBox="0 0 80 36" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:32px;">
+        <path d="M18 10 L38 10 L38 16 L18 16 Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+        <path d="M22 16 L20 28 L27 28 L29 16 Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+        <path d="M23 29.5 Q10 36 4 30 Q-2 24 6 18 Q12 13 18 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M38 11 Q44 8 48 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M38 15 Q44 18 48 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <rect x="48" y="9.5" width="8" height="7" rx="0.8" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M56 11.5 L59 13 L56 14.5 Z" fill="currentColor" opacity="0.75"/>
+        <circle cx="62" cy="13" r="2" fill="#FF4500" opacity="0.95"/>
+        <line x1="62" y1="13" x2="68" y2="7"  stroke="#ffbd2e" stroke-width="1.3" stroke-linecap="round"/>
+        <line x1="62" y1="13" x2="70" y2="12" stroke="#FF4500" stroke-width="1.1" stroke-linecap="round"/>
+        <line x1="62" y1="13" x2="68" y2="19" stroke="#ffbd2e" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span class="site-nav-logo-text" style="color:#FF4500;text-shadow:0 0 8px rgba(255,69,0,0.4);">BLUE-TIP</span>
+    </a>
+    <div class="site-nav-tabs">
+      <a href="/bluetip-home" class="site-nav-tab">HOME</a>
+      <a href="/chat" class="site-nav-tab">CHAT</a>
+      <a href="/bluetip-contact" class="site-nav-tab active">CONTACT</a>
+      <a href="/login?mode=customer&next=/bluetip-home" class="site-nav-tab">CLIENT PORTAL</a>
+    </div>
+  </nav>
+
+  <main class="contact-page">
+    <div class="contact-card">
+      <div class="contact-title">REQUEST SERVICE</div>
+      <div class="contact-subtitle">BLUE-TIP MOBILE WELDING SERVICES</div>
+      <hr class="contact-divider">
+
+      <div class="service-tags">
+        <span class="service-tag">ON-SITE WELDING</span>
+        <span class="service-tag">FABRICATION</span>
+        <span class="service-tag">STRUCTURAL REPAIR</span>
+        <span class="service-tag">CUSTOM METALWORK</span>
+        <span class="service-tag">EMERGENCY REPAIR</span>
+        <span class="service-tag">PIPE WELDING</span>
+      </div>
+
+      <div class="contact-row">
+        <div class="contact-row-label">PHONE</div>
+        <div>
+          <div class="contact-row-value">+1 (555) 123-4567</div>
+          <div class="contact-row-note">Mon – Sat, 7AM – 7PM</div>
+        </div>
+      </div>
+      <a class="contact-action-btn" href="tel:+15551234567">CALL NOW</a>
+
+      <div class="contact-row">
+        <div class="contact-row-label">EMAIL</div>
+        <div>
+          <div class="contact-row-value">jobs@bluetip.com</div>
+          <div class="contact-row-note">Response within 2 business hours</div>
+        </div>
+      </div>
+      <a class="contact-action-btn" href="mailto:jobs@bluetip.com">SEND EMAIL</a>
+
+      <div class="contact-row">
+        <div class="contact-row-label">AI CHAT</div>
+        <div>
+          <div class="contact-row-value">24 / 7 WELDING ASSISTANT</div>
+          <div class="contact-row-note">Get instant quotes and job estimates</div>
+        </div>
+      </div>
+      <a class="contact-action-btn" href="/chat">START CHAT</a>
+
+    </div>
+  </main>
+
+  <script type="module">
+    import { initMatrixRain } from '/js/matrix-rain.js';
+    const rain = initMatrixRain('matrix-rain');
+    if (rain) rain.start();
+  </script>
+</body>
+</html>

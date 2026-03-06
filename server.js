@@ -121,6 +121,10 @@ app.get('/bluetip-home', (req, res) => {
   res.sendFile(join(__dirname, 'public', 'bluetip-home.html'));
 });
 
+app.get('/bluetip-contact', (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'bluetip-contact.html'));
+});
+
 app.get('/home', (req, res) => {
   res.sendFile(join(__dirname, 'public', 'home.html'));
 });

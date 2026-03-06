@@ -109,6 +109,43 @@
     </div>
   </div>
 
-  <script type="module" src="/js/customer.js"></script>
+  <script type="module">
+    import { initMatrixRain } from '/js/matrix-rain.js';
+
+    const rain = initMatrixRain('matrix-rain');
+    if (rain) rain.start();
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const splashOptions = document.getElementById('splash-options');
+      const optionChat    = document.getElementById('option-chat');
+      const optionContact = document.getElementById('option-contact');
+      const signinBtn     = document.getElementById('splash-signin');
+      const preStatus     = document.getElementById('pre-connection-status');
+
+      // Show boxes immediately (no rack animation needed)
+      if (preStatus) preStatus.style.display = 'none';
+      splashOptions?.classList.add('show');
+      optionChat?.classList.add('show', 'cable-connected');
+      optionContact?.classList.add('show', 'cable-connected');
+      signinBtn?.classList.add('visible');
+
+      // Wait for user choice
+      const choice = await new Promise(resolve => {
+        optionChat?.addEventListener('click',    () => resolve('chat'));
+        optionContact?.addEventListener('click', () => resolve('contact'));
+      });
+
+      // Fade out splash then navigate
+      const overlay = document.getElementById('logo-splash');
+      overlay?.classList.add('fade-out');
+      await new Promise(r => setTimeout(r, 600));
+
+      if (choice === 'chat') {
+        window.location.href = '/chat';
+      } else {
+        window.location.href = '/bluetip-contact';
+      }
+    });
+  </script>
 </body>
 </html>
