@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLUE-TIP - Mobile Welding Services</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/customer.css">
+  <link rel="stylesheet" href="/css/logo.css">
+</head>
+<body>
+  <canvas id="matrix-rain"></canvas>
+
+  <!-- Splash Screen -->
+  <div id="logo-splash" class="logo-splash-overlay">
+    <a href="/login" class="splash-signin-btn" id="splash-signin">
+      <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="5" r="2.5"/>
+        <path d="M3 13c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke-linecap="round"/>
+      </svg>
+      CLIENT PORTAL
+    </a>
+
+    <div class="pre-connection-status" id="pre-connection-status">
+      <span class="status-text">ESTABLISHING CONNECTION...</span>
+    </div>
+
+    <div class="splash-logo-container" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:40px 0;">
+      <!-- Welding torch SVG splash logo -->
+      <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" style="width:260px;height:auto;color:var(--blue);">
+        <!-- MIG gun body -->
+        <path d="M55 42 L110 42 L110 58 L55 58 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+        <!-- Pistol grip -->
+        <path d="M65 58 L60 95 L80 95 L85 58 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+        <!-- Grip ridges -->
+        <line x1="67" y1="63" x2="65" y2="73" stroke="currentColor" stroke-width="2" opacity="0.45"/>
+        <line x1="73" y1="63" x2="71" y2="73" stroke="currentColor" stroke-width="2" opacity="0.45"/>
+        <line x1="79" y1="63" x2="77" y2="73" stroke="currentColor" stroke-width="2" opacity="0.45"/>
+        <!-- Trigger -->
+        <path d="M70 58 Q67 68 72 68 Q77 68 74 58" fill="none" stroke="currentColor" stroke-width="2"/>
+        <!-- Cable connector -->
+        <circle cx="69" cy="95" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+        <!-- Looping cable (signature curve) -->
+        <path d="M69 99 Q40 115 20 100 Q2 86 18 65 Q32 46 55 50" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        <!-- Swan neck -->
+        <path d="M110 44 Q128 32 140 38" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
+        <path d="M110 56 Q128 68 140 62" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
+        <!-- Nozzle cup -->
+        <rect x="140" y="37" width="22" height="26" rx="2" fill="none" stroke="currentColor" stroke-width="3"/>
+        <!-- Contact tip -->
+        <path d="M162 43 L170 50 L162 57 Z" fill="currentColor" opacity="0.7"/>
+        <!-- Arc flash starburst -->
+        <circle cx="178" cy="50" r="6" fill="#FF4500" opacity="0.95"/>
+        <circle cx="178" cy="50" r="10" fill="none" stroke="#FF4500" stroke-width="1" opacity="0.3"/>
+        <line x1="178" y1="50" x2="196" y2="30" stroke="#ffbd2e" stroke-width="3" stroke-linecap="round"/>
+        <line x1="178" y1="50" x2="200" y2="48" stroke="#FF4500" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="178" y1="50" x2="196" y2="70" stroke="#ffbd2e" stroke-width="3" stroke-linecap="round"/>
+        <line x1="178" y1="50" x2="198" y2="58" stroke="#FF4500" stroke-width="2" stroke-linecap="round"/>
+        <line x1="178" y1="50" x2="184" y2="26" stroke="#ffbd2e" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="178" y1="50" x2="184" y2="74" stroke="#ffbd2e" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="196" cy="30" r="3" fill="#ffbd2e"/>
+        <circle cx="200" cy="48" r="2.5" fill="#FF4500"/>
+        <circle cx="196" cy="70" r="3" fill="#ffbd2e"/>
+      </svg>
+
+      <!-- Brand name -->
+      <div style="text-align:center;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:32px;letter-spacing:8px;color:var(--blue);text-shadow:0 0 20px var(--blue-glow);">BLUE-TIP</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:4px;color:var(--blue-dark);margin-top:6px;">MOBILE WELDING SERVICES</div>
+      </div>
+
+      <!-- Connection status -->
+      <div class="connection-status">
+        <span class="status-text">ESTABLISHING CONNECTION...</span>
+      </div>
+
+      <!-- Option Boxes -->
+      <div class="splash-options" id="splash-options">
+        <button class="splash-option-box" id="option-chat">
+          <svg class="box-border-data" viewBox="0 0 200 180" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <rect class="border-data-path" x="1" y="1" width="198" height="178" rx="7"/>
+          </svg>
+          <div class="option-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="none" stroke="currentColor" stroke-width="2"/>
+              <line x1="6" y1="9" x2="18" y2="9" stroke="currentColor" stroke-width="2"/>
+              <line x1="6" y1="13" x2="14" y2="13" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="option-label">START CHAT</div>
+          <div class="option-description">Welding AI Assistant</div>
+        </button>
+
+        <button class="splash-option-box" id="option-contact">
+          <svg class="box-border-data" viewBox="0 0 200 180" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <rect class="border-data-path" x="1" y="1" width="198" height="178" rx="7"/>
+          </svg>
+          <div class="option-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M3 7l9 6 9-6" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="option-label">REQUEST JOB</div>
+          <div class="option-description">Book a Welding Service</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/customer.js"></script>
+</body>
+</html>
