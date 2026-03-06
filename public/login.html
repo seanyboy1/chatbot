@@ -148,7 +148,7 @@
       document.getElementById('auth-tagline').textContent = 'MOBILE WELDING SERVICES - CLIENT PORTAL';
     }
     if (isLoggedIn() && mode !== 'customer') {
-      window.location.href = getRole() === 'admin' ? '/dashboard' : '/profile';
+      window.location.href = getRole() === 'admin' ? '/dashboard' : '/customer.html';
     }
 
     const rain = initMatrixRain('matrix-rain');
@@ -204,10 +204,10 @@
         saveAuth(data.token, data.user, data.role);
         setStatus('ACCESS GRANTED — CONNECTING...', 'success');
         setTimeout(() => {
-          if (mode === 'customer') {
-            window.location.href = next;
+          if (data.role === 'admin') {
+            window.location.href = '/dashboard';
           } else {
-            window.location.href = data.role === 'admin' ? '/dashboard' : '/profile';
+            window.location.href = mode === 'customer' ? next : '/customer.html';
           }
         }, 800);
       } catch {
