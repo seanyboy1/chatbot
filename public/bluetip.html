@@ -100,9 +100,9 @@
       </div>
 
       <div id="system-status-card" class="stats-card">
-        <h3>System Status</h3>
+        <h3>Field Status</h3>
         <div class="stat-row">
-          <span>Webhook</span>
+          <span>Dispatch</span>
           <span class="stat-value" id="webhook-status">CONNECTED</span>
         </div>
         <div class="stat-row">
@@ -112,9 +112,9 @@
       </div>
 
       <div class="stats-card">
-        <h3>Statistics</h3>
+        <h3>Job Statistics</h3>
         <div class="stat-row stat-row-link" data-tab-link="chat">
-          <span>Messages</span>
+          <span>Inquiries</span>
           <span class="stat-value" id="message-count">0</span>
         </div>
         <div class="stat-row">
@@ -122,15 +122,15 @@
           <span class="stat-value" id="avg-response">--</span>
         </div>
         <div class="stat-row stat-row-link" data-req-filter="pending">
-          <span>Req Pending</span>
+          <span>Jobs Pending</span>
           <span class="stat-value" id="req-pending" style="color:#FFD700;">--</span>
         </div>
         <div class="stat-row stat-row-link" data-req-filter="in_progress">
-          <span>Req In Progress</span>
+          <span>Jobs Active</span>
           <span class="stat-value" id="req-in-progress" style="color:#FF8C00;">--</span>
         </div>
         <div class="stat-row stat-row-link" data-req-filter="resolved">
-          <span>Req Resolved</span>
+          <span>Jobs Complete</span>
           <span class="stat-value" id="req-resolved" style="color:#27c93f;">--</span>
         </div>
       </div>
@@ -138,20 +138,20 @@
       <div class="actions-card">
         <h3>Quick Actions</h3>
         <button class="action-btn" id="clear-chat">Clear Chat</button>
-        <button class="action-btn" id="export-chat">Export</button>
-        <button class="action-btn" id="test-connection">Test Connection</button>
+        <button class="action-btn" id="export-chat">Export Jobs</button>
+        <button class="action-btn" id="test-connection">Test Dispatch</button>
       </div>
 
       <div class="activity-card">
         <h3>Recent Activity</h3>
         <div id="activity-log" class="activity-list">
-          <div class="activity-item">[System] Dashboard loaded</div>
-          <div class="activity-item">[System] Awaiting user interaction</div>
+          <div class="activity-item">[System] Blue-TIP panel loaded</div>
+          <div class="activity-item">[System] Awaiting work orders</div>
         </div>
       </div>
 
       <div class="customers-card">
-        <h3>Registered Customers</h3>
+        <h3>Clients</h3>
         <div id="customers-list" class="customers-list">
           <div class="customers-loading">LOADING...</div>
         </div>
@@ -191,7 +191,7 @@
       </div>
 
       <div class="requests-card">
-        <h3>Service Requests</h3>
+        <h3>Work Orders</h3>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
           <button class="req-filter-btn active" data-filter="all">ALL</button>
           <button class="req-filter-btn" data-filter="pending">PENDING</button>
@@ -253,10 +253,11 @@
 
         <div class="terminal-body" id="chat-window">
           <div class="boot-sequence" id="boot-sequence">
-            <p>> INITIALIZING SYSTEM...</p>
-            <p>> LOADING NEURAL NETWORK...</p>
-            <p>> ESTABLISHING SECURE CONNECTION...</p>
+            <p>> INITIALIZING BLUE-TIP FIELD SYSTEM...</p>
+            <p>> LOADING WELDING SERVICE PROTOCOLS...</p>
+            <p>> ESTABLISHING DISPATCH CONNECTION...</p>
             <p>> BLUE-TIP ONLINE. MOBILE WELDING SERVICES READY.</p>
+            <p>> SERVICES: ON-SITE WELDING | FABRICATION | REPAIR | STRUCTURAL</p>
             <p class="separator">════════════════════════════════════════════════</p>
           </div>
         </div>
@@ -267,7 +268,7 @@
             <input
               type="text"
               id="user-input"
-              placeholder="ENTER MESSAGE..."
+              placeholder="DESCRIBE YOUR WELDING JOB..."
               autocomplete="off"
               spellcheck="false"
             >
