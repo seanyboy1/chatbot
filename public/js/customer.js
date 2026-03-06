@@ -59,6 +59,20 @@ async function playSplashAnimation() {
   const splashContainer = document.querySelector('.splash-logo-container');
   if (splashContainer) splashContainer.style.visibility = 'hidden';
 
+  // If no rack icon (e.g. Blue-TIP page), skip animation and show options immediately
+  if (!rackIcon) {
+    if (splashContainer) splashContainer.style.visibility = '';
+    if (preStatus) preStatus.classList.remove('blinking');
+    if (splashOptions) splashOptions.classList.add('show');
+    document.getElementById('option-chat')?.classList.add('show', 'cable-connected');
+    document.getElementById('option-contact')?.classList.add('show', 'cable-connected');
+    document.getElementById('splash-signin')?.classList.add('visible');
+    return new Promise((resolve) => {
+      document.getElementById('option-chat')?.addEventListener('click', () => resolve('chat'));
+      document.getElementById('option-contact')?.addEventListener('click', () => resolve('contact'));
+    });
+  }
+
   // Show "ESTABLISHING CONNECTION..." blinking (3 smooth pulses via CSS animation)
   if (preStatus) {
     preStatus.classList.add('blinking');

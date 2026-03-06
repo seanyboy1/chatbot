@@ -136,8 +136,9 @@
     import { initMatrixRain } from '/js/matrix-rain.js';
     import { saveAuth, isLoggedIn, getRole } from '/js/auth.js';
 
-    // Redirect if already logged in
-    if (isLoggedIn()) {
+    // Redirect if already logged in (skip redirect in customer test mode)
+    const mode = new URLSearchParams(window.location.search).get('mode');
+    if (isLoggedIn() && mode !== 'customer') {
       window.location.href = getRole() === 'admin' ? '/dashboard' : '/profile';
     }
 
@@ -194,7 +195,11 @@
         saveAuth(data.token, data.user, data.role);
         setStatus('ACCESS GRANTED — CONNECTING...', 'success');
         setTimeout(() => {
-          window.location.href = data.role === 'admin' ? '/dashboard' : '/profile';
+          if (mode === 'customer') {
+            window.location.href = '/customer.html';
+          } else {
+            window.location.href = data.role === 'admin' ? '/dashboard' : '/profile';
+          }
         }, 800);
       } catch {
         setStatus('Connection error. Try again.', 'error');
