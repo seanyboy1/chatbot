@@ -137,7 +137,9 @@
     import { saveAuth, isLoggedIn, getRole } from '/js/auth.js';
 
     // Redirect if already logged in (skip redirect in customer test mode)
-    const mode = new URLSearchParams(window.location.search).get('mode');
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode');
+    const next = params.get('next') || '/customer.html';
     if (isLoggedIn() && mode !== 'customer') {
       window.location.href = getRole() === 'admin' ? '/dashboard' : '/profile';
     }
@@ -196,7 +198,7 @@
         setStatus('ACCESS GRANTED — CONNECTING...', 'success');
         setTimeout(() => {
           if (mode === 'customer') {
-            window.location.href = '/customer.html';
+            window.location.href = next;
           } else {
             window.location.href = data.role === 'admin' ? '/dashboard' : '/profile';
           }
