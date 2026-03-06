@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADMIN DASHBOARD</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/logo.css">
+  <style>
+    .dash-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dash-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 24px;
+      border-bottom: 1px solid var(--blue-dark);
+      background: rgba(10,10,10,0.92);
+      position: relative;
+      z-index: 2;
+    }
+
+    .dash-nav-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 3px;
+      color: var(--blue-dim);
+    }
+
+    .dash-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dash-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .dash-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 28px;
+      letter-spacing: 6px;
+      color: #FF4500;
+      text-shadow: 0 0 20px rgba(255,69,0,0.6), 0 0 40px rgba(255,69,0,0.2);
+      margin-bottom: 8px;
+    }
+
+    .dash-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--blue-dark);
+    }
+
+    .dash-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 860px;
+      width: 100%;
+    }
+
+    @media (max-width: 700px) {
+      .dash-grid {
+        grid-template-columns: 1fr;
+        max-width: 360px;
+      }
+    }
+
+    .dash-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 36px 24px;
+      background: rgba(13,13,13,0.95);
+      border: 1px solid var(--blue-dark);
+      border-radius: 6px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dash-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,69,0,0.03) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .dash-card:hover {
+      border-color: #FF4500;
+      box-shadow: 0 0 20px rgba(255,69,0,0.2), 0 0 40px rgba(255,69,0,0.05);
+      transform: translateY(-2px);
+    }
+
+    .dash-card-icon {
+      font-size: 36px;
+      margin-bottom: 16px;
+      color: #FF4500;
+      text-shadow: 0 0 12px rgba(255,69,0,0.5);
+    }
+
+    .dash-card-name {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 18px;
+      letter-spacing: 4px;
+      color: #FF4500;
+      text-shadow: 0 0 10px rgba(255,69,0,0.4);
+      margin-bottom: 8px;
+    }
+
+    .dash-card-desc {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--blue-dark);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .dash-card-arrow {
+      margin-top: 16px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--blue-dark);
+      transition: color 0.2s;
+    }
+
+    .dash-card:hover .dash-card-arrow {
+      color: #FF4500;
+    }
+
+    .signout-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      color: var(--blue-dim);
+      background: none;
+      border: 1px solid var(--blue-dark);
+      padding: 5px 14px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .signout-btn:hover {
+      color: var(--blue);
+      border-color: var(--blue);
+      box-shadow: 0 0 8px var(--blue-glow);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrix-rain"></canvas>
+
+  <div class="dash-page">
+    <!-- Nav -->
+    <nav class="dash-nav">
+      <div class="dash-nav-title">ADMIN DASHBOARD</div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;display:flex;align-items:center;gap:6px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:#27c93f;box-shadow:0 0 6px #27c93f;display:inline-block;"></span>
+          <span style="color:#FF4500;">ONLINE</span>
+        </div>
+        <button class="signout-btn" id="signout-btn">SIGN OUT</button>
+      </div>
+    </nav>
+
+    <!-- Body -->
+    <div class="dash-body">
+      <div class="dash-header">
+        <div class="dash-title">CONTROL HUB</div>
+        <div class="dash-sub">SELECT A SYSTEM TO MANAGE</div>
+      </div>
+
+      <div class="dash-grid">
+        <!-- Blue-NET -->
+        <a href="/admin" class="dash-card">
+          <div class="dash-card-icon">◈</div>
+          <div class="dash-card-name">BLUE-NET</div>
+          <div class="dash-card-desc">NETWORK SERVICES<br>FIBER & INTERNET SOLUTIONS</div>
+          <div class="dash-card-arrow">ENTER →</div>
+        </a>
+
+        <!-- Blue-TIP -->
+        <a href="/bluetip" class="dash-card">
+          <div class="dash-card-icon">⚡</div>
+          <div class="dash-card-name">BLUE-TIP</div>
+          <div class="dash-card-desc">MOBILE WELDING<br>FIELD & FABRICATION SERVICES</div>
+          <div class="dash-card-arrow">ENTER →</div>
+        </a>
+
+        <!-- Meshtastic -->
+        <a href="/mesh" class="dash-card">
+          <div class="dash-card-icon">⬡</div>
+          <div class="dash-card-name">MESHTASTIC</div>
+          <div class="dash-card-desc">RADIO MESH NETWORK<br>NODE MANAGEMENT</div>
+          <div class="dash-card-arrow">ENTER →</div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initMatrixRain } from '/js/matrix-rain.js';
+    import { isLoggedIn, getRole, clearAuth } from '/js/auth.js';
+
+    // Auth guard
+    if (!isLoggedIn() || getRole() !== 'admin') {
+      window.location.href = '/';
+    }
+
+    const rain = initMatrixRain('matrix-rain');
+    if (rain) rain.start();
+
+    document.getElementById('signout-btn').addEventListener('click', () => {
+      clearAuth();
+      window.location.href = '/';
+    });
+  </script>
+</body>
+</html>

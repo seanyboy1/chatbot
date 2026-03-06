@@ -106,7 +106,15 @@ app.use(async (req, res, next) => {
 
 // Page routes (before static middleware)
 app.get('/', (req, res) => {
-  res.sendFile(join(__dirname, 'public', 'customer.html'));
+  res.sendFile(join(__dirname, 'public', 'restricted.html'));
+});
+
+app.get('/dashboard', (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'dashboard.html'));
+});
+
+app.get('/bluetip', (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'bluetip.html'));
 });
 
 app.get('/home', (req, res) => {

@@ -138,7 +138,7 @@
 
     // Redirect if already logged in
     if (isLoggedIn()) {
-      window.location.href = getRole() === 'admin' ? '/admin' : '/profile';
+      window.location.href = getRole() === 'admin' ? '/dashboard' : '/profile';
     }
 
     const rain = initMatrixRain('matrix-rain');
@@ -194,7 +194,7 @@
         saveAuth(data.token, data.user, data.role);
         setStatus('ACCESS GRANTED — CONNECTING...', 'success');
         setTimeout(() => {
-          window.location.href = data.role === 'admin' ? '/admin' : '/profile';
+          window.location.href = data.role === 'admin' ? '/dashboard' : '/profile';
         }, 800);
       } catch {
         setStatus('Connection error. Try again.', 'error');

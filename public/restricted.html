@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RESTRICTED ACCESS - ADMIN ONLY</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/auth.css">
+  <style>
+    .restricted-banner {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .restricted-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 22px;
+      letter-spacing: 4px;
+      color: #FF4500;
+      text-shadow: 0 0 16px rgba(255,69,0,0.7), 0 0 32px rgba(255,69,0,0.3);
+      display: block;
+      margin-bottom: 4px;
+    }
+    .restricted-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: #8b1a00;
+    }
+    .restricted-warn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: #8b1a00;
+      text-align: center;
+      margin-top: 14px;
+      padding: 8px;
+      border: 1px solid #3a0a00;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrix-rain"></canvas>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <!-- Terminal header -->
+      <div class="auth-header">
+        <div class="terminal-dots">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+        </div>
+        <div class="auth-badge" style="color:#FF4500;border-color:#8b1a00;">RESTRICTED ACCESS</div>
+        <div class="terminal-status">
+          <span class="status-indicator" style="background:#FF4500;box-shadow:0 0 6px #FF4500;"></span>
+          <span style="color:#FF4500;">SECURED</span>
+        </div>
+      </div>
+
+      <div class="auth-card-inner">
+        <!-- Banner -->
+        <div class="restricted-banner">
+          <span class="restricted-title">⚠ RESTRICTED ⚠</span>
+          <span class="restricted-sub">ADMIN ACCESS ONLY</span>
+        </div>
+
+        <!-- Status -->
+        <div class="auth-status" id="auth-status"></div>
+
+        <!-- Login Form -->
+        <form class="auth-form" id="form-login" autocomplete="on">
+          <div class="auth-field">
+            <label class="auth-label">USERNAME OR EMAIL</label>
+            <div class="auth-input-row">
+              <span class="prompt-symbol" style="color:#FF4500;">›</span>
+              <input class="auth-input" type="text" id="login-id" placeholder="admin identifier" autocomplete="username" spellcheck="false"/>
+            </div>
+          </div>
+          <div class="auth-field">
+            <label class="auth-label">PASSWORD</label>
+            <div class="auth-input-row">
+              <span class="prompt-symbol" style="color:#FF4500;">›</span>
+              <input class="auth-input" type="password" id="login-pass" placeholder="admin password" autocomplete="current-password"/>
+            </div>
+          </div>
+          <button type="submit" class="auth-btn" id="login-btn" style="background:linear-gradient(135deg,#8b1a00,#FF4500);border-color:#FF4500;color:#fff;">AUTHENTICATE</button>
+        </form>
+
+        <div class="restricted-warn">
+          ⚠ UNAUTHORIZED ACCESS IS PROHIBITED AND MONITORED ⚠
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initMatrixRain } from '/js/matrix-rain.js';
+    import { saveAuth, isLoggedIn, getRole } from '/js/auth.js';
+
+    // Redirect if already logged in as admin
+    if (isLoggedIn()) {
+      window.location.href = getRole() === 'admin' ? '/dashboard' : '/home';
+    }
+
+    const rain = initMatrixRain('matrix-rain');
+    if (rain) rain.start();
+
+    const statusEl = document.getElementById('auth-status');
+    function setStatus(msg, type) {
+      statusEl.textContent = msg;
+      statusEl.className = 'auth-status' + (type ? ' ' + type : '');
+    }
+
+    // Login
+    const formLogin = document.getElementById('form-login');
+    formLogin.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const identifier = document.getElementById('login-id').value.trim();
+      const password   = document.getElementById('login-pass').value;
+      const btn = document.getElementById('login-btn');
+      if (!identifier || !password) return setStatus('All fields required.', 'error');
+
+      btn.disabled = true;
+      btn.textContent = 'AUTHENTICATING...';
+      setStatus('', '');
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setStatus(data.error || 'Access denied.', 'error');
+          btn.disabled = false;
+          btn.textContent = 'AUTHENTICATE';
+          return;
+        }
+        if (data.role !== 'admin') {
+          setStatus('ACCESS DENIED — ADMIN CREDENTIALS REQUIRED.', 'error');
+          btn.disabled = false;
+          btn.textContent = 'AUTHENTICATE';
+          return;
+        }
+        saveAuth(data.token, data.user, data.role);
+        setStatus('ACCESS GRANTED — LOADING DASHBOARD...', 'success');
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 800);
+      } catch {
+        setStatus('Connection error. Try again.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'AUTHENTICATE';
+      }
+    });
+  </script>
+</body>
+</html>

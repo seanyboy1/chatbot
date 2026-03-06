@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BLUE-NET - ADMIN PANEL</title>
+  <title>BLUE-TIP - ADMIN PANEL</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/logo.css">
@@ -14,32 +14,17 @@
   <!-- Top Navigation -->
   <nav class="dashboard-nav">
     <div class="nav-left">
-      <a href="/" class="logo-container">
+      <a href="/dashboard" class="logo-container">
         <svg class="logo-icon" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
-          <!-- Switch Body -->
-          <rect class="network-line" x="2" y="8" width="56" height="14" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          <!-- Ports -->
-          <rect class="network-port" x="6" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
-          <rect class="network-port" x="10" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
-          <rect class="network-port" x="14" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
-          <rect class="network-port" x="18" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
-          <rect class="network-port" x="22" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
-          <rect class="network-port" x="26" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
-          <rect class="network-port" x="30" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
-          <rect class="network-port" x="34" y="11" width="3" height="3" rx="0.3" fill="none" stroke="currentColor" stroke-width="1"/>
-          <!-- LEDs -->
-          <circle class="led-green" cx="7.5" cy="17" r="1" fill="#27c93f"/>
-          <circle class="led-yellow" cx="11.5" cy="17" r="1" fill="#ffbd2e"/>
-          <circle class="led-green" cx="15.5" cy="17" r="1" fill="#27c93f"/>
-          <circle class="led-yellow" cx="19.5" cy="17" r="1" fill="#ffbd2e"/>
-          <circle class="led-green" cx="23.5" cy="17" r="1" fill="#27c93f"/>
-          <circle class="led-yellow" cx="27.5" cy="17" r="1" fill="#ffbd2e"/>
-          <circle class="led-green" cx="31.5" cy="17" r="1" fill="#27c93f"/>
-          <circle class="led-yellow" cx="35.5" cy="17" r="1" fill="#ffbd2e"/>
-          <!-- Power LED -->
-          <circle class="led-power" cx="52" cy="15" r="1.5" fill="currentColor"/>
+          <!-- Flame / Torch icon -->
+          <ellipse cx="30" cy="22" rx="10" ry="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M24 22 Q26 12 30 8 Q34 12 36 22" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <ellipse cx="30" cy="10" rx="4" ry="3" fill="none" stroke="#FF4500" stroke-width="1" opacity="0.7"/>
+          <circle cx="30" cy="22" r="1.5" fill="#FF4500"/>
+          <circle cx="24" cy="22" r="1" fill="#ffbd2e"/>
+          <circle cx="36" cy="22" r="1" fill="#ffbd2e"/>
         </svg>
-        <span class="logo-text" data-text="BLUE-NET">BLUE-NET</span>
+        <span class="logo-text" data-text="BLUE-TIP" style="color:#FF4500;text-shadow:0 0 10px rgba(255,69,0,0.5);">BLUE-TIP</span>
       </a>
       <span class="admin-label">ADMIN PANEL</span>
     </div>
@@ -97,19 +82,19 @@
 
     <!-- Cards Container -->
     <aside class="sidebar-left">
-      <!-- System Sub-Chooser (shown when System tab is clicked) -->
+      <!-- System Sub-Chooser -->
       <div id="system-chooser-card" class="system-chooser-card">
         <h3>System</h3>
         <div class="system-chooser-options">
           <button class="system-chooser-btn" id="chooser-bluenet">
-            <div class="chooser-icon">◈</div>
-            <div class="chooser-label">BLUE-NET</div>
-            <div class="chooser-sub">Network Status</div>
+            <div class="chooser-icon" style="color:#FF4500;">⚡</div>
+            <div class="chooser-label">BLUE-TIP</div>
+            <div class="chooser-sub">Service Status</div>
           </button>
-          <a href="/mesh" class="system-chooser-btn" id="chooser-mesh" style="text-decoration:none;display:block;">
-            <div class="chooser-icon">⬡</div>
-            <div class="chooser-label">MESHTASTIC</div>
-            <div class="chooser-sub">Radio Nodes</div>
+          <a href="/dashboard" class="system-chooser-btn" style="text-decoration:none;display:block;">
+            <div class="chooser-icon">◈</div>
+            <div class="chooser-label">DASHBOARD</div>
+            <div class="chooser-sub">Back to Hub</div>
           </a>
         </div>
       </div>
@@ -259,7 +244,7 @@
             <span class="dot yellow"></span>
             <span class="dot green"></span>
           </div>
-          <div class="terminal-title">BLUE-NET_v1.0 - SECURE_CHANNEL</div>
+          <div class="terminal-title" style="color:#FF4500;">BLUE-TIP_v1.0 - WELDING_SERVICES</div>
           <div class="terminal-status">
             <span class="status-indicator status-green"></span>
             <span style="color:#FF4500;">ONLINE</span>
@@ -271,7 +256,7 @@
             <p>> INITIALIZING SYSTEM...</p>
             <p>> LOADING NEURAL NETWORK...</p>
             <p>> ESTABLISHING SECURE CONNECTION...</p>
-            <p>> BLUE-NET ONLINE. READY FOR INPUT.</p>
+            <p>> BLUE-TIP ONLINE. MOBILE WELDING SERVICES READY.</p>
             <p class="separator">════════════════════════════════════════════════</p>
           </div>
         </div>
@@ -291,7 +276,6 @@
         </div>
       </div>
     </main>
-
 
   </div>
 
