@@ -346,9 +346,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // BLUE-NET chooser button → show system status inline
   document.getElementById('chooser-bluenet')?.addEventListener('click', () => {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    document.querySelector('.tab-btn[data-tab="statistics"]')?.classList.add('active');
     allCards.forEach(c => c?.classList.remove('active'));
     dashMain?.classList.remove('active');
-    systemCard?.classList.add('active');
+    statsCard?.classList.add('active');
+    loadServiceRequests();
   });
 
   // MESHTASTIC chooser button → navigate to mesh page
