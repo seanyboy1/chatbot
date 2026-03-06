@@ -208,10 +208,11 @@ app.delete('/api/mesh/nodes/:nodeId', requireAuth, async (req, res) => {
 
 // ── Auth: Register ──────────────────────────────────────────────────────────
 app.post('/api/auth/register', async (req, res) => {
-  const { name, email, username, phone, password } = req.body;
+  const { name, email, username, phone, password, service } = req.body;
   if (!name || !email || !username || !password) {
     return res.status(400).json({ error: 'Name, email, username, and password are required.' });
   }
+  const validService = service === 'bluetip' ? 'bluetip' : 'bluenet';
   try {
     await connectDB();
     const exists = await User.findOne({ $or: [{ email: email.toLowerCase() }, { username: username.toLowerCase() }] });
@@ -222,7 +223,7 @@ app.post('/api/auth/register', async (req, res) => {
     const salt = crypto.randomBytes(16).toString('hex');
     const passwordHash = hashPassword(password, salt);
     const authToken = crypto.randomBytes(32).toString('hex');
-    const user = await User.create({ name, email, username, phone, passwordHash, salt, authToken });
+    const user = await User.create({ name, email, username, phone, passwordHash, salt, authToken, service: validService });
     res.json({ token: authToken, user: { id: user._id, name: user.name, email: user.email, username: user.username, phone: user.phone, createdAt: user.createdAt } });
   } catch (err) {
     console.error('Register error:', err);
@@ -232,7 +233,7 @@ app.post('/api/auth/register', async (req, res) => {
 
 // ── Auth: Login ─────────────────────────────────────────────────────────────
 app.post('/api/auth/login', async (req, res) => {
-  const { identifier, password } = req.body;
+  const { identifier, password, service } = req.body;
   if (!identifier || !password) {
     return res.status(400).json({ error: 'Credentials required.' });
   }
@@ -254,6 +255,12 @@ app.post('/api/auth/login', async (req, res) => {
 
     const hash = hashPassword(password, user.salt);
     if (hash !== user.passwordHash) return res.status(401).json({ error: 'Invalid credentials.' });
+
+    // Enforce service separation
+    if (service && user.service !== service) {
+      const label = service === 'bluetip' ? 'BLUE-TIP' : 'BLUE-NET';
+      return res.status(403).json({ error: `No ${label} account found. Please register.` });
+    }
 
     // Rotate auth token on each login
     const authToken = crypto.randomBytes(32).toString('hex');

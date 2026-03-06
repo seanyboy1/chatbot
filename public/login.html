@@ -138,8 +138,9 @@
 
     // Redirect if already logged in (skip redirect in customer test mode)
     const params = new URLSearchParams(window.location.search);
-    const mode = params.get('mode');
-    const next = params.get('next') || '/customer.html';
+    const mode    = params.get('mode');
+    const next    = params.get('next') || '/customer.html';
+    const service = next === '/bluetip-home' ? 'bluetip' : 'bluenet';
 
     // Rebrand for Blue-TIP
     if (next === '/bluetip-home') {
@@ -192,7 +193,7 @@
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ identifier, password }),
+          body: JSON.stringify({ identifier, password, ...(mode === 'customer' && { service }) }),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -240,7 +241,7 @@
         const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, username, email, phone, password: pass }),
+          body: JSON.stringify({ name, username, email, phone, password: pass, service }),
         });
         const data = await res.json();
         if (!res.ok) {

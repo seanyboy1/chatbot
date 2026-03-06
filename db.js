@@ -58,6 +58,7 @@ const userSchema = new mongoose.Schema({
   passwordHash: String,
   salt: String,
   authToken: String,
+  service: { type: String, enum: ['bluenet', 'bluetip'], default: 'bluenet' },
   createdAt: { type: Date, default: Date.now },
 });
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
