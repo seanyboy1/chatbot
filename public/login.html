@@ -42,9 +42,9 @@
             <circle cx="22.5" cy="13" r="0.8" fill="#ffbd2e"/>
             <circle cx="52" cy="10" r="1.2" fill="currentColor"/>
           </svg>
-          <span class="auth-logo-text">BLUE-NET</span>
+          <span class="auth-logo-text" id="auth-logo-text">BLUE-NET</span>
         </div>
-        <div class="auth-tagline">NETWORK SOLUTIONS - CLIENT PORTAL</div>
+        <div class="auth-tagline" id="auth-tagline">NETWORK SOLUTIONS - CLIENT PORTAL</div>
 
         <!-- Tabs -->
         <div class="auth-tabs">
@@ -140,6 +140,13 @@
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode');
     const next = params.get('next') || '/customer.html';
+
+    // Rebrand for Blue-TIP
+    if (next === '/bluetip-home') {
+      document.title = 'BLUE-TIP - SECURE ACCESS';
+      document.getElementById('auth-logo-text').textContent = 'BLUE-TIP';
+      document.getElementById('auth-tagline').textContent = 'MOBILE WELDING SERVICES - CLIENT PORTAL';
+    }
     if (isLoggedIn() && mode !== 'customer') {
       window.location.href = getRole() === 'admin' ? '/dashboard' : '/profile';
     }
