@@ -98,7 +98,7 @@
 
     // Auth guard — redirect to Blue-TIP login if not logged in
     if (!getToken()) {
-      window.location.replace('/login?mode=customer&next=/bluetip-customer&service=bluetip');
+      window.location.replace('/login?mode=customer&next=/bluetip-profile&service=bluetip');
     }
 
     const rain = initMatrixRain('matrix-rain');

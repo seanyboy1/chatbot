@@ -140,7 +140,7 @@
     const params = new URLSearchParams(window.location.search);
     const mode    = params.get('mode');
     const next    = params.get('next') || '/customer.html';
-    const isBlueTip = next === '/bluetip-customer' || next === '/bluetip' || next === '/bluetip-home' || params.get('service') === 'bluetip';
+    const isBlueTip = next === '/bluetip-profile' || next === '/bluetip-customer' || next === '/bluetip' || next === '/bluetip-home' || params.get('service') === 'bluetip';
     const service = isBlueTip ? 'bluetip' : 'bluenet';
 
     // Rebrand for Blue-TIP

@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLUE-TIP - MY ACCOUNT</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body>
+  <canvas id="matrix-rain"></canvas>
+
+  <!-- Top bar -->
+  <nav class="profile-topbar">
+    <a href="/bluetip-profile" class="profile-topbar-logo">
+      <!-- Welding gun mini icon -->
+      <svg viewBox="0 0 60 20" xmlns="http://www.w3.org/2000/svg" color="var(--blue)">
+        <path d="M8 6 L28 6 L28 11 L8 11 Z" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M11 11 L10 17 L16 17 L17 11 Z" fill="none" stroke="currentColor" stroke-width="1.1"/>
+        <path d="M10 11 Q9.5 13.5 11 13.5 Q12.5 13.5 12 11" fill="none" stroke="currentColor" stroke-width="0.8"/>
+        <path d="M10 18 Q4 20 2 17 Q0 14 3 11 Q6 8 8 8.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        <path d="M28 7 Q32 5 35 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M28 10 Q32 12 35 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <rect x="35" y="5.5" width="6" height="7" rx="0.5" fill="none" stroke="currentColor" stroke-width="1.1"/>
+        <path d="M41 7 L44 8.5 L41 10 Z" fill="currentColor" opacity="0.7"/>
+        <circle cx="47" cy="8.5" r="2" fill="#FF4500" opacity="0.9"/>
+        <line x1="47" y1="8.5" x2="52" y2="4"  stroke="#ffbd2e" stroke-width="1" stroke-linecap="round"/>
+        <line x1="47" y1="8.5" x2="54" y2="8"  stroke="#FF4500" stroke-width="0.9" stroke-linecap="round"/>
+        <line x1="47" y1="8.5" x2="52" y2="13" stroke="#ffbd2e" stroke-width="1" stroke-linecap="round"/>
+      </svg>
+      <span class="profile-topbar-logo-text">BLUE-TIP</span>
+    </a>
+    <div class="profile-topbar-user">
+      <div class="profile-avatar" id="user-avatar">--</div>
+      <div class="profile-username" id="user-displayname">LOADING...</div>
+      <button class="profile-logout-btn" id="logout-btn">LOGOUT</button>
+    </div>
+  </nav>
+
+  <!-- Main dashboard -->
+  <main class="profile-page">
+
+    <!-- Welcome -->
+    <div class="profile-welcome">
+      <div class="profile-welcome-title">WELCOME BACK</div>
+      <div class="profile-welcome-name" id="welcome-name">...</div>
+    </div>
+
+    <!-- Account info card -->
+    <div class="profile-info-card">
+      <div class="profile-info-field">
+        <span class="profile-info-label">FULL NAME</span>
+        <span class="profile-info-value" id="info-name">—</span>
+      </div>
+      <div class="profile-info-field">
+        <span class="profile-info-label">EMAIL</span>
+        <span class="profile-info-value" id="info-email">—</span>
+      </div>
+      <div class="profile-info-field">
+        <span class="profile-info-label">PHONE</span>
+        <span class="profile-info-value" id="info-phone">—</span>
+      </div>
+      <div class="profile-info-field">
+        <span class="profile-info-label">MEMBER SINCE</span>
+        <span class="profile-info-value" id="info-since">—</span>
+      </div>
+      <div class="profile-info-field">
+        <span class="profile-info-label">TOTAL CHATS</span>
+        <span class="profile-info-value" id="info-chats">0</span>
+      </div>
+    </div>
+
+    <!-- Action cards -->
+    <div class="profile-actions">
+      <div class="action-card" id="card-service">
+        <div class="action-icon">🔥</div>
+        <div class="action-title">REQUEST A JOB</div>
+        <div class="action-desc">Book a welding job, repair, or on-site consultation.</div>
+      </div>
+      <div class="action-card" id="card-callback">
+        <div class="action-icon">📞</div>
+        <div class="action-title">REQUEST CALLBACK</div>
+        <div class="action-desc">Schedule a call to discuss your welding project.</div>
+      </div>
+      <div class="action-card" id="card-chat">
+        <div class="action-icon">💬</div>
+        <div class="action-title">CHAT WITH AI</div>
+        <div class="action-desc">Get instant answers from our welding AI assistant.</div>
+      </div>
+      <div class="action-card" id="card-history">
+        <div class="action-icon">📜</div>
+        <div class="action-title">PAST CHATS</div>
+        <div class="action-desc">Review your previous support conversations.</div>
+      </div>
+      <div class="action-card" id="card-edit-profile">
+        <div class="action-icon">✏️</div>
+        <div class="action-title">EDIT PROFILE</div>
+        <div class="action-desc">Update your name, email, phone, or password.</div>
+      </div>
+      <div class="action-card" id="card-requests">
+        <div class="action-icon">📋</div>
+        <div class="action-title">MY REQUESTS</div>
+        <div class="action-desc">View status of your job and callback requests.</div>
+      </div>
+    </div>
+
+    <!-- Chat panel -->
+    <div class="profile-panel" id="panel-chat">
+      <div class="profile-panel-header">
+        <div class="terminal-dots" style="gap:5px;">
+          <span class="dot red"    id="chat-dot-red"   ></span>
+          <span class="dot yellow" id="chat-dot-yellow"></span>
+          <span class="dot green"  id="chat-dot-green" ></span>
+        </div>
+        <span class="profile-panel-title">WELDING AI TERMINAL</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="terminal-status" style="font-size:11px;">
+            <span class="status-indicator"></span><span>ONLINE</span>
+          </div>
+          <button class="profile-panel-close" id="close-chat">✕</button>
+        </div>
+      </div>
+      <div class="profile-chat-body terminal-body" id="chat-window"></div>
+      <div class="profile-chat-input-area">
+        <div class="input-row">
+          <span class="prompt-symbol">›</span>
+          <input type="text" id="chat-input" class="terminal-input" placeholder="Type your message..." autocomplete="off" spellcheck="false"/>
+          <button id="chat-send" class="send-btn">SEND</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Requests panel -->
+    <div class="profile-panel" id="panel-requests">
+      <div class="profile-panel-header">
+        <button class="profile-panel-close" id="req-panel-back" style="display:none;background:transparent;border:none;color:var(--blue-dim);font-family:'Share Tech Mono',monospace;font-size:11px;cursor:pointer;letter-spacing:1px;padding:0;">← BACK</button>
+        <span class="profile-panel-title" id="req-panel-title">MY REQUESTS</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="service-status-refresh" id="svc-refresh-btn" title="Refresh">↻</button>
+          <button class="profile-panel-close" id="close-requests">✕</button>
+        </div>
+      </div>
+      <div class="service-status-list" id="svc-status-list" style="padding:12px 16px;overflow-y:auto;flex:1;"></div>
+    </div>
+
+    <!-- Past chats panel -->
+    <div class="profile-panel" id="panel-history">
+      <div class="profile-panel-header">
+        <span class="profile-panel-title">CHAT HISTORY</span>
+        <button class="profile-panel-close" id="close-history">✕</button>
+      </div>
+      <div class="past-chats-list" id="chats-list">
+        <div class="past-chats-empty">LOADING CHAT HISTORY...</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Job Request Modal -->
+  <div class="modal-overlay" id="modal-service">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">🔥 JOB REQUEST</span>
+        <button class="modal-close" data-close="modal-service">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label class="modal-label">JOB TYPE</label>
+          <select class="modal-select" id="svc-type">
+            <option value="new_job">New Welding Job</option>
+            <option value="repair">Repair / Fabrication</option>
+            <option value="consultation">On-Site Consultation</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">DETAILS</label>
+          <textarea class="modal-textarea" id="svc-details" placeholder="Describe your welding project..."></textarea>
+        </div>
+        <div class="modal-status" id="svc-status"></div>
+        <button class="modal-btn" id="svc-submit">SUBMIT REQUEST</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Callback Request Modal -->
+  <div class="modal-overlay" id="modal-callback">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">📞 REQUEST CALLBACK</span>
+        <button class="modal-close" data-close="modal-callback">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label class="modal-label">PHONE NUMBER</label>
+          <input class="modal-input" type="tel" id="cb-phone" placeholder="+1 (555) 000-0000"/>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">PREFERRED TIME</label>
+          <select class="modal-select" id="cb-time">
+            <option value="morning">Morning (8AM – 12PM)</option>
+            <option value="afternoon">Afternoon (12PM – 5PM)</option>
+            <option value="evening">Evening (5PM – 8PM)</option>
+            <option value="weekend">Weekend</option>
+            <option value="anytime">Anytime</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">MESSAGE (OPTIONAL)</label>
+          <textarea class="modal-textarea" id="cb-msg" placeholder="What should we discuss?"></textarea>
+        </div>
+        <div class="modal-status" id="cb-status"></div>
+        <button class="modal-btn" id="cb-submit">REQUEST CALLBACK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Profile Modal -->
+  <div class="modal-overlay" id="modal-edit-profile">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">✏️ EDIT PROFILE</span>
+        <button class="modal-close" data-close="modal-edit-profile">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label class="modal-label">FULL NAME</label>
+          <input class="modal-input" type="text" id="ep-name" placeholder="Full name"/>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">EMAIL</label>
+          <input class="modal-input" type="email" id="ep-email" placeholder="Email address"/>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">PHONE</label>
+          <input class="modal-input" type="tel" id="ep-phone" placeholder="+1 (555) 000-0000"/>
+        </div>
+        <div class="modal-field" style="margin-top:18px;border-top:1px solid var(--blue-dark);padding-top:18px;">
+          <label class="modal-label">CHANGE PASSWORD</label>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">CURRENT PASSWORD</label>
+          <input class="modal-input" type="password" id="ep-current-pw" placeholder="Leave blank to keep unchanged"/>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">NEW PASSWORD</label>
+          <input class="modal-input" type="password" id="ep-new-pw" placeholder="New password"/>
+        </div>
+        <div class="modal-status" id="ep-status"></div>
+        <button class="modal-btn" id="ep-submit">SAVE CHANGES</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initMatrixRain } from '/js/matrix-rain.js';
+    import { requireAuth, getUser, getToken, clearAuth, authFetch } from '/js/auth.js';
+
+    // Auth guard
+    if (!requireAuth()) throw new Error('not authenticated');
+
+    const rain = initMatrixRain('matrix-rain');
+    if (rain) rain.start();
+
+    // ── Load user info ──────────────────────────────────────────────────────
+    const user = getUser();
+    if (user) {
+      const initials = (user.name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+      document.getElementById('user-avatar').textContent = initials;
+      document.getElementById('user-displayname').textContent = (user.username || user.name || '').toUpperCase();
+      document.getElementById('welcome-name').textContent = (user.name || user.username || '').toUpperCase();
+      document.getElementById('info-name').textContent  = user.name || '—';
+      document.getElementById('info-email').textContent = user.email || '—';
+      document.getElementById('info-phone').textContent = user.phone || '—';
+      if (user.createdAt) {
+        document.getElementById('info-since').textContent = new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      }
+    }
+
+    // ── Logout ──────────────────────────────────────────────────────────────
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      clearAuth();
+      window.location.href = '/bluetip-home';
+    });
+
+    // ── Panel toggle helpers ────────────────────────────────────────────────
+    function openPanel(id)  { document.getElementById(id).classList.add('open'); }
+    function closePanel(id) { document.getElementById(id).classList.remove('open'); }
+    function toggleCard(cardId, panelId) {
+      const card  = document.getElementById(cardId);
+      const panel = document.getElementById(panelId);
+      const isOpen = panel.classList.contains('open');
+      card.classList.toggle('active', !isOpen);
+      panel.classList.toggle('open', !isOpen);
+    }
+
+    document.getElementById('close-chat').addEventListener('click', () => {
+      closePanel('panel-chat');
+      document.getElementById('card-chat').classList.remove('active');
+    });
+    document.getElementById('chat-dot-red').addEventListener('click', () => {
+      closePanel('panel-chat');
+      document.getElementById('card-chat').classList.remove('active');
+    });
+    document.getElementById('chat-dot-yellow').addEventListener('click', () => {
+      document.getElementById('panel-chat').classList.toggle('minimized');
+    });
+    document.getElementById('chat-dot-green').addEventListener('click', () => {
+      document.getElementById('panel-chat').classList.remove('minimized');
+    });
+    document.getElementById('close-history').addEventListener('click', () => {
+      closePanel('panel-history');
+      document.getElementById('card-history').classList.remove('active');
+    });
+    document.getElementById('close-requests').addEventListener('click', () => {
+      closePanel('panel-requests');
+      document.getElementById('card-requests').classList.remove('active');
+      openReqId = null;
+    });
+
+    // ── Action cards ────────────────────────────────────────────────────────
+    document.getElementById('card-edit-profile').addEventListener('click', () => {
+      const u = getUser();
+      if (u) {
+        document.getElementById('ep-name').value  = u.name  || '';
+        document.getElementById('ep-email').value = u.email || '';
+        document.getElementById('ep-phone').value = u.phone || '';
+      }
+      document.getElementById('ep-current-pw').value = '';
+      document.getElementById('ep-new-pw').value = '';
+      document.getElementById('ep-status').textContent = '';
+      document.getElementById('ep-status').className = 'modal-status';
+      openModal('modal-edit-profile');
+    });
+
+    document.getElementById('ep-submit').addEventListener('click', async () => {
+      const name        = document.getElementById('ep-name').value.trim();
+      const email       = document.getElementById('ep-email').value.trim();
+      const phone       = document.getElementById('ep-phone').value.trim();
+      const currentPassword = document.getElementById('ep-current-pw').value;
+      const newPassword     = document.getElementById('ep-new-pw').value;
+      const statusEl = document.getElementById('ep-status');
+      const btn = document.getElementById('ep-submit');
+
+      btn.disabled = true; btn.textContent = 'SAVING...';
+      statusEl.textContent = ''; statusEl.className = 'modal-status';
+
+      try {
+        const body = { name, email, phone };
+        if (newPassword) { body.currentPassword = currentPassword; body.newPassword = newPassword; }
+
+        const res = await authFetch('/api/auth/profile', { method: 'PUT', body: JSON.stringify(body) });
+        const data = await res.json();
+        if (res.ok) {
+          const { saveAuth, getToken, getRole, getService } = await import('/js/auth.js');
+          saveAuth(getToken(), data.user, getRole(), getService());
+
+          document.getElementById('info-name').textContent  = data.user.name  || '—';
+          document.getElementById('info-email').textContent = data.user.email || '—';
+          document.getElementById('info-phone').textContent = data.user.phone || '—';
+          const initials = (data.user.name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+          document.getElementById('user-avatar').textContent = initials;
+          document.getElementById('user-displayname').textContent = (data.user.username || data.user.name || '').toUpperCase();
+          document.getElementById('welcome-name').textContent = (data.user.name || data.user.username || '').toUpperCase();
+
+          statusEl.textContent = 'Profile updated!';
+          statusEl.className = 'modal-status success';
+          setTimeout(() => closeModal('modal-edit-profile'), 1500);
+        } else {
+          statusEl.textContent = data.error || 'Update failed.';
+          statusEl.className = 'modal-status error';
+        }
+      } catch {
+        statusEl.textContent = 'Connection error.'; statusEl.className = 'modal-status error';
+      }
+      btn.disabled = false; btn.textContent = 'SAVE CHANGES';
+    });
+
+    document.getElementById('card-service').addEventListener('click', () => openModal('modal-service'));
+    document.getElementById('card-callback').addEventListener('click', () => {
+      const phone = user?.phone || '';
+      document.getElementById('cb-phone').value = phone;
+      openModal('modal-callback');
+    });
+    document.getElementById('card-chat').addEventListener('click', () => {
+      toggleCard('card-chat', 'panel-chat');
+      if (document.getElementById('panel-chat').classList.contains('open')) {
+        initChat();
+        document.getElementById('chat-input').focus();
+      }
+    });
+    document.getElementById('card-history').addEventListener('click', () => {
+      toggleCard('card-history', 'panel-history');
+      if (document.getElementById('panel-history').classList.contains('open')) loadChatHistory();
+    });
+    document.getElementById('card-requests').addEventListener('click', () => {
+      toggleCard('card-requests', 'panel-requests');
+      if (document.getElementById('panel-requests').classList.contains('open')) loadServiceRequests();
+    });
+
+    // ── Modal helpers ────────────────────────────────────────────────────────
+    function openModal(id)  { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    document.querySelectorAll('[data-close]').forEach(btn => {
+      btn.addEventListener('click', () => closeModal(btn.dataset.close));
+    });
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal(overlay.id);
+      });
+    });
+
+    // ── Job request ──────────────────────────────────────────────────────────
+    document.getElementById('svc-submit').addEventListener('click', async () => {
+      const type    = document.getElementById('svc-type').value;
+      const details = document.getElementById('svc-details').value.trim();
+      const statusEl = document.getElementById('svc-status');
+      const btn = document.getElementById('svc-submit');
+
+      if (!details) { statusEl.textContent = 'Please describe your request.'; statusEl.className = 'modal-status error'; return; }
+
+      btn.disabled = true; btn.textContent = 'SUBMITTING...';
+      statusEl.textContent = ''; statusEl.className = 'modal-status';
+
+      try {
+        const res = await authFetch('/api/service-request', {
+          method: 'POST', body: JSON.stringify({ type, details }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          statusEl.textContent = data.message || 'Request submitted!';
+          statusEl.className = 'modal-status success';
+          document.getElementById('svc-details').value = '';
+          setTimeout(() => closeModal('modal-service'), 1800);
+        } else {
+          statusEl.textContent = data.error || 'Submission failed.';
+          statusEl.className = 'modal-status error';
+        }
+      } catch {
+        statusEl.textContent = 'Connection error.'; statusEl.className = 'modal-status error';
+      }
+      btn.disabled = false; btn.textContent = 'SUBMIT REQUEST';
+    });
+
+    // ── Callback request ─────────────────────────────────────────────────────
+    document.getElementById('cb-submit').addEventListener('click', async () => {
+      const phone = document.getElementById('cb-phone').value.trim();
+      const preferredTime = document.getElementById('cb-time').value;
+      const details = document.getElementById('cb-msg').value.trim();
+      const statusEl = document.getElementById('cb-status');
+      const btn = document.getElementById('cb-submit');
+
+      if (!phone) { statusEl.textContent = 'Phone number is required.'; statusEl.className = 'modal-status error'; return; }
+
+      btn.disabled = true; btn.textContent = 'SUBMITTING...';
+      statusEl.textContent = ''; statusEl.className = 'modal-status';
+
+      try {
+        const res = await authFetch('/api/callback-request', {
+          method: 'POST', body: JSON.stringify({ phone, preferredTime, details }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          statusEl.textContent = data.message || 'Callback requested!';
+          statusEl.className = 'modal-status success';
+          setTimeout(() => closeModal('modal-callback'), 1800);
+        } else {
+          statusEl.textContent = data.error || 'Submission failed.';
+          statusEl.className = 'modal-status error';
+        }
+      } catch {
+        statusEl.textContent = 'Connection error.'; statusEl.className = 'modal-status error';
+      }
+      btn.disabled = false; btn.textContent = 'REQUEST CALLBACK';
+    });
+
+    // ── Embedded chat ─────────────────────────────────────────────────────────
+    let chatSessionId = null;
+    let chatReady = false;
+
+    function addMsg(role, content) {
+      const win = document.getElementById('chat-window');
+      const el = document.createElement('div');
+      el.className = role === 'user' ? 'message user-message' : 'message bot-message';
+      if (role === 'user') {
+        el.innerHTML = `<span class="message-prompt">&gt; </span>${escHtml(content)}`;
+      } else {
+        const p = document.createElement('p');
+        p.innerHTML = `<span class="message-prompt">AI › </span>${escHtml(content)}`;
+        el.appendChild(p);
+      }
+      win.appendChild(el);
+      win.scrollTop = win.scrollHeight;
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    async function initChat() {
+      if (chatReady) return;
+      chatReady = true;
+      const win = document.getElementById('chat-window');
+      win.innerHTML = '';
+
+      const lines = ['BLUE-TIP WELDING AI v1.0', 'AUTHENTICATING USER...', 'SESSION ESTABLISHED', '──────────────────────────────────', 'Hello! How can I help with your welding project?'];
+      for (const line of lines) {
+        const p = document.createElement('p');
+        p.className = 'boot-sequence';
+        p.textContent = line;
+        win.appendChild(p);
+        await new Promise(r => setTimeout(r, 120));
+        win.scrollTop = win.scrollHeight;
+      }
+
+      try {
+        const res = await authFetch('/api/chats', { method: 'POST', body: '{}' });
+        const data = await res.json();
+        chatSessionId = data.sessionId;
+      } catch { /* will use fallback */ }
+    }
+
+    async function sendChatMessage() {
+      const input = document.getElementById('chat-input');
+      const msg = input.value.trim();
+      if (!msg) return;
+      input.value = '';
+
+      addMsg('user', msg);
+
+      const win = document.getElementById('chat-window');
+      const typing = document.createElement('p');
+      typing.className = 'boot-sequence';
+      typing.textContent = 'AI › ...';
+      win.appendChild(typing);
+      win.scrollTop = win.scrollHeight;
+
+      try {
+        let reply;
+        if (chatSessionId) {
+          const res = await authFetch(`/api/chats/${chatSessionId}/message`, {
+            method: 'POST', body: JSON.stringify({ message: msg }),
+          });
+          const data = await res.json();
+          reply = data.reply || '[No response]';
+        } else {
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg, context: 'customer' }),
+          });
+          const data = await res.json();
+          reply = data.reply || '[No response]';
+        }
+        win.removeChild(typing);
+        addMsg('bot', reply);
+      } catch {
+        win.removeChild(typing);
+        addMsg('bot', '[ERROR] Could not reach AI. Please try again.');
+      }
+    }
+
+    document.getElementById('chat-send').addEventListener('click', sendChatMessage);
+    document.getElementById('chat-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendChatMessage();
+    });
+
+    // ── Service request status ───────────────────────────────────────────────
+    const typeLabels = {
+      new_job:      'NEW JOB',
+      repair:       'REPAIR',
+      consultation: 'CONSULTATION',
+      callback:     'CALLBACK',
+      other:        'OTHER',
+    };
+    const statusMeta = {
+      pending:     { label: 'PENDING',     cls: 'svc-status-pending'  },
+      in_progress: { label: 'IN PROGRESS', cls: 'svc-status-progress' },
+      resolved:    { label: 'RESOLVED',    cls: 'svc-status-resolved' },
+      completed:   { label: 'COMPLETED',   cls: 'svc-status-resolved' },
+      cancelled:   { label: 'CANCELLED',   cls: 'svc-status-cancelled'},
+    };
+
+    let cachedRequests = [];
+    let openReqId = null;
+
+    async function loadServiceRequests() {
+      const list = document.getElementById('svc-status-list');
+      if (!list) return;
+      list.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--blue-dark);padding:8px 0;">LOADING...</div>';
+      try {
+        const res = await authFetch('/api/service-requests');
+        const data = await res.json();
+        cachedRequests = data.requests || [];
+        openReqId = null;
+        renderRequestList();
+      } catch {
+        list.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:#FF4500;padding:8px 0;">FAILED TO LOAD</div>';
+      }
+    }
+
+    function renderRequestList() {
+      const list = document.getElementById('svc-status-list');
+      const backBtn = document.getElementById('req-panel-back');
+      const title = document.getElementById('req-panel-title');
+      backBtn.style.display = 'none';
+      title.textContent = 'MY REQUESTS';
+
+      if (!cachedRequests.length) {
+        list.innerHTML = '<div style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--blue-dark);padding:8px 0;">NO REQUESTS YET</div>';
+        return;
+      }
+
+      list.innerHTML = '';
+      cachedRequests.forEach(r => {
+        const sm = statusMeta[r.status] || { label: (r.status||'PENDING').toUpperCase(), cls: 'svc-status-pending' };
+        const date = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const typeLabel = typeLabels[r.type] || (r.type || 'REQUEST').toUpperCase();
+
+        const item = document.createElement('div');
+        item.className = 'svc-status-item';
+        item.style.cursor = 'pointer';
+        item.innerHTML = `
+          <div class="svc-status-row">
+            <span class="svc-type-badge">${typeLabel}</span>
+            <span class="svc-status-badge ${sm.cls}">${sm.label}</span>
+            <span class="svc-date">${date}</span>
+            <span style="color:var(--blue-dim);font-size:12px;margin-left:4px;">›</span>
+          </div>
+          ${r.details ? `<div class="svc-details">${escHtml(r.details)}</div>` : ''}
+        `;
+        item.addEventListener('click', () => { openReqId = r._id; renderRequestDetail(); });
+        list.appendChild(item);
+      });
+    }
+
+    function renderRequestDetail() {
+      const r = cachedRequests.find(x => x._id === openReqId);
+      if (!r) return;
+      const list = document.getElementById('svc-status-list');
+      const backBtn = document.getElementById('req-panel-back');
+      const title = document.getElementById('req-panel-title');
+
+      const sm = statusMeta[r.status] || { label: (r.status||'PENDING').toUpperCase(), cls: 'svc-status-pending' };
+      const date = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const typeLabel = typeLabels[r.type] || (r.type || 'REQUEST').toUpperCase();
+      const repliedDate = r.repliedAt ? new Date(r.repliedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+
+      title.textContent = typeLabel;
+      backBtn.style.display = '';
+      backBtn.onclick = () => { openReqId = null; renderRequestList(); };
+
+      list.innerHTML = `
+        <div class="svc-status-row" style="margin-bottom:12px;">
+          <span class="svc-type-badge">${typeLabel}</span>
+          <span class="svc-status-badge ${sm.cls}">${sm.label}</span>
+          <span class="svc-date">${date}</span>
+        </div>
+        ${r.details ? `
+        <div style="border:1px solid var(--blue-dark);border-radius:2px;padding:10px;margin-bottom:12px;background:rgba(0,0,0,0.2);">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--blue-dark);margin-bottom:6px;">YOUR REQUEST</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--blue-dim);white-space:pre-wrap;word-break:break-word;">${escHtml(r.details)}</div>
+        </div>` : ''}
+        ${r.phone ? `<div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--blue-dim);margin-bottom:10px;">📞 ${escHtml(r.phone)}${r.preferredTime?' · '+escHtml(r.preferredTime):''}</div>` : ''}
+        ${r.adminReply ? `
+        <div style="border:1px solid rgba(39,201,63,0.25);border-radius:2px;padding:10px;background:rgba(39,201,63,0.04);">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#27c93f;margin-bottom:6px;">REPLY FROM BLUE-TIP${repliedDate?' · '+repliedDate:''}</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--blue-dim);white-space:pre-wrap;word-break:break-word;">${escHtml(r.adminReply)}</div>
+        </div>` : `
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--blue-dark);font-style:italic;">No reply yet — we'll get back to you soon.</div>`}
+      `;
+    }
+
+    document.getElementById('svc-refresh-btn').addEventListener('click', loadServiceRequests);
+    document.getElementById('svc-submit').addEventListener('click', () => setTimeout(loadServiceRequests, 2000));
+    document.getElementById('cb-submit').addEventListener('click', () => setTimeout(loadServiceRequests, 2000));
+
+    // ── Chat history ─────────────────────────────────────────────────────────
+    async function loadChatHistory() {
+      const listEl = document.getElementById('chats-list');
+      listEl.innerHTML = '<div class="past-chats-empty">LOADING...</div>';
+
+      try {
+        const res = await authFetch('/api/chats');
+        const data = await res.json();
+        const sessions = data.sessions || [];
+
+        document.getElementById('info-chats').textContent = sessions.length;
+
+        if (!sessions.length) {
+          listEl.innerHTML = '<div class="past-chats-empty">NO CHAT HISTORY YET</div>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        sessions.forEach((s) => {
+          const date = new Date(s.lastMessageAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          const msgCount = s.messages?.length || 0;
+
+          const item = document.createElement('div');
+          item.className = 'past-chat-item';
+          item.innerHTML = `
+            <div>
+              <div class="past-chat-title">${escHtml(s.title || 'Chat Session')}</div>
+              <div class="past-chat-meta">${date} · ${msgCount} messages</div>
+            </div>
+            <span class="past-chat-expand">▼</span>
+          `;
+
+          const msgBox = document.createElement('div');
+          msgBox.className = 'past-chat-messages';
+          (s.messages || []).forEach(m => {
+            const el = document.createElement('div');
+            el.className = `past-msg ${m.role}`;
+            el.innerHTML = `<div class="past-msg-label">${m.role === 'user' ? '&gt; YOU' : 'AI ›'}</div>${escHtml(m.content)}`;
+            msgBox.appendChild(el);
+          });
+
+          item.addEventListener('click', () => {
+            const isOpen = msgBox.classList.contains('open');
+            msgBox.classList.toggle('open', !isOpen);
+            item.querySelector('.past-chat-expand').textContent = isOpen ? '▼' : '▲';
+          });
+
+          listEl.appendChild(item);
+          listEl.appendChild(msgBox);
+        });
+      } catch {
+        listEl.innerHTML = '<div class="past-chats-empty">FAILED TO LOAD HISTORY</div>';
+      }
+    }
+  </script>
+</body>
+</html>
