@@ -140,16 +140,17 @@
     const params = new URLSearchParams(window.location.search);
     const mode    = params.get('mode');
     const next    = params.get('next') || '/customer.html';
-    const service = next === '/bluetip-home' ? 'bluetip' : 'bluenet';
+    const isBlueTip = next === '/bluetip-customer' || next === '/bluetip' || next === '/bluetip-home' || params.get('service') === 'bluetip';
+    const service = isBlueTip ? 'bluetip' : 'bluenet';
 
     // Rebrand for Blue-TIP
-    if (next === '/bluetip-home') {
+    if (isBlueTip) {
       document.title = 'BLUE-TIP - SECURE ACCESS';
       document.getElementById('auth-logo-text').textContent = 'BLUE-TIP';
       document.getElementById('auth-tagline').textContent = 'MOBILE WELDING SERVICES - CLIENT PORTAL';
     }
     if (isLoggedIn() && mode !== 'customer') {
-      window.location.href = getRole() === 'admin' ? '/dashboard' : '/profile';
+      window.location.href = getRole() === 'admin' ? '/dashboard' : next;
     }
 
     const rain = initMatrixRain('matrix-rain');
@@ -202,13 +203,13 @@
           btn.textContent = 'AUTHENTICATE';
           return;
         }
-        saveAuth(data.token, data.user, data.role);
+        saveAuth(data.token, data.user, data.role, service);
         setStatus('ACCESS GRANTED — CONNECTING...', 'success');
         setTimeout(() => {
           if (data.role === 'admin') {
             window.location.href = '/dashboard';
           } else {
-            window.location.href = '/profile';
+            window.location.href = next;
           }
         }, 800);
       } catch {
@@ -250,9 +251,9 @@
           btn.textContent = 'CREATE ACCOUNT';
           return;
         }
-        saveAuth(data.token, data.user, 'user');
+        saveAuth(data.token, data.user, 'user', service);
         setStatus('ACCOUNT CREATED — INITIALIZING PROFILE...', 'success');
-        setTimeout(() => { window.location.href = '/profile'; }, 900);
+        setTimeout(() => { window.location.href = next; }, 900);
       } catch {
         setStatus('Connection error. Try again.', 'error');
         btn.disabled = false;

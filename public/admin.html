@@ -63,7 +63,13 @@
   </nav>
 
   <script type="module">
-    import { clearAuth } from '/js/auth.js';
+    import { clearAuth, getToken, getRole } from '/js/auth.js';
+
+    // Block non-admin access
+    if (!getToken() || getRole() !== 'admin') {
+      window.location.replace('/login');
+    }
+
     document.getElementById('signout-btn').addEventListener('click', () => {
       clearAuth();
       window.location.href = '/';

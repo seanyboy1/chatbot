@@ -97,11 +97,15 @@
 
   <script type="module">
     import { initMatrixRain } from '/js/matrix-rain.js';
-    import { saveAuth, isLoggedIn, getRole } from '/js/auth.js';
+    import { saveAuth, isLoggedIn, getRole, getService } from '/js/auth.js';
 
-    // Redirect if already logged in as admin
+    // Redirect if already logged in
     if (isLoggedIn()) {
-      window.location.href = getRole() === 'admin' ? '/dashboard' : '/home';
+      if (getRole() === 'admin') {
+        window.location.href = '/dashboard';
+      } else {
+        window.location.href = getService() === 'bluetip' ? '/bluetip-customer' : '/customer.html';
+      }
     }
 
     const rain = initMatrixRain('matrix-rain');
