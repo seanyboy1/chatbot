@@ -652,6 +652,10 @@
         <div class="mesh-popup-label" style="margin-bottom:4px;">EDIT NODE</div>
         <input class="mesh-popup-input" data-field="name" value="${escHtml(n.name)}" placeholder="Name"/>
         <input class="mesh-popup-input" data-field="desc" value="${escHtml(n.desc||'')}" placeholder="Description"/>
+        <div class="mesh-popup-label" style="margin-bottom:2px;">LAT</div>
+        <input class="mesh-popup-input" data-field="lat" value="${Number(n.lat).toFixed(5)}" placeholder="Latitude"/>
+        <div class="mesh-popup-label" style="margin-bottom:2px;">LON</div>
+        <input class="mesh-popup-input" data-field="lon" value="${Number(n.lon).toFixed(5)}" placeholder="Longitude"/>
         <button class="mesh-popup-btn" data-action="save-edit" data-id="${escHtml(n.id)}">SAVE</button>
         <button class="mesh-popup-btn" data-action="cancel-edit" data-id="${escHtml(n.id)}">CANCEL</button>
       `;
@@ -660,7 +664,7 @@
     function addMarker(n) {
       const m = L.marker([n.lat, n.lon], { icon: makeIcon(n.online !== false) })
         .addTo(map)
-        .bindPopup(buildPopupView(n), { maxWidth: 240 });
+        .bindPopup(buildPopupView(n), { maxWidth: 300, minWidth: 260, closeOnClick: false });
 
       // Attach click handler once directly on the popup container element.
       // Leaflet calls stopPropagation on its popup, so document-level delegation
@@ -672,6 +676,7 @@
         attached = true;
 
         el.addEventListener('click', async (ev) => {
+          ev.stopPropagation();
           const btn = ev.target.closest('[data-action]');
           if (!btn) return;
           const id     = btn.dataset.id;
@@ -693,24 +698,45 @@
 
           } else if (action === 'edit') {
             const node = nodes.find(x => x.id === id);
-            if (node) m.setPopupContent(buildPopupEdit(node));
+            if (node) {
+              const contentDiv = el.querySelector('.leaflet-popup-content');
+              if (contentDiv) contentDiv.innerHTML = buildPopupEdit(node);
+            }
 
           } else if (action === 'save-edit') {
             const idx = nodes.findIndex(x => x.id === id);
             if (idx !== -1) {
               const fields = {};
               el.querySelectorAll('[data-field]').forEach(inp => {
-                fields[inp.dataset.field] = inp.value.trim();
+                const val = inp.value.trim();
+                if (inp.dataset.field === 'lat' || inp.dataset.field === 'lon') {
+                  fields[inp.dataset.field] = parseFloat(val);
+                } else {
+                  fields[inp.dataset.field] = val;
+                }
               });
+              if (isNaN(fields.lat) || isNaN(fields.lon)) return;
               await apiUpdateNode(id, fields);
               Object.assign(nodes[idx], fields);
-              render();
-              setTimeout(() => markers[id]?.openPopup(), 50);
+              const contentDiv = el.querySelector('.leaflet-popup-content');
+              if (contentDiv) contentDiv.innerHTML = buildPopupView(nodes[idx]);
+              // Only full re-render if coords changed (need to move marker)
+              const coordsChanged = 'lat' in fields || 'lon' in fields;
+              if (coordsChanged) {
+                render();
+                setTimeout(() => markers[id]?.openPopup(), 50);
+              } else {
+                renderSidebar();
+                updateStats();
+              }
             }
 
           } else if (action === 'cancel-edit') {
             const node = nodes.find(x => x.id === id);
-            if (node) m.setPopupContent(buildPopupView(node));
+            if (node) {
+              const contentDiv = el.querySelector('.leaflet-popup-content');
+              if (contentDiv) contentDiv.innerHTML = buildPopupView(node);
+            }
           }
         });
       });
