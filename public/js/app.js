@@ -196,19 +196,22 @@ async function loadRecentActivity() {
           const ts = new Date(activity.timestamp);
           const time = ts.toLocaleTimeString();
           const date = ts.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-          const city = activity.city ? ` — ${activity.city}` : '';
+          const rawIp = (activity.ip || '').replace(/^::ffff:/, '');
+          const ip = (rawIp === '::1' || rawIp === '127.0.0.1') ? 'localhost' : rawIp;
+          const cityPart = activity.city && activity.city !== 'Local' ? ` — ${activity.city}` : (ip === 'localhost' ? ' — localhost' : '');
           let message = '';
 
           if (activity.action === 'login') {
             const label = activity.userType === 'bluetip' ? '🔧' : '💬';
-            message = `${label} ${activity.message || 'Customer login'}${city}`;
+            const username = (activity.message || '').replace('Login: ', '') || 'customer';
+            message = `${label} ${username} logged in${cityPart}`;
           } else if (activity.action === 'page_visit') {
             const userTypeLabel = activity.userType === 'admin' ? '👤' : activity.userType === 'customer' ? '💬' : '🌐';
-            message = `${userTypeLabel} ${activity.userType || 'visitor'} from ${activity.ip}${city}`;
+            message = `${userTypeLabel} ${activity.userType || 'visitor'} from ${ip}${cityPart}`;
           } else if (activity.action === 'connect') {
-            message = `📍 ${activity.userType || 'user'} connected: ${activity.ip}${city}`;
+            message = `📍 ${activity.userType || 'user'} connected: ${ip}${cityPart}`;
           } else if (activity.action === 'message') {
-            message = `💬 Message from ${activity.ip}${city}`;
+            message = `💬 Message from ${ip}${cityPart}`;
           } else if (activity.message) {
             message = activity.message.replace(/^\[\d{1,2}:\d{2}:\d{2}[^\]]*\]\s*/, '');
           }
