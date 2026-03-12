@@ -193,27 +193,31 @@ async function loadRecentActivity() {
 
         // Add recent activity from database (newest first)
         data.activity.forEach(activity => {
-          const time = new Date(activity.timestamp).toLocaleTimeString();
+          const ts = new Date(activity.timestamp);
+          const time = ts.toLocaleTimeString();
+          const date = ts.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+          const city = activity.city ? ` — ${activity.city}` : '';
           let message = '';
 
-          if (activity.action === 'page_visit') {
+          if (activity.action === 'login') {
+            const label = activity.userType === 'bluetip' ? '🔧' : '💬';
+            message = `${label} ${activity.message || 'Customer login'}${city}`;
+          } else if (activity.action === 'page_visit') {
             const userTypeLabel = activity.userType === 'admin' ? '👤' : activity.userType === 'customer' ? '💬' : '🌐';
-            message = `${userTypeLabel} ${activity.userType || 'visitor'} from ${activity.ip}`;
+            message = `${userTypeLabel} ${activity.userType || 'visitor'} from ${activity.ip}${city}`;
           } else if (activity.action === 'connect') {
-            const userTypeLabel = activity.userType === 'admin' ? '👤' : '💬';
-            message = `📍 ${activity.userType || 'user'} connected: ${activity.ip}`;
+            message = `📍 ${activity.userType || 'user'} connected: ${activity.ip}${city}`;
           } else if (activity.action === 'message') {
-            const userTypeLabel = activity.userType === 'admin' ? '👤' : '💬';
-            message = `${userTypeLabel} Message from ${activity.ip}`;
+            message = `💬 Message from ${activity.ip}${city}`;
           } else if (activity.message) {
-            // Show custom activity messages (already has timestamp from database)
-            message = activity.message.replace(/^\[\d{1,2}:\d{2}:\d{2}[^\]]*\]\s*/, ''); // Remove old timestamp
+            message = activity.message.replace(/^\[\d{1,2}:\d{2}:\d{2}[^\]]*\]\s*/, '');
           }
 
           if (message) {
             const item = document.createElement('div');
             item.className = 'activity-item';
-            item.textContent = `[${time}] ${message}`;
+            const stamp = activity.action === 'login' ? `[${date} ${time}]` : `[${time}]`;
+            item.textContent = `${stamp} ${message}`;
             activityLog.appendChild(item);
           }
         });

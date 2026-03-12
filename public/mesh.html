@@ -460,6 +460,7 @@
       <div class="mesh-title">BLUE-MESHTASTIC // RADIO NODE MAP</div>
       <div class="mesh-stat-chip">NODES: <span id="mesh-node-count">0</span></div>
       <div class="mesh-stat-chip">ONLINE: <span id="mesh-online-count">0</span></div>
+      <div class="mesh-stat-chip">OFFLINE: <span id="mesh-offline-count">0</span></div>
     </div>
 
     <!-- Main grid -->
@@ -620,9 +621,11 @@
     }
 
     function updateStats() {
-      const online = nodes.filter(n => n.online !== false).length;
-      document.getElementById('mesh-node-count').textContent  = nodes.length;
-      document.getElementById('mesh-online-count').textContent = online;
+      const online  = nodes.filter(n => n.online !== false).length;
+      const offline = nodes.length - online;
+      document.getElementById('mesh-node-count').textContent   = nodes.length;
+      document.getElementById('mesh-online-count').textContent  = online;
+      document.getElementById('mesh-offline-count').textContent = offline;
     }
 
     function buildPopupView(n) {

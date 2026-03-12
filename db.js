@@ -27,12 +27,13 @@ export async function connectDB() {
 const activityLogSchema = new mongoose.Schema({
   ip: String,
   userAgent: String,
-  action: String, // 'connect', 'message', 'page_visit', 'test_connection'
+  action: String, // 'connect', 'message', 'page_visit', 'test_connection', 'login'
   message: String,
   response: String,
   timestamp: { type: Date, default: Date.now },
   sessionId: String,
   userType: String, // 'admin', 'customer', 'visitor'
+  city: String,
 });
 
 export const ActivityLog = mongoose.models.ActivityLog || mongoose.model('ActivityLog', activityLogSchema);

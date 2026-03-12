@@ -12,6 +12,20 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// IP geolocation helper (uses free ip-api.com, no key required)
+async function geolocateIP(ip) {
+  const clean = (ip || '').replace(/^::ffff:/, '').split(',')[0].trim();
+  if (!clean || clean === '127.0.0.1' || clean.startsWith('192.168.') || clean.startsWith('10.') || clean.startsWith('::1')) {
+    return 'Local';
+  }
+  try {
+    const res = await fetch(`http://ip-api.com/json/${clean}?fields=status,city,regionName,country`);
+    const d = await res.json();
+    if (d.status === 'success') return [d.city, d.regionName, d.country].filter(Boolean).join(', ') || 'Unknown';
+  } catch {}
+  return 'Unknown';
+}
+
 // n8n webhook integration
 const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
 if (!N8N_WEBHOOK_URL) {
@@ -274,6 +288,18 @@ app.post('/api/auth/login', async (req, res) => {
     const authToken = crypto.randomBytes(32).toString('hex');
     user.authToken = authToken;
     await user.save();
+
+    // Log login with geolocation (non-blocking)
+    const loginIP = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.connection?.remoteAddress || req.ip;
+    geolocateIP(loginIP).then(city => {
+      ActivityLog.create({
+        ip: loginIP, action: 'login',
+        message: `Login: ${user.username}`,
+        userType: user.service === 'bluetip' ? 'bluetip' : 'customer',
+        sessionId: authToken.substring(0, 8),
+        city,
+      }).catch(() => {});
+    });
 
     res.json({
       token: authToken,
@@ -622,7 +648,7 @@ app.get('/api/activity', async (req, res) => {
     const recentActivity = await ActivityLog.find(filter)
       .sort({ timestamp: -1 })
       .limit(20)
-      .select('ip action timestamp message userType');
+      .select('ip action timestamp message userType city');
 
     // Get unique visitor count (last 24 hours)
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
