@@ -10,11 +10,40 @@
   color: var(--blue);
 }
 
-.logo-container:hover,
-.logo-container:active {
+/* Hover: brighten only, no color change */
+.logo-container:hover {
   transform: scale(1.05);
+  filter: brightness(1.4);
+}
+
+/* Click: fire orange (Blue-NET and Blue-TIP) */
+.logo-container:active {
+  transform: scale(1.02);
   color: #FF4500;
-  text-shadow: 0 0 12px rgba(255,69,0,0.5);
+  filter: none;
+}
+
+.logo-container:active .logo-text {
+  color: #FF4500;
+  text-shadow: 0 0 15px rgba(255,69,0,0.5);
+}
+
+/* Meshtastic: icon is orange by default, click turns it blue */
+.logo-mesh .logo-icon {
+  color: #FF4500;
+}
+
+.logo-mesh:active {
+  color: var(--blue);
+}
+
+.logo-mesh:active .logo-icon {
+  color: var(--blue);
+}
+
+.logo-mesh:active .logo-text {
+  color: var(--blue);
+  text-shadow: 0 0 15px var(--blue-glow);
 }
 
 /* Logo Icon SVG */
@@ -142,11 +171,6 @@
   transition: color 0.2s, text-shadow 0.2s;
 }
 
-.logo-container:hover .logo-text,
-.logo-container:active .logo-text {
-  color: #FF4500;
-  text-shadow: 0 0 15px rgba(255,69,0,0.5);
-}
 
 /* Logo reveal animation (for customer page) */
 .logo-revealing {
