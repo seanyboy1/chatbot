@@ -59,6 +59,23 @@
       color: var(--blue);
     }
 
+    .mesh-stat-chip {
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.15s, box-shadow 0.15s, color 0.15s;
+    }
+
+    .mesh-stat-chip:hover {
+      border-color: var(--blue-dim);
+      color: var(--blue);
+    }
+
+    .mesh-stat-chip.active {
+      border-color: var(--blue);
+      color: var(--blue);
+      box-shadow: 0 0 8px var(--blue-glow);
+    }
+
     /* ── Main grid ─────────────────────────────────────── */
     .mesh-grid {
       display: grid;
@@ -458,9 +475,9 @@
     <!-- Top bar -->
     <div class="mesh-topbar">
       <div class="mesh-title">BLUE-MESHTASTIC // RADIO NODE MAP</div>
-      <div class="mesh-stat-chip">NODES: <span id="mesh-node-count">0</span></div>
-      <div class="mesh-stat-chip">ONLINE: <span id="mesh-online-count">0</span></div>
-      <div class="mesh-stat-chip">OFFLINE: <span id="mesh-offline-count">0</span></div>
+      <div class="mesh-stat-chip active" id="chip-all">NODES: <span id="mesh-node-count">0</span></div>
+      <div class="mesh-stat-chip" id="chip-online">ONLINE: <span id="mesh-online-count">0</span></div>
+      <div class="mesh-stat-chip" id="chip-offline">OFFLINE: <span id="mesh-offline-count">0</span></div>
     </div>
 
     <!-- Main grid -->
@@ -615,6 +632,18 @@
     // State
     let nodes = [];
     const markers = {};
+    let nodeFilter = 'all'; // 'all' | 'online' | 'offline'
+
+    // Filter chip click handlers
+    const chipMap = { all: 'chip-all', online: 'chip-online', offline: 'chip-offline' };
+    Object.entries(chipMap).forEach(([filter, id]) => {
+      document.getElementById(id).addEventListener('click', () => {
+        nodeFilter = filter;
+        Object.values(chipMap).forEach(cid => document.getElementById(cid).classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        render();
+      });
+    });
 
     function escHtml(s) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -753,8 +782,17 @@
         list.innerHTML = '<div class="mesh-no-nodes">NO NODES REGISTERED</div>';
         return;
       }
+      const filtered = nodes.filter(n => {
+        if (nodeFilter === 'online')  return n.online !== false;
+        if (nodeFilter === 'offline') return n.online === false;
+        return true;
+      });
+      if (!filtered.length) {
+        list.innerHTML = `<div class="mesh-no-nodes">NO ${nodeFilter.toUpperCase()} NODES</div>`;
+        return;
+      }
       list.innerHTML = '';
-      nodes.forEach(n => {
+      filtered.forEach(n => {
         const item = document.createElement('div');
         item.className = 'mesh-node-item';
         item.dataset.id = n.id;
@@ -779,8 +817,13 @@
       // Remove old markers
       Object.values(markers).forEach(m => map.removeLayer(m));
       Object.keys(markers).forEach(k => delete markers[k]);
-      // Add current nodes
-      nodes.forEach(n => addMarker(n));
+      // Add nodes matching current filter
+      const visible = nodes.filter(n => {
+        if (nodeFilter === 'online')  return n.online !== false;
+        if (nodeFilter === 'offline') return n.online === false;
+        return true;
+      });
+      visible.forEach(n => addMarker(n));
       renderSidebar();
       updateStats();
     }
