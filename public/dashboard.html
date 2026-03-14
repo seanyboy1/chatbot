@@ -112,10 +112,18 @@
     }
 
     .dash-card-icon {
-      font-size: 36px;
+      height: 40px;
       margin-bottom: 16px;
       color: #FF4500;
-      text-shadow: 0 0 12px rgba(255,69,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 0 6px rgba(255,69,0,0.45));
+    }
+
+    .dash-card-icon svg {
+      height: 40px;
+      width: auto;
     }
 
     .dash-card-name {
@@ -195,7 +203,29 @@
       <div class="dash-grid">
         <!-- Blue-NET -->
         <a href="/admin" class="dash-card">
-          <div class="dash-card-icon">◈</div>
+          <!-- Blue-NET network switch logo -->
+          <div class="dash-card-icon">
+            <svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="8" width="56" height="14" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+              <rect x="6"  y="11" width="3" height="3" rx="0.3" fill="none" stroke="#FF4500" stroke-width="1"/>
+              <rect x="10" y="11" width="3" height="3" rx="0.3" fill="none" stroke="#FF4500" stroke-width="1"/>
+              <rect x="14" y="11" width="3" height="3" rx="0.3" fill="none" stroke="#FF4500" stroke-width="1"/>
+              <rect x="18" y="11" width="3" height="3" rx="0.3" fill="none" stroke="#FF4500" stroke-width="1"/>
+              <rect x="22" y="11" width="3" height="3" rx="0.3" fill="none" stroke="#FF4500" stroke-width="1"/>
+              <rect x="26" y="11" width="3" height="3" rx="0.3" fill="none" stroke="#FF4500" stroke-width="1"/>
+              <rect x="30" y="11" width="3" height="3" rx="0.3" fill="none" stroke="#FF4500" stroke-width="1"/>
+              <rect x="34" y="11" width="3" height="3" rx="0.3" fill="none" stroke="#FF4500" stroke-width="1"/>
+              <circle cx="7.5"  cy="17" r="1" fill="#27c93f"/>
+              <circle cx="11.5" cy="17" r="1" fill="#ffbd2e"/>
+              <circle cx="15.5" cy="17" r="1" fill="#27c93f"/>
+              <circle cx="19.5" cy="17" r="1" fill="#ffbd2e"/>
+              <circle cx="23.5" cy="17" r="1" fill="#27c93f"/>
+              <circle cx="27.5" cy="17" r="1" fill="#ffbd2e"/>
+              <circle cx="31.5" cy="17" r="1" fill="#27c93f"/>
+              <circle cx="35.5" cy="17" r="1" fill="#ffbd2e"/>
+              <circle cx="52"   cy="15" r="1.5" fill="currentColor"/>
+            </svg>
+          </div>
           <div class="dash-card-name">BLUE-NET</div>
           <div class="dash-card-desc">NETWORK SERVICES<br>FIBER & INTERNET SOLUTIONS</div>
           <div class="dash-card-arrow">ENTER →</div>
@@ -203,7 +233,39 @@
 
         <!-- Blue-TIP -->
         <a href="/bluetip" class="dash-card">
-          <div class="dash-card-icon">⚡</div>
+          <!-- Blue-TIP welding gun logo -->
+          <div class="dash-card-icon">
+            <svg viewBox="0 0 80 36" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22 30 Q8 37 2 28 Q-2 19 6 13 Q11 8 17 11" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+              <circle cx="22" cy="30" r="1.6" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1"/>
+              <path d="M16 8 L42 8 Q45 8 45 11 L45 21 Q45 24 42 24 L16 24 Q13 24 13 21 L13 11 Q13 8 16 8 Z" fill="currentColor" fill-opacity="0.07" stroke="currentColor" stroke-width="1.4"/>
+              <line x1="30" y1="8" x2="30" y2="24" stroke="currentColor" stroke-width="0.6" opacity="0.28"/>
+              <circle cx="34.5" cy="11" r="0.8" fill="currentColor" opacity="0.38"/>
+              <circle cx="34.5" cy="21" r="0.8" fill="currentColor" opacity="0.38"/>
+              <path d="M21 24 L20 30 L28 30 L28 24 Z" fill="currentColor" fill-opacity="0.06" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M21 24 Q17 27 20 30" fill="none" stroke="currentColor" stroke-width="1.1"/>
+              <line x1="22" y1="25.5" x2="21.5" y2="28.5" stroke="currentColor" stroke-width="0.7" opacity="0.38"/>
+              <line x1="24" y1="25.5" x2="23.5" y2="28.5" stroke="currentColor" stroke-width="0.7" opacity="0.38"/>
+              <line x1="26" y1="25.5" x2="25.5" y2="28.5" stroke="currentColor" stroke-width="0.7" opacity="0.38"/>
+              <path d="M24.5 24 Q23.5 27 24.5 28.5 Q26.5 28.5 26.5 27 Q26.5 25.5 24.5 24" fill="currentColor" fill-opacity="0.18" stroke="currentColor" stroke-width="0.85"/>
+              <path d="M45 10 Q50 7 54 9 Q57 10.5 58 10.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M45 22 Q50 25 54 22 Q57 21 58 21.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+              <rect x="57" y="8.5" width="10" height="15" rx="1.2" fill="currentColor" fill-opacity="0.09" stroke="currentColor" stroke-width="1.4"/>
+              <line x1="61" y1="8.5" x2="61" y2="23.5" stroke="currentColor" stroke-width="0.8" opacity="0.4"/>
+              <circle cx="64.5" cy="12" r="0.7" fill="currentColor" opacity="0.4"/>
+              <circle cx="64.5" cy="16" r="0.7" fill="currentColor" opacity="0.4"/>
+              <circle cx="64.5" cy="20" r="0.7" fill="currentColor" opacity="0.4"/>
+              <path d="M67 10 L71 16 L67 22" fill="currentColor" opacity="0.72"/>
+              <circle cx="73" cy="16" r="4.5" fill="none" stroke="#FF4500" stroke-width="0.9" opacity="0.22"/>
+              <circle cx="73" cy="16" r="2.1" fill="#FF4500" opacity="0.95"/>
+              <line x1="73" y1="16" x2="79" y2="8"  stroke="#ffbd2e" stroke-width="1.4" stroke-linecap="round"/>
+              <line x1="73" y1="16" x2="80" y2="16" stroke="#FF4500" stroke-width="1.2" stroke-linecap="round"/>
+              <line x1="73" y1="16" x2="79" y2="24" stroke="#ffbd2e" stroke-width="1.4" stroke-linecap="round"/>
+              <circle cx="79" cy="8"  r="1.2" fill="#ffbd2e"/>
+              <circle cx="80" cy="16" r="1"   fill="#FF4500"/>
+              <circle cx="79" cy="24" r="1.2" fill="#ffbd2e"/>
+            </svg>
+          </div>
           <div class="dash-card-name">BLUE-TIP</div>
           <div class="dash-card-desc">MOBILE WELDING<br>FIELD & FABRICATION SERVICES</div>
           <div class="dash-card-arrow">ENTER →</div>
@@ -211,7 +273,31 @@
 
         <!-- Blue-Meshtastic -->
         <a href="/mesh" class="dash-card">
-          <div class="dash-card-icon">⬡</div>
+          <!-- Blue-Meshtastic mesh node logo -->
+          <div class="dash-card-icon">
+            <svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" style="color:#FF4500;">
+              <line x1="8"  y1="15" x2="30" y2="5"  stroke="currentColor" stroke-width="1"   opacity="0.45"/>
+              <line x1="8"  y1="15" x2="20" y2="25" stroke="currentColor" stroke-width="1"   opacity="0.45"/>
+              <line x1="30" y1="5"  x2="52" y2="15" stroke="currentColor" stroke-width="1"   opacity="0.45"/>
+              <line x1="30" y1="5"  x2="20" y2="25" stroke="currentColor" stroke-width="1"   opacity="0.45"/>
+              <line x1="30" y1="5"  x2="40" y2="25" stroke="currentColor" stroke-width="1"   opacity="0.45"/>
+              <line x1="52" y1="15" x2="40" y2="25" stroke="currentColor" stroke-width="1"   opacity="0.45"/>
+              <line x1="20" y1="25" x2="40" y2="25" stroke="currentColor" stroke-width="0.8" opacity="0.4"/>
+              <line x1="8"  y1="15" x2="40" y2="25" stroke="currentColor" stroke-width="0.7" opacity="0.22"/>
+              <path d="M54 13 Q58 15 54 17" fill="none" stroke="#27c93f" stroke-width="1"   opacity="0.8"/>
+              <path d="M55 11 Q59 15 55 19" fill="none" stroke="#27c93f" stroke-width="0.8" opacity="0.45"/>
+              <circle cx="8"  cy="15" r="3"   fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="1.3"/>
+              <circle cx="8"  cy="15" r="1.2" fill="currentColor" opacity="0.65"/>
+              <circle cx="30" cy="5"  r="3"   fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="1.3"/>
+              <circle cx="30" cy="5"  r="1.2" fill="currentColor" opacity="0.65"/>
+              <circle cx="52" cy="15" r="3"   fill="#27c93f" fill-opacity="0.18" stroke="#27c93f" stroke-width="1.3"/>
+              <circle cx="52" cy="15" r="1.3" fill="#27c93f"/>
+              <circle cx="20" cy="25" r="2.5" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="1.1"/>
+              <circle cx="20" cy="25" r="1"   fill="currentColor" opacity="0.6"/>
+              <circle cx="40" cy="25" r="2.5" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="1.1"/>
+              <circle cx="40" cy="25" r="1"   fill="currentColor" opacity="0.6"/>
+            </svg>
+          </div>
           <div class="dash-card-name">BLUE-MESHTASTIC</div>
           <div class="dash-card-desc">RADIO MESH NETWORK<br>NODE MANAGEMENT</div>
           <div class="dash-card-arrow">ENTER →</div>
