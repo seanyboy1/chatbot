@@ -8,6 +8,23 @@
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/customer.css">
   <link rel="stylesheet" href="/css/logo.css">
+  <style>
+    #bluetip-splash-svg { width: 260px; height: auto; }
+    #bluetip-brand-name { font-family: 'Share Tech Mono', monospace; font-size: 32px; letter-spacing: 8px; color: var(--blue); text-shadow: 0 0 20px var(--blue-glow); }
+    #bluetip-brand-sub  { font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 4px; color: var(--blue-dark); margin-top: 6px; }
+    .bluetip-splash-inner { padding: 40px 0; gap: 24px; }
+    @media (max-width: 768px) {
+      #bluetip-splash-svg  { width: 180px !important; }
+      #bluetip-brand-name  { font-size: 22px !important; letter-spacing: 5px !important; }
+      #bluetip-brand-sub   { font-size: 9px !important; letter-spacing: 3px !important; }
+      .bluetip-splash-inner { padding: 20px 16px !important; gap: 16px !important; }
+    }
+    @media (max-width: 480px) {
+      #bluetip-splash-svg  { width: 140px !important; }
+      #bluetip-brand-name  { font-size: 18px !important; letter-spacing: 4px !important; }
+      .bluetip-splash-inner { padding: 16px 12px !important; gap: 12px !important; }
+    }
+  </style>
 </head>
 <body>
   <canvas id="matrix-rain"></canvas>
@@ -26,9 +43,9 @@
       <span class="status-text">ESTABLISHING CONNECTION...</span>
     </div>
 
-    <div class="splash-logo-container" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:40px 0;">
+    <div class="splash-logo-container bluetip-splash-inner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:40px 0;">
       <!-- Welding torch SVG splash logo -->
-      <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" style="width:260px;height:auto;color:var(--blue);">
+      <svg id="bluetip-splash-svg" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" style="color:var(--blue);">
         <!-- Cable hose (thick, curved behind body) -->
         <path d="M68 100 Q40 118 20 103 Q2 88 16 66 Q28 48 44 52" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
         <!-- Cable connector nub -->
@@ -100,8 +117,8 @@
 
       <!-- Brand name -->
       <div style="text-align:center;">
-        <div style="font-family:'Share Tech Mono',monospace;font-size:32px;letter-spacing:8px;color:var(--blue);text-shadow:0 0 20px var(--blue-glow);">BLUE-TIP</div>
-        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:4px;color:var(--blue-dark);margin-top:6px;">MOBILE WELDING SERVICES</div>
+        <div id="bluetip-brand-name">BLUE-TIP</div>
+        <div id="bluetip-brand-sub">MOBILE WELDING SERVICES</div>
       </div>
 
       <!-- Connection status -->
