@@ -824,6 +824,12 @@
   </div>
 
 
+  <script type="module">
+    import { isLoggedIn, getRole } from '/js/auth.js';
+    if (isLoggedIn() && getRole() !== 'admin') {
+      window.location.replace('/profile');
+    }
+  </script>
   <script type="module" src="/js/customer.js"></script>
 </body>
 </html>
