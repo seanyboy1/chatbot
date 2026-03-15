@@ -13,16 +13,35 @@
     #bluetip-brand-name { font-family: 'Share Tech Mono', monospace; font-size: 32px; letter-spacing: 8px; color: var(--blue); text-shadow: 0 0 20px var(--blue-glow); }
     #bluetip-brand-sub  { font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 4px; color: var(--blue-dark); margin-top: 6px; }
     .bluetip-splash-inner { padding: 40px 0; gap: 24px; }
+    /* Make option boxes flex on bluetip page (no rack/cable absolute layout) */
+    .bluetip-splash-inner .splash-options {
+      width: auto;
+      height: auto;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      gap: 16px;
+      opacity: 1;
+    }
+    .bluetip-splash-inner .splash-option-box {
+      position: relative;
+      left: auto !important;
+    }
     @media (max-width: 768px) {
       #bluetip-splash-svg  { width: 180px !important; }
       #bluetip-brand-name  { font-size: 22px !important; letter-spacing: 5px !important; }
       #bluetip-brand-sub   { font-size: 9px !important; letter-spacing: 3px !important; }
       .bluetip-splash-inner { padding: 20px 16px !important; gap: 16px !important; }
+      .bluetip-splash-inner .splash-option-box { width: 150px !important; height: 140px !important; padding: 12px 16px !important; }
+      .bluetip-splash-inner .option-icon { width: 36px !important; height: 36px !important; }
     }
     @media (max-width: 480px) {
       #bluetip-splash-svg  { width: 140px !important; }
       #bluetip-brand-name  { font-size: 18px !important; letter-spacing: 4px !important; }
       .bluetip-splash-inner { padding: 16px 12px !important; gap: 12px !important; }
+      .bluetip-splash-inner .splash-options { gap: 10px !important; }
+      .bluetip-splash-inner .splash-option-box { width: 130px !important; height: 120px !important; padding: 10px 12px !important; }
+      .bluetip-splash-inner .option-icon { width: 28px !important; height: 28px !important; }
     }
   </style>
 </head>
