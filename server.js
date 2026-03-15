@@ -36,6 +36,12 @@ if (!N8N_WEBHOOK_URL) {
 
 app.use(express.json());
 
+// Skip ngrok browser warning for all responses (allows API calls from mobile to pass through)
+app.use((req, res, next) => {
+  res.setHeader('ngrok-skip-browser-warning', '1');
+  next();
+});
+
 // ── SMS via Twilio ───────────────────────────────────────────────────────────
 async function sendSMS(body) {
   const sid  = process.env.TWILIO_ACCOUNT_SID;
