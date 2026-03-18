@@ -69,8 +69,30 @@ function hashPassword(password, salt) {
   return crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha256').toString('hex');
 }
 
-// ── Admin session store (in-memory) ────────────────────────────────────────
-const adminSessions = new Set();
+// ── Rate limiter (in-memory, no extra deps) ──────────────────────────────────
+const rateLimitMap = new Map();
+function checkRateLimit(ip, maxRequests, windowMs) {
+  const now = Date.now();
+  const key = ip + '|' + windowMs;
+  let entry = rateLimitMap.get(key);
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + windowMs };
+  }
+  entry.count++;
+  rateLimitMap.set(key, entry);
+  return entry.count > maxRequests; // true = blocked
+}
+// Clean up stale entries every 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitMap) {
+    if (now > entry.resetAt) rateLimitMap.delete(key);
+  }
+}, 10 * 60 * 1000);
+
+// ── Admin session store (in-memory, with expiry) ─────────────────────────────
+const adminSessions = new Map(); // token → expiresAt
+const ADMIN_SESSION_TTL = 12 * 60 * 60 * 1000; // 12 hours
 
 // ── Auth middleware ─────────────────────────────────────────────────────────
 async function requireAuth(req, res, next) {
@@ -78,7 +100,12 @@ async function requireAuth(req, res, next) {
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
   // Check admin sessions first
-  if (adminSessions.has(token)) {
+  const adminExpiry = adminSessions.get(token);
+  if (adminExpiry) {
+    if (Date.now() > adminExpiry) {
+      adminSessions.delete(token);
+      return res.status(401).json({ error: 'Session expired. Please log in again.' });
+    }
     req.isAdmin = true;
     req.user = { name: 'Administrator', role: 'admin' };
     return next();
@@ -321,6 +348,11 @@ app.post('/api/auth/register', async (req, res) => {
 
 // ── Auth: Login ─────────────────────────────────────────────────────────────
 app.post('/api/auth/login', async (req, res) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip;
+  if (checkRateLimit(ip + '|login', 10, 15 * 60 * 1000)) {
+    return res.status(429).json({ error: 'Too many login attempts. Try again in 15 minutes.' });
+  }
+
   const { identifier, password, service } = req.body;
   if (!identifier || !password) {
     return res.status(400).json({ error: 'Credentials required.' });
@@ -331,7 +363,7 @@ app.post('/api/auth/login', async (req, res) => {
   const adminPass = process.env.ADMIN_PASSWORD;
   if (adminUser && adminPass && identifier === adminUser && password === adminPass) {
     const token = 'admin-' + crypto.randomBytes(24).toString('hex');
-    adminSessions.add(token);
+    adminSessions.set(token, Date.now() + ADMIN_SESSION_TTL);
     return res.json({ token, role: 'admin', user: { name: 'Administrator', username: adminUser } });
   }
 
@@ -666,6 +698,10 @@ app.use(express.static(join(__dirname, 'public')));
 
 // Endpoint to save activity log entry
 app.post('/api/activity', async (req, res) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip;
+  if (checkRateLimit(ip + '|activity', 60, 60 * 1000)) {
+    return res.status(429).json({ error: 'Too many requests.' });
+  }
   const { message, action, context } = req.body;
 
   if (!message) {
@@ -702,7 +738,8 @@ app.post('/api/activity', async (req, res) => {
 });
 
 // Endpoint to get recent activity from database
-app.get('/api/activity', async (req, res) => {
+app.get('/api/activity', requireAuth, async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
   try {
     await connectDB();
 
@@ -736,6 +773,10 @@ app.get('/api/activity', async (req, res) => {
 
 // Endpoint to get user's IP address
 app.get('/api/ip', async (req, res) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip;
+  if (checkRateLimit(ip + '|ipcheck', 30, 60 * 1000)) {
+    return res.status(429).json({ error: 'Too many requests.' });
+  }
   // Get IP from headers (works with proxies like Vercel)
   const ip = req.headers['x-forwarded-for'] ||
              req.headers['x-real-ip'] ||
