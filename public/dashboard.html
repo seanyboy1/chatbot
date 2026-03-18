@@ -405,7 +405,7 @@
 
     document.getElementById('signout-btn').addEventListener('click', () => {
       clearAuth();
-      window.location.href = '/';
+      fetch('/api/auth/logout', { method: 'POST' }).finally(() => { window.location.href = '/'; });
     });
   </script>
 </body>

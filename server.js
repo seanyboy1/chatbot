@@ -69,6 +69,17 @@ function hashPassword(password, salt) {
   return crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha256').toString('hex');
 }
 
+// ── Simple cookie parser ─────────────────────────────────────────────────────
+function parseCookies(cookieHeader) {
+  const cookies = {};
+  if (!cookieHeader) return cookies;
+  cookieHeader.split(';').forEach(c => {
+    const [k, ...v] = c.trim().split('=');
+    if (k) cookies[k.trim()] = decodeURIComponent(v.join('='));
+  });
+  return cookies;
+}
+
 // ── Rate limiter (in-memory, no extra deps) ──────────────────────────────────
 const rateLimitMap = new Map();
 function checkRateLimit(ip, maxRequests, windowMs) {
@@ -93,6 +104,46 @@ setInterval(() => {
 // ── Admin session store (in-memory, with expiry) ─────────────────────────────
 const adminSessions = new Map(); // token → expiresAt
 const ADMIN_SESSION_TTL = 12 * 60 * 60 * 1000; // 12 hours
+
+// ── Admin page guard (server-side, checks httpOnly cookie) ───────────────────
+function requireAdminPage(req, res, next) {
+  const cookies = parseCookies(req.headers.cookie);
+  const token = cookies.admin_session;
+  if (!token) return res.redirect('/login');
+  const expiry = adminSessions.get(token);
+  if (!expiry || Date.now() > expiry) {
+    adminSessions.delete(token);
+    res.setHeader('Set-Cookie', 'admin_session=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict');
+    return res.redirect('/login');
+  }
+  next();
+}
+
+// ── Admin password: migrate plaintext → hashed on startup ───────────────────
+function migrateAdminPassword() {
+  const plain = process.env.ADMIN_PASSWORD;
+  const existingHash = process.env.ADMIN_PASSWORD_HASH;
+  if (plain && !existingHash) {
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = hashPassword(plain, salt);
+    process.env.ADMIN_PASSWORD_HASH = hash;
+    process.env.ADMIN_PASSWORD_SALT = salt;
+    delete process.env.ADMIN_PASSWORD;
+    try {
+      const envPath = join(__dirname, '.env');
+      let content = fs.readFileSync(envPath, 'utf8');
+      content = content.replace(
+        /^ADMIN_PASSWORD=.*$/m,
+        `ADMIN_PASSWORD_HASH=${hash}\nADMIN_PASSWORD_SALT=${salt}`
+      );
+      fs.writeFileSync(envPath, content, 'utf8');
+      console.log('[security] Admin password migrated to hash.');
+    } catch (err) {
+      console.error('[security] Failed to persist admin password hash:', err.message);
+    }
+  }
+}
+migrateAdminPassword();
 
 // ── Auth middleware ─────────────────────────────────────────────────────────
 async function requireAuth(req, res, next) {
@@ -156,11 +207,11 @@ app.get('/', (req, res) => {
   res.sendFile(join(__dirname, 'public', 'restricted.html'));
 });
 
-app.get('/dashboard', (req, res) => {
+app.get('/dashboard', requireAdminPage, (req, res) => {
   res.sendFile(join(__dirname, 'public', 'dashboard.html'));
 });
 
-app.get('/bluetip', (req, res) => {
+app.get('/bluetip', requireAdminPage, (req, res) => {
   res.sendFile(join(__dirname, 'public', 'bluetip.html'));
 });
 
@@ -184,7 +235,7 @@ app.get('/home', (req, res) => {
   res.sendFile(join(__dirname, 'public', 'home.html'));
 });
 
-app.get('/admin', (req, res) => {
+app.get('/admin', requireAdminPage, (req, res) => {
   res.sendFile(join(__dirname, 'public', 'admin.html'));
 });
 
@@ -204,7 +255,7 @@ app.get('/profile', (req, res) => {
   res.sendFile(join(__dirname, 'public', 'profile.html'));
 });
 
-app.get('/mesh', (req, res) => {
+app.get('/mesh', requireAdminPage, (req, res) => {
   res.sendFile(join(__dirname, 'public', 'mesh.html'));
 });
 
@@ -262,7 +313,7 @@ app.delete('/api/mesh/nodes/:nodeId', requireAuth, async (req, res) => {
 });
 
 // ── Blue-SIKE Page ───────────────────────────────────────────────────────────
-app.get('/bluesike', (req, res) => {
+app.get('/bluesike', requireAdminPage, (req, res) => {
   res.sendFile(join(__dirname, 'public', 'bluesike.html'));
 });
 
@@ -360,11 +411,21 @@ app.post('/api/auth/login', async (req, res) => {
 
   // Check admin credentials first
   const adminUser = process.env.ADMIN_USERNAME;
-  const adminPass = process.env.ADMIN_PASSWORD;
-  if (adminUser && adminPass && identifier === adminUser && password === adminPass) {
-    const token = 'admin-' + crypto.randomBytes(24).toString('hex');
-    adminSessions.set(token, Date.now() + ADMIN_SESSION_TTL);
-    return res.json({ token, role: 'admin', user: { name: 'Administrator', username: adminUser } });
+  const adminHash = process.env.ADMIN_PASSWORD_HASH;
+  const adminSalt = process.env.ADMIN_PASSWORD_SALT;
+  const adminPlain = process.env.ADMIN_PASSWORD; // fallback if not yet migrated
+  if (adminUser && identifier === adminUser) {
+    const valid = adminHash && adminSalt
+      ? hashPassword(password, adminSalt) === adminHash
+      : (adminPlain && password === adminPlain);
+    if (valid) {
+      const token = 'admin-' + crypto.randomBytes(24).toString('hex');
+      adminSessions.set(token, Date.now() + ADMIN_SESSION_TTL);
+      const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+      const cookieFlags = `HttpOnly; SameSite=Strict; Path=/; Max-Age=${ADMIN_SESSION_TTL / 1000}${isSecure ? '; Secure' : ''}`;
+      res.setHeader('Set-Cookie', `admin_session=${token}; ${cookieFlags}`);
+      return res.json({ token, role: 'admin', user: { name: 'Administrator', username: adminUser } });
+    }
   }
 
   try {
@@ -410,29 +471,54 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// ── Auth: Logout (clears httpOnly cookie + invalidates session) ──────────────
+app.post('/api/auth/logout', (req, res) => {
+  const cookies = parseCookies(req.headers.cookie);
+  const token = cookies.admin_session;
+  if (token) adminSessions.delete(token);
+  res.setHeader('Set-Cookie', 'admin_session=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict');
+  res.json({ success: true });
+});
+
 // ── Admin: Update Profile ────────────────────────────────────────────────────
 app.put('/api/admin/profile', requireAuth, (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
   const { username, currentPassword, newPassword } = req.body;
   if (!currentPassword) return res.status(400).json({ error: 'Current password required.' });
 
-  if (currentPassword !== process.env.ADMIN_PASSWORD) {
-    return res.status(401).json({ error: 'Current password is incorrect.' });
-  }
+  // Verify current password against hash (or plaintext fallback)
+  const storedHash  = process.env.ADMIN_PASSWORD_HASH;
+  const storedSalt  = process.env.ADMIN_PASSWORD_SALT;
+  const storedPlain = process.env.ADMIN_PASSWORD;
+  const valid = storedHash && storedSalt
+    ? hashPassword(currentPassword, storedSalt) === storedHash
+    : (storedPlain && currentPassword === storedPlain);
+  if (!valid) return res.status(401).json({ error: 'Current password is incorrect.' });
 
   const newUser = (username || process.env.ADMIN_USERNAME).trim();
-  const newPass = (newPassword || '').trim() || process.env.ADMIN_PASSWORD;
 
-  // Update in memory immediately
-  process.env.ADMIN_USERNAME = newUser;
-  process.env.ADMIN_PASSWORD = newPass;
+  // Hash the new password (or re-hash current if not changing)
+  const passToHash = (newPassword || '').trim() || currentPassword;
+  const newSalt = crypto.randomBytes(16).toString('hex');
+  const newHash = hashPassword(passToHash, newSalt);
 
-  // Persist to .env file
+  process.env.ADMIN_USERNAME     = newUser;
+  process.env.ADMIN_PASSWORD_HASH = newHash;
+  process.env.ADMIN_PASSWORD_SALT = newSalt;
+  delete process.env.ADMIN_PASSWORD;
+
   try {
     const envPath = join(__dirname, '.env');
     let content = fs.readFileSync(envPath, 'utf8');
     content = content.replace(/^ADMIN_USERNAME=.*$/m, `ADMIN_USERNAME=${newUser}`);
-    content = content.replace(/^ADMIN_PASSWORD=.*$/m, `ADMIN_PASSWORD=${newPass}`);
+    // Update or add hash/salt lines, remove any plaintext password line
+    if (/^ADMIN_PASSWORD_HASH=.*$/m.test(content)) {
+      content = content.replace(/^ADMIN_PASSWORD_HASH=.*$/m, `ADMIN_PASSWORD_HASH=${newHash}`);
+      content = content.replace(/^ADMIN_PASSWORD_SALT=.*$/m, `ADMIN_PASSWORD_SALT=${newSalt}`);
+    } else {
+      content = content.replace(/^ADMIN_PASSWORD=.*$/m, `ADMIN_PASSWORD_HASH=${newHash}\nADMIN_PASSWORD_SALT=${newSalt}`);
+    }
+    content = content.replace(/^ADMIN_PASSWORD=.*\n?/m, '');
     fs.writeFileSync(envPath, content, 'utf8');
   } catch (err) {
     console.error('Failed to persist admin credentials:', err);

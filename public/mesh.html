@@ -543,7 +543,7 @@
 
     // Nav buttons
     document.getElementById('back-btn').addEventListener('click', () => { window.location.href = '/dashboard'; });
-    document.getElementById('signout-btn').addEventListener('click', () => { clearAuth(); window.location.href = '/login'; });
+    document.getElementById('signout-btn').addEventListener('click', () => { clearAuth(); fetch('/api/auth/logout', { method: 'POST' }).finally(() => { window.location.href = '/login'; }); });
 
     // Hover effects for nav buttons
     ['back-btn', 'signout-btn'].forEach(id => {
