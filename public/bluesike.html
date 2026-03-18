@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLUE-SIKE</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/logo.css">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    /* ── Page Layout ───────────────────────────────────── */
+    body { overflow: hidden; }
+
+    .mesh-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 54px);
+      margin-top: 54px;
+      padding: 16px;
+      gap: 12px;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Top bar ───────────────────────────────────────── */
+    .mesh-topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
+    .mesh-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--blue-dark);
+      flex: 1;
+    }
+
+    .mesh-stat-chip {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: var(--blue-dim);
+      background: rgba(93,173,226,0.06);
+      border: 1px solid var(--blue-dark);
+      padding: 4px 10px;
+      border-radius: 2px;
+    }
+
+    .mesh-stat-chip span {
+      color: var(--blue);
+    }
+
+    .mesh-stat-chip {
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.15s, box-shadow 0.15s, color 0.15s;
+    }
+
+    .mesh-stat-chip:hover {
+      border-color: var(--blue-dim);
+      color: var(--blue);
+    }
+
+    .mesh-stat-chip.active {
+      border-color: var(--blue);
+      color: var(--blue);
+      box-shadow: 0 0 8px var(--blue-glow);
+    }
+
+    /* ── Main grid ─────────────────────────────────────── */
+    .mesh-grid {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ── Sidebar ───────────────────────────────────────── */
+    .mesh-sidebar {
+      background: var(--bg-terminal);
+      border: 1px solid var(--blue-dark);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+
+    .mesh-sidebar-header {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2.5px;
+      color: var(--blue-dark);
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid rgba(93,173,226,0.12);
+    }
+
+    .mesh-node-list {
+      overflow-y: auto;
+      flex: 1;
+      padding: 8px 0;
+    }
+
+    .mesh-node-list::-webkit-scrollbar { width: 4px; }
+    .mesh-node-list::-webkit-scrollbar-track { background: transparent; }
+    .mesh-node-list::-webkit-scrollbar-thumb { background: var(--blue-dark); border-radius: 2px; }
+
+    .mesh-node-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(93,173,226,0.06);
+      transition: background 0.15s;
+    }
+
+    .mesh-node-item:hover {
+      background: rgba(93,173,226,0.07);
+    }
+
+    .mesh-node-item.selected {
+      background: rgba(93,173,226,0.12);
+      border-left: 2px solid var(--blue);
+    }
+
+    .mesh-node-name {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      color: #FF4500;
+      text-shadow: 0 0 8px rgba(255,69,0,0.4);
+      letter-spacing: 1px;
+      margin-bottom: 3px;
+    }
+
+    .mesh-node-meta {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--blue-dark);
+      letter-spacing: 0.5px;
+    }
+
+    .mesh-node-status {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .mesh-node-status.online  { background: #27c93f; box-shadow: 0 0 6px #27c93f; }
+    .mesh-node-status.offline { background: var(--blue-dark); }
+
+    .mesh-no-nodes {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--blue-dark);
+      text-align: center;
+      padding: 24px 14px;
+      letter-spacing: 1px;
+    }
+
+    /* ── Add Node Form ─────────────────────────────────── */
+    .mesh-add-form {
+      border-top: 1px solid rgba(93,173,226,0.12);
+      padding: 12px 14px;
+    }
+
+    .mesh-add-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--blue-dark);
+      margin-bottom: 8px;
+    }
+
+    .mesh-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--blue-dark);
+      color: var(--blue);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      padding: 4px 0;
+      outline: none;
+      letter-spacing: 1px;
+      box-sizing: border-box;
+      margin-bottom: 8px;
+    }
+
+    .mesh-input::placeholder { color: rgba(93,173,226,0.25); }
+
+    .mesh-coords {
+      display: flex;
+      gap: 8px;
+    }
+
+    .mesh-coords .mesh-input { margin-bottom: 0; }
+
+    .mesh-add-btn {
+      width: 100%;
+      margin-top: 10px;
+      background: transparent;
+      border: 1px solid var(--blue-dark);
+      color: var(--blue-dim);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      padding: 7px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mesh-add-btn:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+      box-shadow: 0 0 8px var(--blue-glow);
+    }
+
+    .mesh-form-msg {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      min-height: 14px;
+      margin-top: 6px;
+    }
+
+    /* ── Map Panel ─────────────────────────────────────── */
+    .mesh-map-panel {
+      background: var(--bg-terminal);
+      border: 1px solid var(--blue-dark);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #mesh-map {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Override Leaflet dark theme */
+    .leaflet-container {
+      background: #0a0f1a;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .leaflet-popup-content-wrapper {
+      background: rgba(5,12,26,0.97);
+      border: 1px solid var(--blue-dark);
+      border-radius: 3px;
+      box-shadow: 0 0 20px rgba(93,173,226,0.3);
+      color: var(--blue-dim);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+    }
+
+    .leaflet-popup-tip {
+      background: var(--blue-dark);
+    }
+
+    .leaflet-popup-close-button {
+      color: var(--blue-dark) !important;
+      font-size: 16px !important;
+    }
+
+    .leaflet-control-zoom a {
+      background: rgba(5,12,26,0.9);
+      border-color: var(--blue-dark);
+      color: var(--blue-dim);
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .leaflet-control-zoom a:hover {
+      background: rgba(93,173,226,0.15);
+      color: var(--blue);
+    }
+
+    .leaflet-control-attribution {
+      background: rgba(5,12,26,0.7) !important;
+      color: rgba(93,173,226,0.3) !important;
+      font-size: 9px;
+    }
+
+    .leaflet-control-attribution a { color: rgba(93,173,226,0.4) !important; }
+
+    /* Scan line overlay on map */
+    .mesh-map-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.04) 2px,
+        rgba(0,0,0,0.04) 4px
+      );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* ── Node detail popup ─────────────────────────────── */
+    .mesh-popup-name {
+      font-size: 13px;
+      color: #FF4500;
+      text-shadow: 0 0 8px rgba(255,69,0,0.4);
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .mesh-popup-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 3px;
+    }
+
+    .mesh-popup-label { color: var(--blue-dark); font-size: 9px; letter-spacing: 1.5px; }
+    .mesh-popup-val   { color: var(--blue); font-size: 10px; }
+
+    .mesh-popup-btn {
+      margin-top: 6px;
+      background: transparent;
+      border: 1px solid var(--blue-dark);
+      color: var(--blue-dim);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      padding: 4px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      display: block;
+    }
+
+    .mesh-popup-btn:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    .mesh-popup-btn.danger {
+      border-color: rgba(255,69,0,0.3);
+      color: rgba(255,69,0,0.6);
+    }
+
+    .mesh-popup-btn.danger:hover {
+      border-color: #FF4500;
+      color: #FF4500;
+      box-shadow: 0 0 6px rgba(255,69,0,0.3);
+    }
+
+    .mesh-popup-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--blue-dark);
+      color: var(--blue);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      padding: 3px 0;
+      outline: none;
+      box-sizing: border-box;
+      margin-bottom: 6px;
+    }
+
+    /* ── Map coords tooltip ────────────────────────────── */
+    .mesh-crosshair-tip {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--blue-dark);
+      letter-spacing: 1px;
+      pointer-events: none;
+      z-index: 1001;
+    }
+
+    /* ── Mobile ────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      body { overflow: auto; }
+
+      .mesh-container {
+        height: auto;
+        padding: 12px;
+      }
+
+      .mesh-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 360px;
+      }
+
+      .mesh-sidebar {
+        max-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrix-rain"></canvas>
+
+  <!-- Top Navigation -->
+  <nav class="dashboard-nav">
+    <div class="nav-left">
+      <a href="/dashboard" class="logo-container">
+        <svg class="logo-icon" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" style="color:#FF4500;">
+          <!-- Outer ring -->
+          <circle cx="30" cy="15" r="12" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.5"/>
+          <!-- Inner ring -->
+          <circle cx="30" cy="15" r="7"  fill="none" stroke="#27c93f" stroke-width="1" opacity="0.7"/>
+          <!-- Cross hairs -->
+          <line x1="30" y1="2"  x2="30" y2="8"  stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+          <line x1="30" y1="22" x2="30" y2="28" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+          <line x1="17" y1="15" x2="23" y2="15" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+          <line x1="37" y1="15" x2="43" y2="15" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+          <!-- Center dot -->
+          <circle cx="30" cy="15" r="2.5" fill="#27c93f" opacity="0.9"/>
+          <!-- Pulse ring -->
+          <circle cx="30" cy="15" r="4.5" fill="none" stroke="#27c93f" stroke-width="0.7" opacity="0.4">
+            <animate attributeName="r" values="4.5;10;4.5" dur="2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite"/>
+          </circle>
+          <!-- Corner marks -->
+          <path d="M4 6 L4 2 L8 2"       fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+          <path d="M52 2 L56 2 L56 6"    fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+          <path d="M4 24 L4 28 L8 28"    fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+          <path d="M52 28 L56 28 L56 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+        </svg>
+        <span class="logo-text" data-text="BLUE-SIKE">BLUE-SIKE</span>
+      </a>
+      <span class="admin-label" style="color:#FF4500;">ADMIN PANEL</span>
+    </div>
+    <div class="nav-right" style="display:flex;align-items:center;gap:16px;">
+      <div class="nav-status">
+        <span class="status-dot status-dot-green"></span> <span style="color:#FF4500;">ONLINE</span>
+      </div>
+      <button id="back-btn" style="
+        font-family:'Share Tech Mono',monospace;
+        font-size:11px;
+        letter-spacing:1.5px;
+        color:var(--blue-dim);
+        background:none;
+        border:1px solid var(--blue-dark);
+        padding:5px 14px;
+        border-radius:3px;
+        cursor:pointer;
+        transition:color 0.2s,border-color 0.2s,box-shadow 0.2s;
+      ">← ADMIN</button>
+      <button id="signout-btn" style="
+        font-family:'Share Tech Mono',monospace;
+        font-size:11px;
+        letter-spacing:1.5px;
+        color:var(--blue-dim);
+        background:none;
+        border:1px solid var(--blue-dark);
+        padding:5px 14px;
+        border-radius:3px;
+        cursor:pointer;
+        transition:color 0.2s,border-color 0.2s,box-shadow 0.2s;
+      ">SIGN OUT</button>
+    </div>
+  </nav>
+
+  <div class="mesh-container">
+    <!-- Top bar -->
+    <div class="mesh-topbar">
+      <div class="mesh-title">BLUE-SIKE // NODE MAP</div>
+      <div class="mesh-stat-chip active" id="chip-all">NODES: <span id="mesh-node-count">0</span></div>
+      <div class="mesh-stat-chip" id="chip-online">ONLINE: <span id="mesh-online-count">0</span></div>
+      <div class="mesh-stat-chip" id="chip-offline">OFFLINE: <span id="mesh-offline-count">0</span></div>
+    </div>
+
+    <!-- Main grid -->
+    <div class="mesh-grid">
+      <!-- Sidebar -->
+      <div class="mesh-sidebar">
+        <div class="mesh-sidebar-header">REGISTERED NODES</div>
+        <div class="mesh-node-list" id="mesh-node-list">
+          <div class="mesh-no-nodes">NO NODES REGISTERED</div>
+        </div>
+        <div class="mesh-add-form">
+          <div class="mesh-add-title">ADD NODE</div>
+          <input class="mesh-input" id="node-name" type="text" placeholder="Node name / callsign" autocomplete="off" spellcheck="false"/>
+          <div class="mesh-coords">
+            <input class="mesh-input" id="node-lat" type="text" placeholder="Latitude" autocomplete="off"/>
+            <input class="mesh-input" id="node-lon" type="text" placeholder="Longitude" autocomplete="off"/>
+          </div>
+          <input class="mesh-input" id="node-desc" type="text" placeholder="Description (optional)" autocomplete="off"/>
+          <button class="mesh-add-btn" id="mesh-add-btn">+ ADD NODE</button>
+          <div class="mesh-form-msg" id="mesh-form-msg"></div>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div class="mesh-map-panel">
+        <div id="mesh-map"></div>
+        <div class="mesh-crosshair-tip" id="mesh-coords-tip">CLICK MAP TO PLACE NODE</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initMatrixRain } from '/js/matrix-rain.js';
+    import { getToken, getRole, clearAuth } from '/js/auth.js';
+
+    // Auth guard — redirect to login if not admin
+    if (!getToken() || getRole() !== 'admin') {
+      window.location.href = '/login';
+    }
+
+    // Matrix rain
+    const rain = initMatrixRain('matrix-rain');
+    if (rain) rain.start();
+
+    // Nav buttons
+    document.getElementById('back-btn').addEventListener('click', () => { window.location.href = '/dashboard'; });
+    document.getElementById('signout-btn').addEventListener('click', () => { clearAuth(); window.location.href = '/login'; });
+
+    // Hover effects for nav buttons
+    ['back-btn', 'signout-btn'].forEach(id => {
+      const btn = document.getElementById(id);
+      btn.addEventListener('mouseover', function() {
+        this.style.color = 'var(--blue)';
+        this.style.borderColor = 'var(--blue)';
+        this.style.boxShadow = '0 0 8px var(--blue-glow)';
+      });
+      btn.addEventListener('mouseout', function() {
+        this.style.color = 'var(--blue-dim)';
+        this.style.borderColor = 'var(--blue-dark)';
+        this.style.boxShadow = 'none';
+      });
+    });
+  </script>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module">
+    import { getToken } from '/js/auth.js';
+
+    function authHeaders() {
+      return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
+    }
+
+    async function apiLoadNodes() {
+      const res = await fetch('/api/bluesike/nodes', { headers: authHeaders() });
+      if (res.status === 401 || res.status === 403) {
+        window.location.href = '/login';
+        return [];
+      }
+      const data = await res.json();
+      return (data.nodes || []).map(n => ({
+        id: n.nodeId, name: n.name, lat: n.lat, lon: n.lon,
+        desc: n.desc || '', online: n.online !== false, addedAt: n.addedAt,
+      }));
+    }
+
+    async function apiUpdateNode(id, fields) {
+      const res = await fetch(`/api/bluesike/nodes/${id}`, {
+        method: 'PUT', headers: authHeaders(),
+        body: JSON.stringify(fields),
+      });
+      return res.ok;
+    }
+
+    async function apiDeleteNode(id) {
+      const res = await fetch(`/api/bluesike/nodes/${id}`, {
+        method: 'DELETE', headers: authHeaders(),
+      });
+      return res.ok;
+    }
+
+    // Wait for Leaflet to load
+    await new Promise(r => {
+      if (window.L) return r();
+      const check = setInterval(() => { if (window.L) { clearInterval(check); r(); } }, 50);
+    });
+
+    // Initialize map centered on US
+    const map = L.map('mesh-map', {
+      center: [39.5, -98.35],
+      zoom: 4,
+      zoomControl: true,
+    });
+
+    // Dark tile layer (CartoDB Dark Matter)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19,
+    }).addTo(map);
+
+    // Custom node icon
+    function makeIcon(online) {
+      const fill   = online ? '#27c93f' : '#3a5a7a';
+      const stroke = online ? '#1a8f2a' : '#1a3a5c';
+      const glow   = online ? `drop-shadow(0 0 5px #27c93f)` : 'none';
+      return L.divIcon({
+        className: '',
+        html: `<svg width="24" height="34" viewBox="0 0 24 34" xmlns="http://www.w3.org/2000/svg" style="filter:${glow}">
+          <path d="M12 2 C6.477 2 2 6.477 2 12 C2 19 12 32 12 32 C12 32 22 19 22 12 C22 6.477 17.523 2 12 2 Z"
+                fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>
+          <circle cx="12" cy="12" r="4" fill="rgba(0,0,0,0.35)"/>
+          <circle cx="12" cy="12" r="2.5" fill="${online ? '#fff' : '#5D9BDB'}" opacity="0.9"/>
+        </svg>`,
+        iconSize: [24, 34],
+        iconAnchor: [12, 34],
+        popupAnchor: [0, -36],
+      });
+    }
+
+    // State
+    let nodes = [];
+    const markers = {};
+    let nodeFilter = 'all';
+
+    // Filter chip click handlers
+    const chipMap = { all: 'chip-all', online: 'chip-online', offline: 'chip-offline' };
+    Object.entries(chipMap).forEach(([filter, id]) => {
+      document.getElementById(id).addEventListener('click', () => {
+        nodeFilter = filter;
+        Object.values(chipMap).forEach(cid => document.getElementById(cid).classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        render();
+      });
+    });
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function updateStats() {
+      const online  = nodes.filter(n => n.online !== false).length;
+      const offline = nodes.length - online;
+      document.getElementById('mesh-node-count').textContent   = nodes.length;
+      document.getElementById('mesh-online-count').textContent  = online;
+      document.getElementById('mesh-offline-count').textContent = offline;
+    }
+
+    function buildPopupView(n) {
+      return `
+        <div class="mesh-popup-name">${escHtml(n.name)}</div>
+        <div class="mesh-popup-row">
+          <span class="mesh-popup-label">LAT</span>
+          <span class="mesh-popup-val">${Number(n.lat).toFixed(5)}</span>
+        </div>
+        <div class="mesh-popup-row">
+          <span class="mesh-popup-label">LON</span>
+          <span class="mesh-popup-val">${Number(n.lon).toFixed(5)}</span>
+        </div>
+        ${n.desc ? `<div class="mesh-popup-row"><span class="mesh-popup-label">INFO</span><span class="mesh-popup-val">${escHtml(n.desc)}</span></div>` : ''}
+        <div class="mesh-popup-row">
+          <span class="mesh-popup-label">STATUS</span>
+          <span class="mesh-popup-val" style="color:${n.online !== false ? '#27c93f' : 'var(--blue-dark)'};">${n.online !== false ? 'ONLINE' : 'OFFLINE'}</span>
+        </div>
+        <button class="mesh-popup-btn" data-action="edit" data-id="${escHtml(n.id)}">EDIT</button>
+        <button class="mesh-popup-btn" data-action="toggle" data-id="${escHtml(n.id)}">${n.online !== false ? 'MARK OFFLINE' : 'MARK ONLINE'}</button>
+        <button class="mesh-popup-btn danger" data-action="delete" data-id="${escHtml(n.id)}">DELETE NODE</button>
+      `;
+    }
+
+    function buildPopupEdit(n) {
+      return `
+        <div class="mesh-popup-label" style="margin-bottom:4px;">EDIT NODE</div>
+        <input class="mesh-popup-input" data-field="name" value="${escHtml(n.name)}" placeholder="Name"/>
+        <input class="mesh-popup-input" data-field="desc" value="${escHtml(n.desc||'')}" placeholder="Description"/>
+        <div class="mesh-popup-label" style="margin-bottom:2px;">LAT</div>
+        <input class="mesh-popup-input" data-field="lat" value="${Number(n.lat).toFixed(5)}" placeholder="Latitude"/>
+        <div class="mesh-popup-label" style="margin-bottom:2px;">LON</div>
+        <input class="mesh-popup-input" data-field="lon" value="${Number(n.lon).toFixed(5)}" placeholder="Longitude"/>
+        <button class="mesh-popup-btn" data-action="save-edit" data-id="${escHtml(n.id)}">SAVE</button>
+        <button class="mesh-popup-btn" data-action="cancel-edit" data-id="${escHtml(n.id)}">CANCEL</button>
+      `;
+    }
+
+    function addMarker(n) {
+      const m = L.marker([n.lat, n.lon], { icon: makeIcon(n.online !== false) })
+        .addTo(map)
+        .bindPopup(buildPopupView(n), { maxWidth: 300, minWidth: 260, closeOnClick: false });
+
+      let attached = false;
+      m.on('popupopen', (e) => {
+        const el = e.popup.getElement();
+        if (!el || attached) return;
+        attached = true;
+
+        el.addEventListener('click', async (ev) => {
+          ev.stopPropagation();
+          const btn = ev.target.closest('[data-action]');
+          if (!btn) return;
+          const id     = btn.dataset.id;
+          const action = btn.dataset.action;
+
+          if (action === 'delete') {
+            m.closePopup();
+            await deleteNode(id);
+
+          } else if (action === 'toggle') {
+            const idx = nodes.findIndex(x => x.id === id);
+            if (idx !== -1) {
+              const newOnline = !(nodes[idx].online !== false);
+              await apiUpdateNode(id, { online: newOnline });
+              nodes[idx].online = newOnline;
+              render();
+              setTimeout(() => markers[id]?.openPopup(), 50);
+            }
+
+          } else if (action === 'edit') {
+            const node = nodes.find(x => x.id === id);
+            if (node) {
+              const contentDiv = el.querySelector('.leaflet-popup-content');
+              if (contentDiv) contentDiv.innerHTML = buildPopupEdit(node);
+            }
+
+          } else if (action === 'save-edit') {
+            const idx = nodes.findIndex(x => x.id === id);
+            if (idx !== -1) {
+              const fields = {};
+              el.querySelectorAll('[data-field]').forEach(inp => {
+                const val = inp.value.trim();
+                if (inp.dataset.field === 'lat' || inp.dataset.field === 'lon') {
+                  fields[inp.dataset.field] = parseFloat(val);
+                } else {
+                  fields[inp.dataset.field] = val;
+                }
+              });
+              if (isNaN(fields.lat) || isNaN(fields.lon)) return;
+              await apiUpdateNode(id, fields);
+              Object.assign(nodes[idx], fields);
+              const contentDiv = el.querySelector('.leaflet-popup-content');
+              if (contentDiv) contentDiv.innerHTML = buildPopupView(nodes[idx]);
+              const coordsChanged = 'lat' in fields || 'lon' in fields;
+              if (coordsChanged) {
+                render();
+                setTimeout(() => markers[id]?.openPopup(), 50);
+              } else {
+                renderSidebar();
+                updateStats();
+              }
+            }
+
+          } else if (action === 'cancel-edit') {
+            const node = nodes.find(x => x.id === id);
+            if (node) {
+              const contentDiv = el.querySelector('.leaflet-popup-content');
+              if (contentDiv) contentDiv.innerHTML = buildPopupView(node);
+            }
+          }
+        });
+      });
+
+      markers[n.id] = m;
+    }
+
+    function renderSidebar() {
+      const list = document.getElementById('mesh-node-list');
+      if (!nodes.length) {
+        list.innerHTML = '<div class="mesh-no-nodes">NO NODES REGISTERED</div>';
+        return;
+      }
+      const filtered = nodes.filter(n => {
+        if (nodeFilter === 'online')  return n.online !== false;
+        if (nodeFilter === 'offline') return n.online === false;
+        return true;
+      });
+      if (!filtered.length) {
+        list.innerHTML = `<div class="mesh-no-nodes">NO ${nodeFilter.toUpperCase()} NODES</div>`;
+        return;
+      }
+      list.innerHTML = '';
+      filtered.forEach(n => {
+        const item = document.createElement('div');
+        item.className = 'mesh-node-item';
+        item.dataset.id = n.id;
+        item.innerHTML = `
+          <div class="mesh-node-name">${escHtml(n.name)}</div>
+          <div class="mesh-node-meta">
+            <span class="mesh-node-status ${n.online !== false ? 'online' : 'offline'}"></span>
+            ${Number(n.lat).toFixed(4)}, ${Number(n.lon).toFixed(4)}
+          </div>
+        `;
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.mesh-node-item').forEach(el => el.classList.remove('selected'));
+          item.classList.add('selected');
+          map.flyTo([n.lat, n.lon], 12, { duration: 0.8 });
+          setTimeout(() => markers[n.id]?.openPopup(), 850);
+        });
+        list.appendChild(item);
+      });
+    }
+
+    function render() {
+      Object.values(markers).forEach(m => map.removeLayer(m));
+      Object.keys(markers).forEach(k => delete markers[k]);
+      const visible = nodes.filter(n => {
+        if (nodeFilter === 'online')  return n.online !== false;
+        if (nodeFilter === 'offline') return n.online === false;
+        return true;
+      });
+      visible.forEach(n => addMarker(n));
+      renderSidebar();
+      updateStats();
+    }
+
+    async function deleteNode(id) {
+      await apiDeleteNode(id);
+      nodes = nodes.filter(n => n.id !== id);
+      render();
+    }
+
+    // ── Click map to pre-fill coords ──────────────────────
+    let clickedLatLon = null;
+    const tip = document.getElementById('mesh-coords-tip');
+
+    map.on('click', (e) => {
+      clickedLatLon = e.latlng;
+      document.getElementById('node-lat').value = e.latlng.lat.toFixed(5);
+      document.getElementById('node-lon').value = e.latlng.lng.toFixed(5);
+      tip.textContent = `SELECTED: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
+      tip.style.color = 'var(--blue)';
+    });
+
+    // ── Add node form ─────────────────────────────────────
+    document.getElementById('mesh-add-btn').addEventListener('click', async () => {
+      const name = document.getElementById('node-name').value.trim();
+      const lat  = parseFloat(document.getElementById('node-lat').value);
+      const lon  = parseFloat(document.getElementById('node-lon').value);
+      const desc = document.getElementById('node-desc').value.trim();
+      const msg  = document.getElementById('mesh-form-msg');
+      const btn  = document.getElementById('mesh-add-btn');
+
+      if (!name) { msg.style.color = '#FF4500'; msg.textContent = 'Node name required.'; return; }
+      if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        msg.style.color = '#FF4500'; msg.textContent = 'Valid coordinates required.'; return;
+      }
+
+      btn.disabled = true; btn.textContent = 'SAVING...';
+
+      const node = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        name, lat, lon, desc, online: true,
+      };
+
+      let saveErr = '';
+      try {
+        const res = await fetch('/api/bluesike/nodes', {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({ nodeId: node.id, name: node.name, lat: node.lat, lon: node.lon, desc: node.desc, online: node.online }),
+        });
+        if (!res.ok) { const d = await res.json().catch(()=>{}); saveErr = d?.error || `HTTP ${res.status}`; }
+      } catch (e) { saveErr = e.message; }
+      btn.disabled = false; btn.textContent = '+ ADD NODE';
+
+      if (saveErr) { msg.style.color = '#FF4500'; msg.textContent = saveErr; return; }
+
+      nodes.push(node);
+      render();
+      map.flyTo([lat, lon], 12, { duration: 0.8 });
+      setTimeout(() => markers[node.id]?.openPopup(), 850);
+
+      document.getElementById('node-name').value = '';
+      document.getElementById('node-lat').value  = '';
+      document.getElementById('node-lon').value  = '';
+      document.getElementById('node-desc').value = '';
+      clickedLatLon = null;
+      tip.textContent = 'CLICK MAP TO PLACE NODE';
+      tip.style.color = '';
+      msg.style.color = '#27c93f'; msg.textContent = 'Node added.';
+      setTimeout(() => { msg.textContent = ''; }, 2000);
+    });
+
+    // Allow Enter key on inputs to submit
+    ['node-name','node-lat','node-lon','node-desc'].forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('mesh-add-btn').click();
+      });
+    });
+
+    // Initial load from database
+    nodes = await apiLoadNodes();
+    render();
+  </script>
+</body>
+</html>

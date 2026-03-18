@@ -105,3 +105,15 @@ const meshNodeSchema = new mongoose.Schema({
   addedAt: { type: Date, default: Date.now },
 });
 export const MeshNode = mongoose.models.MeshNode || mongoose.model('MeshNode', meshNodeSchema);
+
+// Sike Node Schema (Blue-SIKE nodes)
+const sikeNodeSchema = new mongoose.Schema({
+  nodeId: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  lat: { type: Number, required: true },
+  lon: { type: Number, required: true },
+  desc: String,
+  online: { type: Boolean, default: true },
+  addedAt: { type: Date, default: Date.now },
+});
+export const SikeNode = mongoose.models.SikeNode || mongoose.model('SikeNode', sikeNodeSchema);
