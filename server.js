@@ -471,6 +471,16 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// ── Auth: Reissue cookie (for already-logged-in admin page refreshes) ────────
+app.post('/api/auth/reissue-cookie', requireAuth, (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
+  const token = req.headers.authorization?.replace('Bearer ', '').trim();
+  const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+  const cookieFlags = `HttpOnly; SameSite=Strict; Path=/; Max-Age=${ADMIN_SESSION_TTL / 1000}${isSecure ? '; Secure' : ''}`;
+  res.setHeader('Set-Cookie', `admin_session=${token}; ${cookieFlags}`);
+  res.json({ success: true });
+});
+
 // ── Auth: Logout (clears httpOnly cookie + invalidates session) ──────────────
 app.post('/api/auth/logout', (req, res) => {
   const cookies = parseCookies(req.headers.cookie);

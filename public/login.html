@@ -150,7 +150,20 @@
       document.getElementById('auth-tagline').textContent = 'MOBILE WELDING SERVICES - CLIENT PORTAL';
     }
     if (isLoggedIn() && mode !== 'customer') {
-      window.location.href = getRole() === 'admin' ? '/dashboard' : next;
+      if (getRole() === 'admin') {
+        // Re-issue the httpOnly cookie from the stored token, then redirect
+        const { getToken } = await import('/js/auth.js');
+        const r = await fetch('/api/auth/reissue-cookie', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${getToken()}` }
+        }).catch(() => null);
+        if (r && r.ok) {
+          window.location.href = '/dashboard';
+        }
+        // If not ok, fall through and let the user log in normally
+      } else {
+        window.location.href = next;
+      }
     }
 
     const rain = initMatrixRain('matrix-rain');
