@@ -784,7 +784,7 @@ app.use(express.static(join(__dirname, 'public')));
 
 // Endpoint to save activity log entry
 app.post('/api/activity', async (req, res) => {
-  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip;
+  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.headers['x-real-ip'] || req.connection.remoteAddress || req.ip;
   if (checkRateLimit(ip + '|activity', 60, 60 * 1000)) {
     return res.status(429).json({ error: 'Too many requests.' });
   }
@@ -794,10 +794,6 @@ app.post('/api/activity', async (req, res) => {
     return res.status(400).json({ error: 'Message is required' });
   }
 
-  const ip = req.headers['x-forwarded-for'] ||
-             req.headers['x-real-ip'] ||
-             req.connection.remoteAddress ||
-             req.ip;
   const userAgent = req.headers['user-agent'];
 
   // Determine userType from context
@@ -859,15 +855,10 @@ app.get('/api/activity', requireAuth, async (req, res) => {
 
 // Endpoint to get user's IP address
 app.get('/api/ip', async (req, res) => {
-  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip;
+  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.headers['x-real-ip'] || req.connection.remoteAddress || req.ip;
   if (checkRateLimit(ip + '|ipcheck', 30, 60 * 1000)) {
     return res.status(429).json({ error: 'Too many requests.' });
   }
-  // Get IP from headers (works with proxies like Vercel)
-  const ip = req.headers['x-forwarded-for'] ||
-             req.headers['x-real-ip'] ||
-             req.connection.remoteAddress ||
-             req.ip;
 
   const userAgent = req.headers['user-agent'];
   const sessionId = crypto.randomBytes(16).toString('hex');
