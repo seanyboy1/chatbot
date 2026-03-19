@@ -7,6 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/logo.css">
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Pacifico&display=swap" rel="stylesheet">
   <style>
     .dash-page {
       min-height: 100vh;
@@ -224,6 +225,52 @@
       border-color: var(--blue);
       box-shadow: 0 0 8px var(--blue-glow);
     }
+
+    /* ── Sike Easter Egg ── */
+    .dash-center { cursor: pointer; user-select: none; }
+    .dash-center:active { transform: scale(0.96); }
+
+    #sike-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: #000;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      cursor: pointer;
+    }
+    #sike-canvas {
+      position: absolute;
+      inset: 0;
+    }
+    #sike-can {
+      position: absolute;
+      width: 54px;
+      display: none;
+      pointer-events: none;
+      transform-origin: 50% 85%;
+      filter: drop-shadow(0 0 10px rgba(255,80,0,0.9));
+      animation: can-shake 0.07s ease-in-out infinite;
+    }
+    @keyframes can-shake {
+      0%, 100% { transform: rotate(-32deg) translate(0,0); }
+      50%       { transform: rotate(-28deg) translate(1px,-3px); }
+    }
+    #sike-dismiss {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 3px;
+      color: rgba(255,255,255,0.38);
+      opacity: 0;
+      transition: opacity 1s ease 0.3s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>
@@ -391,6 +438,28 @@
     </div>
   </div>
 
+  <!-- Sike Easter Egg Overlay -->
+  <div id="sike-overlay">
+    <canvas id="sike-canvas"></canvas>
+    <!-- Spray can SVG -->
+    <div id="sike-can">
+      <svg viewBox="0 0 30 82" xmlns="http://www.w3.org/2000/svg">
+        <rect x="12" y="0" width="6" height="5" rx="1.5" fill="#888"/>
+        <rect x="10.5" y="3" width="9" height="5" rx="1.5" fill="#555"/>
+        <path d="M10 8 L10 16 Q5 17 5 22 L25 22 Q25 17 20 16 L20 8 Z" fill="#BB2200"/>
+        <rect x="4" y="22" width="22" height="52" rx="5" fill="#DD3300"/>
+        <rect x="6" y="24" width="6" height="48" rx="3" fill="rgba(255,255,255,0.14)"/>
+        <rect x="5" y="30" width="20" height="28" rx="2.5" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.2)" stroke-width="0.6"/>
+        <line x1="7" y1="36" x2="23" y2="36" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+        <line x1="7" y1="41" x2="23" y2="41" stroke="rgba(255,255,255,0.13)" stroke-width="0.7"/>
+        <line x1="7" y1="46" x2="20" y2="46" stroke="rgba(255,255,255,0.13)" stroke-width="0.7"/>
+        <line x1="7" y1="51" x2="17" y2="51" stroke="rgba(255,255,255,0.08)" stroke-width="0.7"/>
+        <rect x="4" y="70" width="22" height="4" rx="2" fill="#AA2200"/>
+      </svg>
+    </div>
+    <div id="sike-dismiss">CLICK ANYWHERE TO DISMISS</div>
+  </div>
+
   <script type="module">
     import { initMatrixRain } from '/js/matrix-rain.js';
     import { isLoggedIn, getRole, clearAuth } from '/js/auth.js';
@@ -407,6 +476,265 @@
       clearAuth();
       fetch('/api/auth/logout', { method: 'POST' }).finally(() => { window.location.href = '/'; });
     });
+
+    // ── Control Hub easter egg ──
+    document.querySelector('.dash-center').addEventListener('click', sikeEasterEgg);
+
+    function sikeEasterEgg() {
+      const overlay = document.getElementById('sike-overlay');
+      const canvas  = document.getElementById('sike-canvas');
+      const canEl   = document.getElementById('sike-can');
+      const dismiss = document.getElementById('sike-dismiss');
+
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canEl.style.display  = 'none';
+      dismiss.style.opacity = '0';
+      dismiss.style.transition = 'opacity 1s ease 0.3s';
+
+      overlay.style.display = 'block';
+      overlay.style.transition = 'opacity 0.5s ease';
+      requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+
+      // Manual dismiss
+      overlay.addEventListener('click', closeSike, { once: true });
+
+      function closeSike() {
+        overlay.style.transition = 'opacity 0.6s ease';
+        overlay.style.opacity = '0';
+        setTimeout(() => { overlay.style.display = 'none'; }, 650);
+      }
+
+      // Start spray after fade-in
+      setTimeout(() => doSpray(ctx, canvas.width, canvas.height, canEl, dismiss, closeSike), 550);
+    }
+
+    function doSpray(ctx, W, H, canEl, dismiss, closeSike) {
+      // ── Concrete wall ──
+      ctx.fillStyle = '#161616';
+      ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < 7000; i++) {
+        const x = Math.random() * W, y = Math.random() * H;
+        const v = Math.round(14 + Math.random() * 22);
+        ctx.globalAlpha = 0.10 + Math.random() * 0.26;
+        ctx.fillStyle = `rgb(${v},${v},${v})`;
+        ctx.fillRect(x, y, 1 + Math.random() * 5, 1 + Math.random() * 5);
+      }
+      ctx.globalAlpha = 1;
+
+      function buildAndAnimate() {
+        const fontSize = Math.min(W * 0.28, H * 0.42, 240);
+        const font     = `${fontSize}px "Pacifico", cursive`;
+        const textY    = H / 2;
+        const outlineW = Math.max(3, fontSize * 0.030);
+
+        const mc = document.createElement('canvas');
+        mc.width = W; mc.height = 2;
+        const mctx = mc.getContext('2d');
+        mctx.font = font;
+        const letters = ['S', 'I', 'K', 'E'];
+        const totalW  = mctx.measureText('SIKE').width;
+        const startX  = W / 2 - totalW / 2;
+        let cumW = 0;
+        const ranges = letters.map(ch => {
+          const w = mctx.measureText(ch).width;
+          const r = { ch, x0: startX + cumW, x1: startX + cumW + w };
+          cumW += w; return r;
+        });
+
+        // ── Build cursive letter pixel data — blue ──
+        const letterData = ranges.map(({ ch, x0, x1 }) => {
+          const lc   = document.createElement('canvas');
+          lc.width   = W; lc.height = H;
+          const lctx = lc.getContext('2d');
+          lctx.font = font; lctx.textAlign = 'left'; lctx.textBaseline = 'middle';
+
+          // White outer halo (drawn first so face covers inside)
+          lctx.strokeStyle = 'rgba(255,255,255,0.85)';
+          lctx.lineWidth   = outlineW * 2.4;
+          lctx.lineJoin    = 'round';
+          lctx.lineCap     = 'round';
+          lctx.strokeText(ch, x0, textY);
+
+          // Blue gradient face
+          const faceG = lctx.createLinearGradient(0, textY - fontSize*0.5, 0, textY + fontSize*0.5);
+          faceG.addColorStop(0,    '#87CEFA');  // light sky blue
+          faceG.addColorStop(0.45, '#1E90FF');  // dodger blue
+          faceG.addColorStop(1,    '#0047AB');  // cobalt blue
+          lctx.fillStyle = faceG;
+          lctx.fillText(ch, x0, textY);
+
+          // Light shimmer at top
+          const hlG = lctx.createLinearGradient(0, textY - fontSize*0.5, 0, textY - fontSize*0.05);
+          hlG.addColorStop(0, 'rgba(220,240,255,0.60)');
+          hlG.addColorStop(1, 'rgba(220,240,255,0)');
+          lctx.fillStyle = hlG;
+          lctx.fillText(ch, x0, textY);
+
+          // Dark outline
+          lctx.strokeStyle = 'rgba(0,10,40,0.90)';
+          lctx.lineWidth   = outlineW * 0.65;
+          lctx.lineJoin    = 'round';
+          lctx.strokeText(ch, x0, textY);
+
+          const pix  = lctx.getImageData(0, 0, W, H).data;
+          const byY  = new Array(H).fill(null).map(() => []);
+          let yMin = H, yMax = 0;
+          const xMin = Math.max(0,     Math.floor(x0) - 4);
+          const xMax = Math.min(W - 1, Math.ceil(x1) + 6);
+          for (let y = 0; y < H; y++) {
+            for (let x = xMin; x <= xMax; x++) {
+              const i = (y * W + x) * 4;
+              if (pix[i + 3] > 40) {
+                byY[y].push({ x, color: `rgb(${pix[i]},${pix[i+1]},${pix[i+2]})` });
+                if (y < yMin) yMin = y;
+                if (y > yMax) yMax = y;
+              }
+            }
+          }
+          return { byY, yMin, yMax };
+        });
+
+        canEl.style.display = 'block';
+
+        // ── Drip system (orange drips) ──
+        const activeDrips = [];
+        function addDrip(x, y) {
+          activeDrips.push({
+            x: x + (Math.random() - 0.5) * 5,
+            y, drawn: 0,
+            total: 35 + Math.random() * 115,
+            speed: 1.0 + Math.random() * 2.2,
+            r:     1.6 + Math.random() * 2.8,
+            hue:   Math.round(205 + Math.random() * 20)  // blue range
+          });
+        }
+
+        function tickDrips() {
+          activeDrips.forEach(d => {
+            if (d.drawn >= d.total) return;
+            const prev = d.drawn;
+            d.drawn = Math.min(d.drawn + d.speed, d.total);
+            if (d.drawn - prev < 0.25) return;
+
+            const tw  = d.r * 0.52;
+            const dh  = d.r * 1.65;
+            const col = `hsl(${d.hue}, 85%, 52%)`;
+
+            ctx.globalAlpha = 0.86;
+            ctx.fillStyle   = col;
+            ctx.fillRect(d.x - tw / 2, d.y, tw, d.drawn);
+
+            ctx.globalAlpha = 0.94;
+            ctx.beginPath();
+            ctx.ellipse(d.x, d.y + d.drawn, d.r * 0.92, dh, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.globalAlpha = 0.30;
+            ctx.fillStyle = 'rgba(200,230,255,1)';
+            ctx.beginPath();
+            ctx.ellipse(d.x - d.r * 0.30, d.y + d.drawn - dh * 0.27,
+              d.r * 0.27, dh * 0.24, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+          });
+        }
+
+        function spawnLetterDrips({ byY, yMin, yMax }) {
+          const n       = 4 + Math.floor(Math.random() * 4);
+          const bottomY = yMin + Math.round((yMax - yMin) * 0.62);
+          for (let i = 0; i < n; i++) {
+            const y   = bottomY + Math.floor(Math.random() * (yMax - bottomY + 1));
+            const row = byY[Math.min(y, yMax)];
+            if (row && row.length) addDrip(row[Math.floor(Math.random() * row.length)].x, y);
+          }
+        }
+
+        function moveCan(x, y) {
+          canEl.style.left = (x - 27) + 'px';
+          canEl.style.top  = (y - 108) + 'px';
+        }
+
+        function traceLetter(ld, onDone) {
+          const { byY, yMin, yMax } = ld;
+          const durationMs = Math.round((yMax - yMin) / fontSize * 1500);
+          let startTs = null, prevY = yMin;
+
+          function frame(ts) {
+            if (!startTs) startTs = ts;
+            const raw   = Math.min((ts - startTs) / durationMs, 1);
+            const eased = raw < 0.08 ? (raw / 0.08) * (raw / 0.08) * 0.08 : raw;
+            const curY  = Math.round(yMin + (yMax - yMin) * Math.min(eased, 1));
+
+            for (let y = prevY; y <= curY && y < H; y++) {
+              const row = byY[y];
+              if (!row || !row.length) continue;
+
+              row.forEach(({ x, color }) => {
+                for (let k = 0; k < 3; k++) {
+                  ctx.globalAlpha = 0.52 + Math.random() * 0.48;
+                  ctx.fillStyle   = color;
+                  ctx.beginPath();
+                  ctx.arc(x + (Math.random()-0.5)*2.5, y + (Math.random()-0.5)*2.5,
+                    0.7 + Math.random() * 2.0, 0, Math.PI * 2);
+                  ctx.fill();
+                }
+                // Mist overspray
+                if (Math.random() < 0.10) {
+                  ctx.globalAlpha = 0.02 + Math.random() * 0.06;
+                  ctx.fillStyle   = color;
+                  ctx.beginPath();
+                  ctx.arc(x + (Math.random()-0.5)*52, y + (Math.random()-0.5)*52,
+                    0.5 + Math.random() * 2.2, 0, Math.PI * 2);
+                  ctx.fill();
+                }
+              });
+
+              const avgX = row.reduce((s, p) => s + p.x, 0) / row.length;
+              moveCan(avgX, y);
+            }
+
+            tickDrips();
+            ctx.globalAlpha = 1;
+            prevY = curY + 1;
+
+            if (raw < 1) requestAnimationFrame(frame);
+            else { spawnLetterDrips(ld); onDone(); }
+          }
+          requestAnimationFrame(frame);
+        }
+
+        // After letters finish, keep animating drips until they all stop
+        function runDripsOnly(onDone) {
+          const allDone = () => !activeDrips.length || activeDrips.every(d => d.drawn >= d.total);
+          (function df() {
+            if (allDone()) { onDone(); return; }
+            tickDrips();
+            ctx.globalAlpha = 1;
+            requestAnimationFrame(df);
+          })();
+        }
+
+        function runAll(li) {
+          if (li >= letterData.length) {
+            canEl.style.display = 'none';
+            runDripsOnly(() => {
+              dismiss.style.opacity = '1';
+              setTimeout(closeSike, 3000);
+            });
+            return;
+          }
+          traceLetter(letterData[li], () => setTimeout(() => runAll(li + 1), 400));
+        }
+
+        runAll(0);
+      }
+
+      // Wait for Pacifico to be ready before measuring/rendering
+      document.fonts.load(`${Math.min(W * 0.28, H * 0.42, 240)}px "Pacifico"`).then(buildAndAnimate);
+    }
   </script>
 </body>
 </html>

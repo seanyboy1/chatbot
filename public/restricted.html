@@ -97,12 +97,19 @@
 
   <script type="module">
     import { initMatrixRain } from '/js/matrix-rain.js';
-    import { saveAuth, isLoggedIn, getRole, getService } from '/js/auth.js';
+    import { saveAuth, isLoggedIn, getRole, getService, getToken } from '/js/auth.js';
 
     // Redirect if already logged in
     if (isLoggedIn()) {
       if (getRole() === 'admin') {
-        window.location.href = '/dashboard';
+        const r = await fetch('/api/auth/reissue-cookie', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${getToken()}` }
+        }).catch(() => null);
+        if (r && r.ok) {
+          window.location.href = '/dashboard';
+        }
+        // If reissue fails, fall through and show the login form
       } else {
         window.location.href = getService() === 'bluetip' ? '/bluetip-profile' : '/customer.html';
       }
