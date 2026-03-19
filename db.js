@@ -101,6 +101,7 @@ const meshNodeSchema = new mongoose.Schema({
   lat: { type: Number, required: true },
   lon: { type: Number, required: true },
   desc: String,
+  imageUrl: String,
   online: { type: Boolean, default: true },
   addedAt: { type: Date, default: Date.now },
 });
@@ -113,6 +114,7 @@ const sikeNodeSchema = new mongoose.Schema({
   lat: { type: Number, required: true },
   lon: { type: Number, required: true },
   desc: String,
+  imageUrl: String,
   online: { type: Boolean, default: true },
   addedAt: { type: Date, default: Date.now },
 });

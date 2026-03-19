@@ -5,6 +5,7 @@ import { dirname, join } from 'path';
 import { connectDB, ActivityLog, Session, User, ChatSession, ServiceRequest, MeshNode, SikeNode } from './db.js';
 import crypto from 'crypto';
 import fs from 'fs';
+import multer from 'multer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -259,6 +260,25 @@ app.get('/mesh', requireAdminPage, (req, res) => {
   res.sendFile(join(__dirname, 'public', 'mesh.html'));
 });
 
+// ── Node image upload ─────────────────────────────────────────────────────────
+const nodeUpload = multer({
+  storage: multer.diskStorage({
+    destination: join(__dirname, 'public', 'uploads', 'nodes'),
+    filename: (req, file, cb) => {
+      const ext = file.originalname.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+      cb(null, `${Date.now()}-${crypto.randomBytes(4).toString('hex')}.${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => cb(null, /image\/(jpeg|jpg|png|gif|webp)/.test(file.mimetype)),
+});
+
+app.post('/api/upload/node-image', requireAuth, nodeUpload.single('image'), (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
+  if (!req.file) return res.status(400).json({ error: 'No image uploaded.' });
+  res.json({ url: `/uploads/nodes/${req.file.filename}` });
+});
+
 // ── Mesh Nodes ───────────────────────────────────────────────────────────────
 app.get('/api/mesh/nodes', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
@@ -273,11 +293,11 @@ app.get('/api/mesh/nodes', requireAuth, async (req, res) => {
 
 app.post('/api/mesh/nodes', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
-  const { nodeId, name, lat, lon, desc, online } = req.body;
+  const { nodeId, name, lat, lon, desc, online, imageUrl } = req.body;
   if (!nodeId || !name || lat == null || lon == null) return res.status(400).json({ error: 'nodeId, name, lat, lon required.' });
   try {
     await connectDB();
-    const node = await MeshNode.create({ nodeId, name, lat, lon, desc, online: online !== false });
+    const node = await MeshNode.create({ nodeId, name, lat, lon, desc, imageUrl, online: online !== false });
     res.json({ node });
   } catch (err) {
     res.status(500).json({ error: 'Failed to save node.' });
@@ -286,13 +306,14 @@ app.post('/api/mesh/nodes', requireAuth, async (req, res) => {
 
 app.put('/api/mesh/nodes/:nodeId', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
-  const { name, desc, online } = req.body;
+  const { name, desc, online, imageUrl } = req.body;
   try {
     await connectDB();
     const update = {};
-    if (name  !== undefined) update.name   = name;
-    if (desc  !== undefined) update.desc   = desc;
-    if (online !== undefined) update.online = online;
+    if (name     !== undefined) update.name     = name;
+    if (desc     !== undefined) update.desc     = desc;
+    if (online   !== undefined) update.online   = online;
+    if (imageUrl !== undefined) update.imageUrl = imageUrl;
     const node = await MeshNode.findOneAndUpdate({ nodeId: req.params.nodeId }, update, { new: true });
     if (!node) return res.status(404).json({ error: 'Node not found.' });
     res.json({ node });
@@ -331,11 +352,11 @@ app.get('/api/bluesike/nodes', requireAuth, async (req, res) => {
 
 app.post('/api/bluesike/nodes', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
-  const { nodeId, name, lat, lon, desc, online } = req.body;
+  const { nodeId, name, lat, lon, desc, online, imageUrl } = req.body;
   if (!nodeId || !name || lat == null || lon == null) return res.status(400).json({ error: 'nodeId, name, lat, lon required.' });
   try {
     await connectDB();
-    const node = await SikeNode.create({ nodeId, name, lat, lon, desc, online: online !== false });
+    const node = await SikeNode.create({ nodeId, name, lat, lon, desc, imageUrl, online: online !== false });
     res.json({ node });
   } catch (err) {
     res.status(500).json({ error: 'Failed to save node.' });
@@ -344,15 +365,16 @@ app.post('/api/bluesike/nodes', requireAuth, async (req, res) => {
 
 app.put('/api/bluesike/nodes/:nodeId', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
-  const { name, desc, online, lat, lon } = req.body;
+  const { name, desc, online, lat, lon, imageUrl } = req.body;
   try {
     await connectDB();
     const update = {};
-    if (name   !== undefined) update.name   = name;
-    if (desc   !== undefined) update.desc   = desc;
-    if (online !== undefined) update.online = online;
-    if (lat    !== undefined) update.lat    = lat;
-    if (lon    !== undefined) update.lon    = lon;
+    if (name     !== undefined) update.name     = name;
+    if (desc     !== undefined) update.desc     = desc;
+    if (online   !== undefined) update.online   = online;
+    if (lat      !== undefined) update.lat      = lat;
+    if (lon      !== undefined) update.lon      = lon;
+    if (imageUrl !== undefined) update.imageUrl = imageUrl;
     const node = await SikeNode.findOneAndUpdate({ nodeId: req.params.nodeId }, update, { new: true });
     if (!node) return res.status(404).json({ error: 'Node not found.' });
     res.json({ node });

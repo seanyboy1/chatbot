@@ -228,6 +228,38 @@
       box-shadow: 0 0 8px var(--blue-glow);
     }
 
+    .mesh-img-label {
+      display: block;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: var(--blue-dim);
+      border: 1px dashed var(--blue-dark);
+      border-radius: 3px;
+      padding: 7px 10px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      text-align: center;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .mesh-img-label:hover { border-color: var(--blue); color: var(--blue); }
+    .mesh-img-preview {
+      width: 100%;
+      max-height: 120px;
+      object-fit: cover;
+      border-radius: 3px;
+      border: 1px solid var(--blue-dark);
+      margin-bottom: 8px;
+    }
+    .mesh-popup-img {
+      width: 100%;
+      max-height: 140px;
+      object-fit: cover;
+      border-radius: 3px;
+      margin-bottom: 6px;
+      border: 1px solid var(--blue-dark);
+    }
+
     .mesh-form-msg {
       font-family: 'Share Tech Mono', monospace;
       font-size: 10px;
@@ -515,6 +547,11 @@
             <input class="mesh-input" id="node-lon" type="text" placeholder="Longitude" autocomplete="off"/>
           </div>
           <input class="mesh-input" id="node-desc" type="text" placeholder="Description (optional)" autocomplete="off"/>
+          <label class="mesh-img-label">
+            <span id="mesh-img-name">PHOTO (OPTIONAL)</span>
+            <input type="file" id="node-image" accept="image/*" style="display:none"/>
+          </label>
+          <img id="node-img-preview" class="mesh-img-preview" style="display:none"/>
           <button class="mesh-add-btn" id="mesh-add-btn">+ ADD NODE</button>
           <div class="mesh-form-msg" id="mesh-form-msg"></div>
         </div>
@@ -571,6 +608,19 @@
       return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
     }
 
+    async function uploadNodeImage(file) {
+      const fd = new FormData();
+      fd.append('image', file);
+      const res = await fetch('/api/upload/node-image', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${getToken()}` },
+        body: fd,
+      });
+      if (!res.ok) return null;
+      const d = await res.json();
+      return d.url || null;
+    }
+
     async function apiLoadNodes() {
       const res = await fetch('/api/mesh/nodes', { headers: authHeaders() });
       if (res.status === 401 || res.status === 403) {
@@ -581,6 +631,7 @@
       return (data.nodes || []).map(n => ({
         id: n.nodeId, name: n.name, lat: n.lat, lon: n.lon,
         desc: n.desc || '', online: n.online !== false, addedAt: n.addedAt,
+        imageUrl: n.imageUrl || '',
       }));
     }
 
@@ -678,6 +729,7 @@
 
     function buildPopupView(n) {
       return `
+        ${n.imageUrl ? `<img class="mesh-popup-img" src="${escHtml(n.imageUrl)}" alt="node photo"/>` : ''}
         <div class="mesh-popup-name">${escHtml(n.name)}</div>
         <div class="mesh-popup-row">
           <span class="mesh-popup-label">LAT</span>
@@ -701,6 +753,11 @@
     function buildPopupEdit(n) {
       return `
         <div class="mesh-popup-label" style="margin-bottom:4px;">EDIT NODE</div>
+        ${n.imageUrl ? `<img class="mesh-popup-img" src="${escHtml(n.imageUrl)}" alt="node photo" id="edit-img-preview-${escHtml(n.id)}"/>` : `<div id="edit-img-preview-${escHtml(n.id)}"></div>`}
+        <label class="mesh-img-label" style="margin-bottom:6px;">
+          <span class="edit-img-name">CHANGE PHOTO</span>
+          <input type="file" class="edit-img-input" accept="image/*" style="display:none"/>
+        </label>
         <input class="mesh-popup-input" data-field="name" value="${escHtml(n.name)}" placeholder="Name"/>
         <input class="mesh-popup-input" data-field="desc" value="${escHtml(n.desc||'')}" placeholder="Description"/>
         <div class="mesh-popup-label" style="margin-bottom:2px;">LAT</div>
@@ -751,7 +808,21 @@
             const node = nodes.find(x => x.id === id);
             if (node) {
               const contentDiv = el.querySelector('.leaflet-popup-content');
-              if (contentDiv) contentDiv.innerHTML = buildPopupEdit(node);
+              if (contentDiv) {
+                contentDiv.innerHTML = buildPopupEdit(node);
+                // Wire preview on edit file input
+                const efi = contentDiv.querySelector('.edit-img-input');
+                if (efi) efi.addEventListener('change', () => {
+                  const f = efi.files[0];
+                  const preview = document.getElementById(`edit-img-preview-${node.id}`);
+                  if (f && preview) {
+                    preview.src = URL.createObjectURL(f);
+                    preview.style.display = 'block';
+                    const lbl = contentDiv.querySelector('.edit-img-name');
+                    if (lbl) lbl.textContent = f.name.length > 20 ? f.name.slice(0, 20) + '…' : f.name;
+                  }
+                });
+              }
             }
 
           } else if (action === 'save-edit') {
@@ -767,6 +838,12 @@
                 }
               });
               if (isNaN(fields.lat) || isNaN(fields.lon)) return;
+              // Upload new image if selected
+              const fileInp = el.querySelector('.edit-img-input');
+              if (fileInp && fileInp.files[0]) {
+                const imgUrl = await uploadNodeImage(fileInp.files[0]);
+                if (imgUrl) fields.imageUrl = imgUrl;
+              }
               await apiUpdateNode(id, fields);
               Object.assign(nodes[idx], fields);
               const contentDiv = el.querySelector('.leaflet-popup-content');
@@ -865,14 +942,30 @@
       tip.style.color = 'var(--blue)';
     });
 
+    // ── Image preview in add form ──────────────────────────
+    document.getElementById('node-image').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      const preview = document.getElementById('node-img-preview');
+      const nameEl  = document.getElementById('mesh-img-name');
+      if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+        nameEl.textContent = file.name.length > 22 ? file.name.slice(0, 22) + '…' : file.name;
+      } else {
+        preview.style.display = 'none';
+        nameEl.textContent = 'PHOTO (OPTIONAL)';
+      }
+    });
+
     // ── Add node form ─────────────────────────────────────
     document.getElementById('mesh-add-btn').addEventListener('click', async () => {
-      const name = document.getElementById('node-name').value.trim();
-      const lat  = parseFloat(document.getElementById('node-lat').value);
-      const lon  = parseFloat(document.getElementById('node-lon').value);
-      const desc = document.getElementById('node-desc').value.trim();
-      const msg  = document.getElementById('mesh-form-msg');
-      const btn  = document.getElementById('mesh-add-btn');
+      const name    = document.getElementById('node-name').value.trim();
+      const lat     = parseFloat(document.getElementById('node-lat').value);
+      const lon     = parseFloat(document.getElementById('node-lon').value);
+      const desc    = document.getElementById('node-desc').value.trim();
+      const imgFile = document.getElementById('node-image').files[0];
+      const msg     = document.getElementById('mesh-form-msg');
+      const btn     = document.getElementById('mesh-add-btn');
 
       if (!name) { msg.style.color = '#FF4500'; msg.textContent = 'Node name required.'; return; }
       if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
@@ -881,16 +974,22 @@
 
       btn.disabled = true; btn.textContent = 'SAVING...';
 
+      let imageUrl = '';
+      if (imgFile) {
+        btn.textContent = 'UPLOADING...';
+        imageUrl = await uploadNodeImage(imgFile) || '';
+      }
+
       const node = {
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-        name, lat, lon, desc, online: true,
+        name, lat, lon, desc, online: true, imageUrl,
       };
 
       let saveErr = '';
       try {
         const res = await fetch('/api/mesh/nodes', {
           method: 'POST', headers: authHeaders(),
-          body: JSON.stringify({ nodeId: node.id, name: node.name, lat: node.lat, lon: node.lon, desc: node.desc, online: node.online }),
+          body: JSON.stringify({ nodeId: node.id, name: node.name, lat: node.lat, lon: node.lon, desc: node.desc, online: node.online, imageUrl: node.imageUrl }),
         });
         if (!res.ok) { const d = await res.json().catch(()=>{}); saveErr = d?.error || `HTTP ${res.status}`; }
       } catch (e) { saveErr = e.message; }
@@ -903,10 +1002,13 @@
       map.flyTo([lat, lon], 12, { duration: 0.8 });
       setTimeout(() => markers[node.id]?.openPopup(), 850);
 
-      document.getElementById('node-name').value = '';
-      document.getElementById('node-lat').value  = '';
-      document.getElementById('node-lon').value  = '';
-      document.getElementById('node-desc').value = '';
+      document.getElementById('node-name').value  = '';
+      document.getElementById('node-lat').value   = '';
+      document.getElementById('node-lon').value   = '';
+      document.getElementById('node-desc').value  = '';
+      document.getElementById('node-image').value = '';
+      document.getElementById('node-img-preview').style.display = 'none';
+      document.getElementById('mesh-img-name').textContent = 'PHOTO (OPTIONAL)';
       clickedLatLon = null;
       tip.textContent = 'CLICK MAP TO PLACE NODE';
       tip.style.color = '';
