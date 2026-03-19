@@ -1,0 +1,23 @@
+services:
+  chatbot:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
+      - MONGODB_URI=mongodb://mongo:27017/chatbot
+    depends_on:
+      - mongo
+    restart: unless-stopped
+    volumes:
+      - uploads_data:/app/uploads
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
+  uploads_data:
