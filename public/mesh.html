@@ -571,7 +571,7 @@
 
     // Auth guard — redirect to login if not admin
     if (!getToken() || getRole() !== 'admin') {
-      window.location.href = '/login';
+      window.location.href = '/login?next=/mesh';
     }
 
     // Matrix rain
@@ -624,7 +624,7 @@
     async function apiLoadNodes() {
       const res = await fetch('/api/mesh/nodes', { headers: authHeaders() });
       if (res.status === 401 || res.status === 403) {
-        window.location.href = '/login';
+        window.location.href = '/login?next=/mesh';
         return [];
       }
       const data = await res.json();

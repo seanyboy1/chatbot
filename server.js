@@ -261,6 +261,9 @@ app.get('/mesh', requireAdminPage, (req, res) => {
 });
 
 // ── Node image upload ─────────────────────────────────────────────────────────
+const uploadsDir = join(__dirname, 'public', 'uploads', 'nodes');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
 const nodeUpload = multer({
   storage: multer.diskStorage({
     destination: join(__dirname, 'public', 'uploads', 'nodes'),

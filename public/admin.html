@@ -67,7 +67,7 @@
 
     // Block non-admin access
     if (!getToken() || getRole() !== 'admin') {
-      window.location.replace('/login');
+      window.location.replace('/login?next=/admin');
     }
 
     document.getElementById('signout-btn').addEventListener('click', () => {

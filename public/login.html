@@ -140,6 +140,8 @@
     const params = new URLSearchParams(window.location.search);
     const mode    = params.get('mode');
     const next    = params.get('next') || '/customer.html';
+    const adminPages = ['/mesh', '/bluesike', '/admin', '/dashboard'];
+    const isAdminNext = adminPages.some(p => next.startsWith(p));
     const isBlueTip = next === '/bluetip-profile' || next === '/bluetip-customer' || next === '/bluetip' || next === '/bluetip-home' || params.get('service') === 'bluetip';
     const service = isBlueTip ? 'bluetip' : 'bluenet';
 
@@ -148,6 +150,9 @@
       document.title = 'BLUE-TIP - SECURE ACCESS';
       document.getElementById('auth-logo-text').textContent = 'BLUE-TIP';
       document.getElementById('auth-tagline').textContent = 'MOBILE WELDING SERVICES - CLIENT PORTAL';
+    } else if (isAdminNext) {
+      document.title = 'BLUE-NET - ADMIN ACCESS';
+      document.getElementById('auth-tagline').textContent = 'ADMINISTRATOR ACCESS';
     }
     if (isLoggedIn() && mode !== 'customer') {
       if (getRole() === 'admin') {
@@ -158,7 +163,7 @@
           headers: { 'Authorization': `Bearer ${getToken()}` }
         }).catch(() => null);
         if (r && r.ok) {
-          window.location.href = '/dashboard';
+          window.location.href = isAdminNext ? next : '/dashboard';
         }
         // If not ok, fall through and let the user log in normally
       } else {
@@ -220,7 +225,7 @@
         setStatus('ACCESS GRANTED — CONNECTING...', 'success');
         setTimeout(() => {
           if (data.role === 'admin') {
-            window.location.href = '/dashboard';
+            window.location.href = isAdminNext ? next : '/dashboard';
           } else {
             window.location.href = next;
           }
