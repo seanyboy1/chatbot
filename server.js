@@ -272,12 +272,15 @@ const nodeUpload = multer({
 
 app.post('/api/upload/node-image', requireAuth, nodeUpload.single('image'), async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
-  if (!req.file) return res.status(400).json({ error: 'No image uploaded.' });
+  if (!req.file) { console.error('[upload] no file received'); return res.status(400).json({ error: 'No image uploaded.' }); }
+  console.log('[upload] file received:', req.file.originalname, req.file.mimetype, req.file.size, 'bytes');
   try {
     const filename = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}.jpg`;
     await sharp(req.file.buffer).rotate().jpeg({ quality: 85 }).toFile(join(uploadsDir, filename));
+    console.log('[upload] saved:', filename);
     res.json({ url: `/uploads/nodes/${filename}` });
   } catch (err) {
+    console.error('[upload] sharp error:', err.message);
     res.status(500).json({ error: 'Image processing failed.' });
   }
 });
