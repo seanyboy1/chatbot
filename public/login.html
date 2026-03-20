@@ -47,7 +47,7 @@
         <div class="auth-tagline" id="auth-tagline">NETWORK SOLUTIONS - CLIENT PORTAL</div>
 
         <!-- Tabs -->
-        <div class="auth-tabs">
+        <div class="auth-tabs" id="auth-tabs">
           <button class="auth-tab active" data-tab="login">LOGIN</button>
           <button class="auth-tab" data-tab="register">REGISTER</button>
         </div>
@@ -151,8 +151,11 @@
       document.getElementById('auth-logo-text').textContent = 'BLUE-TIP';
       document.getElementById('auth-tagline').textContent = 'MOBILE WELDING SERVICES - CLIENT PORTAL';
     } else if (isAdminNext) {
-      document.title = 'BLUE-NET - ADMIN ACCESS';
-      document.getElementById('auth-tagline').textContent = 'ADMINISTRATOR ACCESS';
+      document.title = 'BLUE-NET - ADMIN LOGIN';
+      document.getElementById('auth-logo-text').textContent = 'BLUE-NET ADMIN';
+      document.getElementById('auth-logo-text').style.color = '#FF4500';
+      document.getElementById('auth-tagline').textContent = 'ADMINISTRATOR ACCESS ONLY';
+      document.querySelector('[data-tab="register"]').style.display = 'none';
     }
     if (isLoggedIn() && mode !== 'customer') {
       if (getRole() === 'admin') {
