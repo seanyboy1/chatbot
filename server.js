@@ -6,6 +6,7 @@ import { connectDB, ActivityLog, Session, User, ChatSession, ServiceRequest, Mes
 import crypto from 'crypto';
 import fs from 'fs';
 import multer from 'multer';
+import sharp from 'sharp';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -265,21 +266,21 @@ const uploadsDir = join(__dirname, 'public', 'uploads', 'nodes');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 const nodeUpload = multer({
-  storage: multer.diskStorage({
-    destination: join(__dirname, 'public', 'uploads', 'nodes'),
-    filename: (req, file, cb) => {
-      const ext = file.originalname.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-      cb(null, `${Date.now()}-${crypto.randomBytes(4).toString('hex')}.${ext}`);
-    },
-  }),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => cb(null, /image\/(jpeg|jpg|png|gif|webp)/.test(file.mimetype)),
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => cb(null, /^image\//.test(file.mimetype)),
 });
 
-app.post('/api/upload/node-image', requireAuth, nodeUpload.single('image'), (req, res) => {
+app.post('/api/upload/node-image', requireAuth, nodeUpload.single('image'), async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
   if (!req.file) return res.status(400).json({ error: 'No image uploaded.' });
-  res.json({ url: `/uploads/nodes/${req.file.filename}` });
+  try {
+    const filename = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}.jpg`;
+    await sharp(req.file.buffer).rotate().jpeg({ quality: 85 }).toFile(join(uploadsDir, filename));
+    res.json({ url: `/uploads/nodes/${filename}` });
+  } catch (err) {
+    res.status(500).json({ error: 'Image processing failed.' });
+  }
 });
 
 // ── Mesh Nodes ───────────────────────────────────────────────────────────────
