@@ -672,17 +672,36 @@
     }).addTo(map);
 
     // Custom node icon
-    function makeIcon(online) {
-      const fill   = online ? '#27c93f' : '#3a5a7a';
-      const stroke = online ? '#1a8f2a' : '#1a3a5c';
-      const glow   = online ? `drop-shadow(0 0 5px #27c93f)` : 'none';
+    const COLOR_MAP = {
+      blue:   { fill: '#00cfff', stroke: '#0088bb', glow: '#00cfff' },
+      red:    { fill: '#ff1744', stroke: '#b71c1c', glow: '#ff1744' },
+      orange: { fill: '#ff6d00', stroke: '#cc4400', glow: '#ff6d00' },
+      white:  { fill: '#ffffff', stroke: '#aaaaaa', glow: '#ffffff' },
+      green:  { fill: '#27c93f', stroke: '#1a8f2a', glow: '#27c93f' },
+    };
+
+    function descColor(desc) {
+      if (!desc) return null;
+      const d = desc.toLowerCase();
+      for (const key of Object.keys(COLOR_MAP)) {
+        if (d.includes(key)) return key;
+      }
+      return null;
+    }
+
+    function makeIcon(online, desc) {
+      const key = online ? (descColor(desc) || 'green') : null;
+      const c = key ? COLOR_MAP[key] : null;
+      const fill   = c ? c.fill   : '#3a5a7a';
+      const stroke = c ? c.stroke : '#1a3a5c';
+      const glow   = c ? `drop-shadow(0 0 6px ${c.glow}) drop-shadow(0 0 12px ${c.glow})` : 'none';
       return L.divIcon({
         className: '',
         html: `<svg width="24" height="34" viewBox="0 0 24 34" xmlns="http://www.w3.org/2000/svg" style="filter:${glow}">
           <path d="M12 2 C6.477 2 2 6.477 2 12 C2 19 12 32 12 32 C12 32 22 19 22 12 C22 6.477 17.523 2 12 2 Z"
                 fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>
           <circle cx="12" cy="12" r="4" fill="rgba(0,0,0,0.35)"/>
-          <circle cx="12" cy="12" r="2.5" fill="${online ? '#fff' : '#5D9BDB'}" opacity="0.9"/>
+          <circle cx="12" cy="12" r="2.5" fill="${c ? '#fff' : '#5D9BDB'}" opacity="0.9"/>
         </svg>`,
         iconSize: [24, 34],
         iconAnchor: [12, 34],
@@ -761,7 +780,7 @@
     }
 
     function addMarker(n) {
-      const m = L.marker([n.lat, n.lon], { icon: makeIcon(n.online !== false) })
+      const m = L.marker([n.lat, n.lon], { icon: makeIcon(n.online !== false, n.desc) })
         .addTo(map)
         .bindPopup(buildPopupView(n), { maxWidth: 300, minWidth: 260, closeOnClick: false });
 
