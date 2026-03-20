@@ -47,7 +47,7 @@
         <div class="auth-tagline" id="auth-tagline">NETWORK SOLUTIONS - CLIENT PORTAL</div>
 
         <!-- Tabs -->
-        <div class="auth-tabs" id="auth-tabs">
+        <div class="auth-tabs">
           <button class="auth-tab active" data-tab="login">LOGIN</button>
           <button class="auth-tab" data-tab="register">REGISTER</button>
         </div>
@@ -140,8 +140,6 @@
     const params = new URLSearchParams(window.location.search);
     const mode    = params.get('mode');
     const next    = params.get('next') || '/customer.html';
-    const adminPages = ['/mesh', '/bluesike', '/admin', '/dashboard'];
-    const isAdminNext = adminPages.some(p => next.startsWith(p));
     const isBlueTip = next === '/bluetip-profile' || next === '/bluetip-customer' || next === '/bluetip' || next === '/bluetip-home' || params.get('service') === 'bluetip';
     const service = isBlueTip ? 'bluetip' : 'bluenet';
 
@@ -150,12 +148,6 @@
       document.title = 'BLUE-TIP - SECURE ACCESS';
       document.getElementById('auth-logo-text').textContent = 'BLUE-TIP';
       document.getElementById('auth-tagline').textContent = 'MOBILE WELDING SERVICES - CLIENT PORTAL';
-    } else if (isAdminNext) {
-      document.title = 'BLUE-NET - ADMIN LOGIN';
-      document.getElementById('auth-logo-text').textContent = 'BLUE-NET ADMIN';
-      document.getElementById('auth-logo-text').style.color = '#FF4500';
-      document.getElementById('auth-tagline').textContent = 'ADMINISTRATOR ACCESS ONLY';
-      document.querySelector('[data-tab="register"]').style.display = 'none';
     }
     if (isLoggedIn() && mode !== 'customer') {
       if (getRole() === 'admin') {
@@ -166,7 +158,7 @@
           headers: { 'Authorization': `Bearer ${getToken()}` }
         }).catch(() => null);
         if (r && r.ok) {
-          window.location.href = isAdminNext ? next : '/dashboard';
+          window.location.href = '/dashboard';
         }
         // If not ok, fall through and let the user log in normally
       } else {
@@ -228,7 +220,7 @@
         setStatus('ACCESS GRANTED — CONNECTING...', 'success');
         setTimeout(() => {
           if (data.role === 'admin') {
-            window.location.href = isAdminNext ? next : '/dashboard';
+            window.location.href = '/dashboard';
           } else {
             window.location.href = next;
           }

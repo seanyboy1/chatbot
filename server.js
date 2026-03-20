@@ -111,13 +111,12 @@ const ADMIN_SESSION_TTL = 12 * 60 * 60 * 1000; // 12 hours
 function requireAdminPage(req, res, next) {
   const cookies = parseCookies(req.headers.cookie);
   const token = cookies.admin_session;
-  const dest = `/login?next=${encodeURIComponent(req.path)}`;
-  if (!token) return res.redirect(dest);
+  if (!token) return res.redirect('/login');
   const expiry = adminSessions.get(token);
   if (!expiry || Date.now() > expiry) {
     adminSessions.delete(token);
     res.setHeader('Set-Cookie', 'admin_session=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict');
-    return res.redirect(dest);
+    return res.redirect('/login');
   }
   next();
 }
