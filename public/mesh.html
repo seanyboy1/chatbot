@@ -608,9 +608,28 @@
       return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
     }
 
+    async function toJpeg(file) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth; c.height = img.naturalHeight;
+          c.getContext('2d').drawImage(img, 0, 0);
+          c.toBlob(blob => {
+            URL.revokeObjectURL(url);
+            resolve(blob ? new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }) : file);
+          }, 'image/jpeg', 0.88);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+        img.src = url;
+      });
+    }
+
     async function uploadNodeImage(file) {
+      const upload = /heic|heif/i.test(file.name) ? await toJpeg(file) : file;
       const fd = new FormData();
-      fd.append('image', file);
+      fd.append('image', upload);
       const res = await fetch('/api/upload/node-image', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${getToken()}` },
