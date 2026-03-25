@@ -7,6 +7,10 @@ import crypto from 'crypto';
 import fs from 'fs';
 import multer from 'multer';
 import sharp from 'sharp';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import cors from 'cors';
+import { parse as parseCookieLib } from 'cookie';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -36,13 +40,35 @@ if (!N8N_WEBHOOK_URL) {
   process.exit(1);
 }
 
-app.use(express.json());
+// ── Security headers ─────────────────────────────────────────────────────────
+app.use(helmet({
+  contentSecurityPolicy: false, // disabled — inline scripts/styles used throughout
+  crossOriginEmbedderPolicy: false,
+}));
+
+// ── CORS ─────────────────────────────────────────────────────────────────────
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+app.use(cors({
+  origin: (origin, cb) => {
+    // Allow same-origin, non-browser, or explicitly whitelisted origins
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error('CORS not allowed'));
+  },
+  credentials: true,
+}));
+
+app.use(express.json({ limit: '50kb' }));
 
 // Skip ngrok browser warning for all responses (allows API calls from mobile to pass through)
 app.use((req, res, next) => {
   res.setHeader('ngrok-skip-browser-warning', '1');
   next();
 });
+
+// ── Text sanitiser (strips newlines/control chars — prevents SMS injection) ──
+function sanitizeText(s) {
+  return String(s || '').replace(/[\r\n\t]/g, ' ').trim().slice(0, 200);
+}
 
 // ── SMS via Twilio ───────────────────────────────────────────────────────────
 async function sendSMS(body) {
@@ -71,37 +97,35 @@ function hashPassword(password, salt) {
   return crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha256').toString('hex');
 }
 
-// ── Simple cookie parser ─────────────────────────────────────────────────────
+// ── Cookie parser ─────────────────────────────────────────────────────────────
 function parseCookies(cookieHeader) {
-  const cookies = {};
-  if (!cookieHeader) return cookies;
-  cookieHeader.split(';').forEach(c => {
-    const [k, ...v] = c.trim().split('=');
-    if (k) cookies[k.trim()] = decodeURIComponent(v.join('='));
-  });
-  return cookies;
+  try { return parseCookieLib(cookieHeader || ''); } catch { return {}; }
 }
 
-// ── Rate limiter (in-memory, no extra deps) ──────────────────────────────────
-const rateLimitMap = new Map();
-function checkRateLimit(ip, maxRequests, windowMs) {
-  const now = Date.now();
-  const key = ip + '|' + windowMs;
-  let entry = rateLimitMap.get(key);
-  if (!entry || now > entry.resetAt) {
-    entry = { count: 0, resetAt: now + windowMs };
-  }
-  entry.count++;
-  rateLimitMap.set(key, entry);
-  return entry.count > maxRequests; // true = blocked
-}
-// Clean up stale entries every 10 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitMap) {
-    if (now > entry.resetAt) rateLimitMap.delete(key);
-  }
-}, 10 * 60 * 1000);
+// ── Rate limiters ─────────────────────────────────────────────────────────────
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many login attempts. Try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const activityLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { error: 'Too many requests.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: { error: 'Too many uploads.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ── Admin session store (in-memory, with expiry) ─────────────────────────────
 const adminSessions = new Map(); // token → expiresAt
@@ -270,17 +294,15 @@ const nodeUpload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-app.post('/api/upload/node-image', requireAuth, nodeUpload.single('image'), async (req, res) => {
+app.post('/api/upload/node-image', uploadLimiter, requireAuth, nodeUpload.single('image'), async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
-  if (!req.file) { console.error('[upload] no file received'); return res.status(400).json({ error: 'No image uploaded.' }); }
-  console.log('[upload] file received:', req.file.originalname, req.file.mimetype, req.file.size, 'bytes');
+  if (!req.file) return res.status(400).json({ error: 'No image uploaded.' });
   try {
     const filename = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}.jpg`;
     await sharp(req.file.buffer).rotate().jpeg({ quality: 85 }).toFile(join(uploadsDir, filename));
-    console.log('[upload] saved:', filename);
     res.json({ url: `/uploads/nodes/${filename}` });
   } catch (err) {
-    console.error('[upload] sharp error:', err.message);
+    console.error('[upload] processing error');
     res.status(500).json({ error: 'Image processing failed.' });
   }
 });
@@ -406,6 +428,9 @@ app.post('/api/auth/register', async (req, res) => {
   if (!name || !email || !username || !password) {
     return res.status(400).json({ error: 'Name, email, username, and password are required.' });
   }
+  if (password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  }
   const validService = service === 'bluetip' ? 'bluetip' : 'bluenet';
   try {
     await connectDB();
@@ -426,11 +451,7 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // ── Auth: Login ─────────────────────────────────────────────────────────────
-app.post('/api/auth/login', async (req, res) => {
-  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip;
-  if (checkRateLimit(ip + '|login', 10, 15 * 60 * 1000)) {
-    return res.status(429).json({ error: 'Too many login attempts. Try again in 15 minutes.' });
-  }
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
 
   const { identifier, password, service } = req.body;
   if (!identifier || !password) {
@@ -728,7 +749,7 @@ app.post('/api/chats/:sessionId/message', requireAuth, async (req, res) => {
     const isFirstMessage = session.messages.length === 0;
     if (isFirstMessage) {
       session.title = message.slice(0, 48) + (message.length > 48 ? '…' : '');
-      sendSMS(`BLUE-NET: New chat started\nFrom: ${req.user.name || req.user.username}\n"${message.slice(0, 100)}"`);
+      sendSMS(`BLUE-NET: New chat started\nFrom: ${sanitizeText(req.user.name || req.user.username)}\n"${sanitizeText(message).slice(0, 100)}"`);
     }
 
     session.messages.push({ role: 'user', content: message });
@@ -775,7 +796,7 @@ app.post('/api/service-request', requireAuth, async (req, res) => {
       details,
       phone: user?.phone,
     });
-    sendSMS(`BLUE-NET: New service request\nType: ${type.toUpperCase().replace('_',' ')}\nFrom: ${user?.name || 'Guest'}\n${details.slice(0, 100)}`);
+    sendSMS(`BLUE-NET: New service request\nType: ${sanitizeText(type).toUpperCase().replace('_',' ')}\nFrom: ${sanitizeText(user?.name || 'Guest')}\n${sanitizeText(details).slice(0, 100)}`);
     res.json({ success: true, message: 'Service request submitted successfully.' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to submit request.' });
@@ -811,7 +832,7 @@ app.post('/api/callback-request', requireAuth, async (req, res) => {
       phone,
       preferredTime,
     });
-    sendSMS(`BLUE-NET: Callback request\nFrom: ${user?.name || 'Guest'}\nPhone: ${phone}${preferredTime ? '\nTime: ' + preferredTime : ''}`);
+    sendSMS(`BLUE-NET: Callback request\nFrom: ${sanitizeText(user?.name || 'Guest')}\nPhone: ${sanitizeText(phone)}${preferredTime ? '\nTime: ' + sanitizeText(preferredTime) : ''}`);
     res.json({ success: true, message: 'Callback request submitted. We will contact you shortly.' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to submit callback request.' });
@@ -821,11 +842,8 @@ app.post('/api/callback-request', requireAuth, async (req, res) => {
 app.use(express.static(join(__dirname, 'public')));
 
 // Endpoint to save activity log entry
-app.post('/api/activity', async (req, res) => {
+app.post('/api/activity', activityLimiter, async (req, res) => {
   const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.headers['x-real-ip'] || req.connection.remoteAddress || req.ip;
-  if (checkRateLimit(ip + '|activity', 60, 60 * 1000)) {
-    return res.status(429).json({ error: 'Too many requests.' });
-  }
   const { message, action, context } = req.body;
 
   if (!message) {
