@@ -1,5 +1,7 @@
 node_modules/
 public/uploads/nodes/
+dist/
+build/
 .env
 .env.local
 .vercel

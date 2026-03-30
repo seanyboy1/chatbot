@@ -928,11 +928,8 @@ app.get('/api/activity', requireAuth, async (req, res) => {
 });
 
 // Endpoint to get user's IP address
-app.get('/api/ip', async (req, res) => {
+app.get('/api/ip', activityLimiter, async (req, res) => {
   const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.headers['x-real-ip'] || req.connection.remoteAddress || req.ip;
-  if (checkRateLimit(ip + '|ipcheck', 30, 60 * 1000)) {
-    return res.status(429).json({ error: 'Too many requests.' });
-  }
 
   const userAgent = req.headers['user-agent'];
   const sessionId = crypto.randomBytes(16).toString('hex');

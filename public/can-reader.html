@@ -244,8 +244,16 @@
     .reader-main {
       flex: 1;
       display: flex;
+      flex-direction: row;
+      overflow: hidden;
+    }
+
+    .reader-left {
+      flex: 1;
+      display: flex;
       flex-direction: column;
       overflow: hidden;
+      min-width: 0;
     }
 
     /* ── Param Editor Panel ── */
@@ -281,8 +289,8 @@
 
     .param-row {
       display: flex;
-      align-items: center;
-      gap: 16px;
+      align-items: flex-start;
+      gap: 14px;
       flex-wrap: wrap;
     }
 
@@ -314,6 +322,12 @@
       letter-spacing: 2px;
     }
 
+    .param-arrow {
+      color: #333;
+      font-size: 18px;
+      margin-top: 18px;
+    }
+
     .param-input-group {
       display: flex;
       flex-direction: column;
@@ -334,6 +348,13 @@
     }
     .param-input:focus { border-color: #FF4500; background: rgba(255,69,0,0.08); }
 
+    .param-btn-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 18px;
+    }
+
     .param-apply-btn {
       font-family: 'Share Tech Mono', monospace;
       font-size: 11px;
@@ -345,7 +366,6 @@
       padding: 8px 18px;
       cursor: pointer;
       transition: background 0.15s, box-shadow 0.15s;
-      align-self: flex-end;
     }
     .param-apply-btn:hover {
       background: #ff6a33;
@@ -363,7 +383,6 @@
       padding: 8px 18px;
       cursor: pointer;
       transition: background 0.15s, box-shadow 0.15s;
-      align-self: flex-end;
     }
     .param-download-btn:hover {
       background: rgba(255,69,0,0.08);
@@ -478,6 +497,25 @@
     #compare-modal { display: none; }
     #compare-modal.open { display: flex; }
 
+    #bt-modal { display: none; }
+    #bt-modal.open { display: flex; }
+
+    .bt-pid-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 5px 0;
+      border-bottom: 1px solid #111;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+    }
+    .bt-pid-label { color: #444; letter-spacing: 1px; font-size: 9px; }
+    .bt-pid-val   { color: #27c93f; letter-spacing: 2px; font-size: 14px; text-shadow: 0 0 6px rgba(39,201,63,0.5); }
+    .bt-log-line  { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #2a4a2a; line-height: 1.8; }
+    .bt-log-line.tx { color: #FF4500; }
+    .bt-log-line.rx { color: #27c93f; }
+    .bt-log-line.info { color: #5DADE2; }
+
     #cmp-output::-webkit-scrollbar { width: 6px; }
     #cmp-output::-webkit-scrollbar-track { background: #0a0a0a; }
     #cmp-output::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
@@ -526,6 +564,8 @@
       </a>
       <div style="display:flex;align-items:center;gap:10px;">
         <button class="back-btn" id="new-file-btn" style="display:none;position:relative;overflow:hidden;">+ NEW FILE<input type="file" id="new-file-input" accept=".bin" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;"></button>
+        <button class="back-btn" id="bt-nav-btn" style="display:none;color:#27c93f;border-color:#27c93f;">⌁ BLUETOOTH</button>
+        <span id="bt-status-badge" style="display:none;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1.5px;color:#27c93f;text-shadow:0 0 8px rgba(39,201,63,0.6);">● LIVE</span>
         <a href="/dashboard" onclick="event.preventDefault();window.location.href='/dashboard';" class="back-btn">← DASHBOARD</a>
       </div>
     </nav>
@@ -544,6 +584,11 @@
           <div class="upload-label" style="color:#5DADE2;">COMPARE FILES</div>
           <div class="upload-sub">DIFF TWO .BIN FILES</div>
         </div>
+        <div class="upload-box" id="bt-upload-box" style="border-color:rgba(39,201,63,0.35);cursor:pointer;">
+          <div class="upload-icon" style="color:#27c93f;">⌁</div>
+          <div class="upload-label" style="color:#27c93f;">BLUETOOTH OBD</div>
+          <div class="upload-sub">LIVE CAN DATA FROM CAR</div>
+        </div>
       </div>
     </div>
 
@@ -559,19 +604,42 @@
           <div id="vehicle-info-display" style="color:#27c93f;font-size:10px;letter-spacing:1px;">—</div>
         </div>
 
-        <div class="sidebar-section">PARAMETERS</div>
-
         <button class="param-btn" id="dtc-btn" style="color:#ffbd2e;border-color:#2a2200;">⊙ FAULT CODES</button>
+
+        <div class="sidebar-section">POWERTRAIN</div>
         <button class="param-btn" data-param="miles">⊙ MILES</button>
         <button class="param-btn" data-param="rpm">⊙ RPM</button>
-        <button class="param-btn" data-param="lights">⊙ LIGHTS</button>
-        <button class="param-btn" data-param="fuel">⊙ FUEL</button>
         <button class="param-btn" data-param="engine">⊙ ENGINE HRS</button>
-        <button class="param-btn" data-param="vin">⊙ VIN / ID</button>
         <button class="param-btn" data-param="transmission">⊙ TRANSMISSION</button>
+        <button class="param-btn" data-param="fuel">⊙ FUEL</button>
+        <button class="param-btn" data-param="ignition">⊙ IGNITION</button>
+        <button class="param-btn" data-param="throttle">⊙ THROTTLE</button>
+        <button class="param-btn" data-param="injectors">⊙ INJECTORS</button>
+        <button class="param-btn" data-param="o2">⊙ O2 SENSORS</button>
+        <button class="param-btn" data-param="knock">⊙ KNOCK</button>
+        <button class="param-btn" data-param="coolant">⊙ COOLANT TEMP</button>
+        <button class="param-btn" data-param="iat">⊙ INTAKE AIR</button>
+
+        <div class="sidebar-section">CHASSIS</div>
         <button class="param-btn" data-param="brakes">⊙ BRAKES</button>
         <button class="param-btn" data-param="abs">⊙ ABS</button>
+        <button class="param-btn" data-param="traction">⊙ TRACTION CTRL</button>
+        <button class="param-btn" data-param="steering">⊙ STEERING</button>
+        <button class="param-btn" data-param="tpms">⊙ TIRE PRESSURE</button>
+
+        <div class="sidebar-section">CLIMATE</div>
+        <button class="param-btn" data-param="climate">⊙ A/C &amp; HEAT</button>
+        <button class="param-btn" data-param="cruise">⊙ CRUISE CTRL</button>
+
+        <div class="sidebar-section">BODY</div>
+        <button class="param-btn" data-param="lights">⊙ LIGHTS</button>
         <button class="param-btn" data-param="windows">⊙ WINDOWS</button>
+        <button class="param-btn" data-param="blinkers">⊙ TURN SIGNALS</button>
+        <button class="param-btn" data-param="airbag">⊙ AIRBAG / SRS</button>
+        <button class="param-btn" data-param="battery">⊙ BATTERY</button>
+
+        <div class="sidebar-section">IDENTITY</div>
+        <button class="param-btn" data-param="vin">⊙ VIN / ID</button>
 
         <div style="flex:1;"></div>
 
@@ -583,26 +651,29 @@
           CHANGE FILE
           <input type="file" id="change-file-input" accept=".bin">
         </button>
+
       </div>
 
       <!-- Main -->
       <div class="reader-main">
 
-        <!-- Parameter Editor -->
-        <div class="param-editor" id="param-editor">
-          <div class="param-unknown-msg">← SELECT A PARAMETER</div>
-        </div>
+        <!-- Left column: param editor + hex viewer -->
+        <div class="reader-left">
 
-        <!-- Hex + Cluster row -->
-        <div style="flex:1;display:flex;overflow:hidden;min-height:0;">
+          <!-- Parameter Editor -->
+          <div class="param-editor" id="param-editor">
+            <div class="param-unknown-msg">← SELECT A PARAMETER</div>
+          </div>
 
           <!-- Hex Viewer -->
-          <div class="hex-viewer" id="hex-viewer" style="flex:1;height:100%;overflow-y:auto;overflow-x:hidden;">
+          <div class="hex-viewer" id="hex-viewer" style="flex:1;overflow-y:auto;overflow-x:hidden;">
             <pre id="hex-pre"></pre>
           </div>
 
-          <!-- Cluster Panel — dashboard pinned top, CAN diagram pinned below -->
-          <div id="cluster-panel" style="flex:1.5;border-left:1px solid rgba(39,201,63,0.2);background:rgba(8,8,8,0.98);display:flex;flex-direction:column;overflow:hidden;">
+        </div><!-- end reader-left -->
+
+        <!-- Cluster Panel — full height right column -->
+        <div id="cluster-panel" style="width:63%;border-left:1px solid rgba(39,201,63,0.2);background:rgba(8,8,8,0.98);display:flex;flex-direction:column;overflow:hidden;">
 
             <!-- Dashboard section: fixed, never scrolls away -->
             <div id="cluster-dash" style="flex-shrink:0;overflow-y:auto;padding:12px 14px 8px;max-height:62%;">
@@ -708,6 +779,17 @@
                   <animate attributeName="opacity" values="0.6;0.1;0.6" dur="1.4s" repeatCount="indefinite" begin="0.45s"/>
                 </circle>
 
+                <!-- Clickable hit-areas over each node (transparent, cursor:pointer) -->
+                <rect data-node="ECM" x="58"  y="74" width="64" height="60" rx="3" fill="transparent" style="cursor:pointer;"/>
+                <rect data-node="TCM" x="158" y="74" width="64" height="60" rx="3" fill="transparent" style="cursor:pointer;"/>
+                <rect data-node="ABS" x="258" y="74" width="64" height="60" rx="3" fill="transparent" style="cursor:pointer;"/>
+                <rect data-node="BCM" x="358" y="74" width="64" height="60" rx="3" fill="transparent" style="cursor:pointer;"/>
+                <rect data-node="ICM" x="458" y="74" width="64" height="60" rx="3" fill="transparent" style="cursor:pointer;"/>
+                <rect data-node="EPS" x="553" y="74" width="64" height="60" rx="3" fill="transparent" style="cursor:pointer;"/>
+
+                <!-- Active node highlight ring (shown/hidden by JS) -->
+                <rect id="can-node-hl" x="0" y="74" width="64" height="46" rx="3" fill="none" stroke="#fff" stroke-width="1.5" opacity="0" style="pointer-events:none;transition:opacity 0.15s;"/>
+
                 <!-- CAN IDs below nodes -->
                 <text x="90"  y="130" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6.5" fill="#1e1e1e">0x7E0</text>
                 <text x="190" y="130" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6.5" fill="#1e1e1e">0x7E4</text>
@@ -727,11 +809,81 @@
                 </rect>
                 <text x="340" y="172" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="7" fill="#1e1e1e" letter-spacing="1.5">500 KBPS · ISO 11898 · CAN 2.0B</text>
               </svg>
-</div></div></div>
+
+          <!-- Node data panel — shown when a node is clicked -->
+          <div id="can-node-panel" style="display:none;padding:10px 14px;border-top:1px solid #111;background:rgba(6,6,6,0.98);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div id="can-node-panel-title" style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:#fff;"></div>
+              <button id="can-node-panel-close" style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:#555;background:none;border:1px solid #333;border-radius:2px;padding:2px 8px;cursor:pointer;">✕</button>
+            </div>
+            <div id="can-node-panel-rows" style="display:flex;flex-direction:column;gap:2px;"></div>
+          </div>
+
+          </div><!-- end cluster-can -->
+        </div><!-- end cluster-panel -->
       </div><!-- end reader-main -->
 
     </div><!-- end reader-layout -->
   </div><!-- end can-page -->
+
+  <!-- Bluetooth Modal -->
+  <div id="bt-modal" style="position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.92);flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid rgba(39,201,63,0.3);background:rgba(10,10,10,0.98);">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:3px;color:#27c93f;text-shadow:0 0 14px rgba(39,201,63,0.5);">⌁ BLUETOOTH OBD-II</div>
+      <button id="bt-close-btn" style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:#555;background:none;border:1px solid #333;border-radius:3px;padding:5px 14px;cursor:pointer;">✕ CLOSE</button>
+    </div>
+    <div style="flex:1;display:flex;overflow:hidden;min-height:0;">
+
+      <!-- Left: connection + live PIDs -->
+      <div style="width:300px;min-width:300px;border-right:1px solid #1a1a1a;display:flex;flex-direction:column;padding:20px 16px;gap:14px;overflow-y:auto;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#333;">CONNECTION</div>
+
+        <div id="bt-device-info" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#444;letter-spacing:1px;min-height:18px;">NOT CONNECTED</div>
+
+        <button id="bt-connect-btn" style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:#000;background:#27c93f;border:none;border-radius:3px;padding:9px 18px;cursor:pointer;transition:background 0.15s;">⌁ SCAN &amp; CONNECT</button>
+        <button id="bt-disconnect-btn" style="display:none;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:#27c93f;background:none;border:1px solid #27c93f;border-radius:3px;padding:9px 18px;cursor:pointer;">✕ DISCONNECT</button>
+
+        <div style="border-top:1px solid #1a1a1a;padding-top:14px;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#333;margin-bottom:10px;">LIVE READINGS</div>
+          <div class="bt-pid-row"><span class="bt-pid-label">RPM</span><span class="bt-pid-val" id="bl-rpm">—</span></div>
+          <div class="bt-pid-row"><span class="bt-pid-label">SPEED</span><span class="bt-pid-val" id="bl-spd">—</span><span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#333;">MPH</span></div>
+          <div class="bt-pid-row"><span class="bt-pid-label">COOLANT TEMP</span><span class="bt-pid-val" id="bl-clt">—</span><span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#333;">°F</span></div>
+          <div class="bt-pid-row"><span class="bt-pid-label">INTAKE AIR</span><span class="bt-pid-val" id="bl-iat">—</span><span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#333;">°F</span></div>
+          <div class="bt-pid-row"><span class="bt-pid-label">THROTTLE</span><span class="bt-pid-val" id="bl-tps">—</span><span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#333;">%</span></div>
+          <div class="bt-pid-row"><span class="bt-pid-label">FUEL LEVEL</span><span class="bt-pid-val" id="bl-fuel">—</span><span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#333;">%</span></div>
+          <div class="bt-pid-row"><span class="bt-pid-label">BATTERY</span><span class="bt-pid-val" id="bl-batt">—</span><span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#333;">V</span></div>
+          <div class="bt-pid-row"><span class="bt-pid-label">IGNITION TIMING</span><span class="bt-pid-val" id="bl-ign">—</span><span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#333;">°</span></div>
+          <div class="bt-pid-row"><span class="bt-pid-label">ENGINE LOAD</span><span class="bt-pid-val" id="bl-load">—</span><span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#333;">%</span></div>
+        </div>
+
+        <div style="border-top:1px solid #1a1a1a;padding-top:14px;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#333;margin-bottom:8px;">ADAPTER PROTOCOL</div>
+          <select id="bt-protocol" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#555;background:#0a0a0a;border:1px solid #333;border-radius:3px;padding:5px 8px;width:100%;outline:none;">
+            <option value="auto">AUTO DETECT</option>
+            <option value="6">ISO 15765-4 CAN (11-bit 500K)</option>
+            <option value="7">ISO 15765-4 CAN (29-bit 500K)</option>
+            <option value="8">ISO 15765-4 CAN (11-bit 250K)</option>
+            <option value="3">ISO 9141-2</option>
+            <option value="4">ISO 14230-4 KWP</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Right: raw command log -->
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #111;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#333;">RAW ELM327 LOG</div>
+          <button id="bt-clear-log" style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:#333;background:none;border:1px solid #222;border-radius:3px;padding:3px 10px;cursor:pointer;">CLEAR</button>
+        </div>
+        <div id="bt-log" style="flex:1;overflow-y:auto;padding:10px 16px;"></div>
+        <div style="border-top:1px solid #111;padding:10px 16px;display:flex;gap:8px;">
+          <input id="bt-cmd-input" type="text" placeholder="SEND COMMAND (e.g. 010C)" style="flex:1;font-family:'Share Tech Mono',monospace;font-size:11px;color:#27c93f;background:rgba(39,201,63,0.05);border:1px solid rgba(39,201,63,0.2);border-radius:3px;padding:6px 10px;outline:none;letter-spacing:1px;" />
+          <button id="bt-cmd-send" style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:#000;background:#27c93f;border:none;border-radius:3px;padding:6px 14px;cursor:pointer;">SEND</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
 
   <!-- Compare Modal -->
   <div id="compare-modal" style="position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.88);flex-direction:column;">
@@ -1273,18 +1425,85 @@
         return;
       }
 
-      // VIN — read ASCII from fixed offset
+      // VIN — read ASCII from fixed offset, decode all fields
       if (p.type === 'vin') {
         let vin = '';
         for (let i = p.offsets[0]; i < p.offsets[0] + 17 && i < fileData.length; i++) {
           const c = fileData[i];
           if (c >= 32 && c < 127) vin += String.fromCharCode(c); else break;
         }
+        const validVin = /^[A-HJ-NPR-Z0-9]{17}$/i.test(vin);
+
+        // Decode fields
+        const wmi      = validVin ? vin.substring(0, 3).toUpperCase() : '—';
+        const vds      = validVin ? vin.substring(3, 9).toUpperCase() : '—';
+        const modelYrC = validVin ? vin[9].toUpperCase() : '—';
+        const plantCod = validVin ? vin[10].toUpperCase() : '—';
+        const seqNum   = validVin ? vin.substring(11, 17).toUpperCase() : '—';
+        const checkDig = validVin ? vin[8].toUpperCase() : '—';
+
+        const make = validVin ? (WMI_MAP[wmi] || WMI_MAP[wmi.substring(0,2)] || 'UNKNOWN') : '—';
+        const year = validVin ? (MODEL_YEAR_MAP[modelYrC + '2'] || MODEL_YEAR_MAP[modelYrC] || 'UNKNOWN') : '—';
+
+        // Country from WMI first char
+        const countryMap = {
+          '1':'USA','2':'CANADA','3':'MEXICO','4':'USA','5':'USA',
+          'J':'JAPAN','K':'KOREA','S':'UK/SWEDEN','V':'FRANCE/SPAIN',
+          'W':'GERMANY','Y':'SWEDEN/FINLAND','Z':'ITALY','9':'BRAZIL',
+          'L':'CHINA','M':'INDIA','N':'TURKEY','R':'TAIWAN',
+        };
+        const country = validVin ? (countryMap[wmi[0]] || 'UNKNOWN') : '—';
+
+        // VIN position segment highlight helper
+        const seg = (chars, color) =>
+          `<span style="color:${color};text-shadow:0 0 8px ${color}88;">${chars}</span>`;
+
+        const vinFormatted = validVin
+          ? seg(vin.substring(0,3),'#FF4500') +
+            seg(vin.substring(3,9),'#27c93f') +
+            seg(vin[8],'#ffbd2e') +
+            seg(vin[9],'#5DADE2') +
+            seg(vin[10],'#c084fc') +
+            seg(vin.substring(11,17),'#aaa')
+          : `<span style="color:#555;">${vin || '—'}</span>`;
+
+        const row = (label, val, color='#888') =>
+          `<div style="display:flex;gap:12px;align-items:baseline;padding:5px 0;border-bottom:1px solid #111;">
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#444;min-width:110px;">${label}</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:${color};letter-spacing:1.5px;">${val}</span>
+          </div>`;
+
+        const legend = (color, label) =>
+          `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;color:${color};margin-right:14px;">■ ${label}</span>`;
+
         el.innerHTML = `
           <div class="param-editor-title">${p.label}</div>
           <div class="param-editor-desc">${p.desc}</div>
-          <div style="font-family:'Share Tech Mono',monospace;font-size:22px;color:#FF6633;letter-spacing:4px;margin:8px 0;">${vin}</div>
-          <div class="param-offset-info">OFFSET: 0x${p.offsets[0].toString(16).toUpperCase().padStart(4,'0')}</div>`;
+
+          <div style="font-family:'Share Tech Mono',monospace;font-size:20px;letter-spacing:5px;margin:14px 0 4px;word-break:break-all;">${vinFormatted}</div>
+
+          <div style="margin-bottom:14px;">
+            ${legend('#FF4500','WMI [1-3]')}
+            ${legend('#27c93f','VDS [4-9]')}
+            ${legend('#ffbd2e','CHECK [9]')}
+            ${legend('#5DADE2','YEAR [10]')}
+            ${legend('#c084fc','PLANT [11]')}
+            ${legend('#aaa','SEQ [12-17]')}
+          </div>
+
+          <div style="border:1px solid #1a1a1a;border-radius:4px;overflow:hidden;">
+            ${row('WMI [1-3]', wmi + ' → ' + make, '#FF4500')}
+            ${row('COUNTRY', country, '#FF6633')}
+            ${row('VDS [4-9]', vds, '#27c93f')}
+            ${row('CHECK DIGIT [9]', checkDig, '#ffbd2e')}
+            ${row('MODEL YEAR [10]', modelYrC + ' → ' + year, '#5DADE2')}
+            ${row('PLANT [11]', plantCod, '#c084fc')}
+            ${row('SEQUENCE [12-17]', seqNum, '#aaa')}
+          </div>
+
+          ${!validVin ? `<div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#555;margin-top:10px;letter-spacing:1px;">⚠ NO VALID VIN FOUND AT OFFSET 0x005D</div>` : ''}
+
+          <div class="param-offset-info" style="margin-top:10px;">OFFSET: 0x${p.offsets[0].toString(16).toUpperCase().padStart(4,'0')} · LENGTH: 17 BYTES</div>`;
         return;
       }
 
@@ -1320,13 +1539,16 @@
             <div class="current-val" id="current-display">${currentVal}</div>
             <div class="current-unit">${p.unit}</div>
           </div>
-          <div style="color:#333;font-size:20px;">→</div>
+          <div class="param-arrow">→</div>
           <div class="param-input-group">
             <label style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#444;">NEW VALUE</label>
             <input class="param-input" id="param-new-val" type="number" min="${p.min}" max="${p.max}" placeholder="${currentVal}">
           </div>
-          <button class="param-apply-btn" id="apply-btn">APPLY</button>
-          <button class="param-download-btn" id="download-btn">DOWNLOAD</button>
+          <div class="param-btn-group">
+            <button class="param-download-btn" id="download-btn">DOWNLOAD</button>
+            <button class="param-apply-btn" id="apply-btn">APPLY</button>
+            ${key === 'miles' ? `<button class="param-download-btn" id="reset-to-original-btn" style="color:#ff4500;border-color:#ff4500;">↺ RESET FILE</button>` : ''}
+          </div>
         </div>
         <div class="param-offset-info">PRIMARY: 0x${p.offsets[0].toString(16).toUpperCase().padStart(4,'0')}${backupStr}</div>
         <div class="param-msg" id="param-msg"></div>`;
@@ -1336,6 +1558,24 @@
       document.getElementById('param-new-val').addEventListener('keydown', e => {
         if (e.key === 'Enter') applyValue(key);
       });
+      if (key === 'miles') {
+        document.getElementById('reset-to-original-btn').addEventListener('click', () => {
+          if (!originalData) return;
+          fileData = new Uint8Array(originalData);
+          window._odoAccum = 0;
+          window.clusterRPM = 0;
+          window.clusterSpeed = 0;
+          window.clusterGear = 'P';
+          window.clusterEngineOn = false;
+          window.clusterLights = { headlights: false, highbeam: false, left: false, right: false };
+          clearInterval(window._accelInt);
+          clearInterval(window._decelInt);
+          clearInterval(window._brakeInt);
+          renderEditor('miles');
+          renderCluster();
+          paintHexViewport();
+        });
+      }
     }
 
     function applyValue(key) {
@@ -1931,9 +2171,9 @@
             ${warnLight(410, 55, '◎', 'OIL',  window.clusterStarting,              '#FF4500')}
             ${warnLight(450, 55, '✦', 'TEMP', window.clusterStarting,              '#FF4500')}
 
-            <!-- Turn / light indicators bottom -->
-            ${warnLight(290, 248, '◐', 'HEAD',   L.headlights, '#5DADE2')}
-            ${warnLight(330, 248, '●', 'HIGH',   L.highbeam,   '#5DADE2')}
+            <!-- Light indicators beside blinker arrows -->
+            ${warnLight(75,  38, '◐', 'HEAD', L.headlights, '#5DADE2')}
+            ${warnLight(625, 38, '●', 'HIGH', L.highbeam,   '#5DADE2')}
 
             <!-- Left blinker arrow (top left corner) -->
             <g id="lturn-arrow" opacity="${L.left ? 1 : 0.1}">
@@ -2043,6 +2283,7 @@
           window.clusterRPM   = 0;
           window.clusterSpeed = 0;
           window.clusterGear  = 'P';
+          window._odoAccum    = 0;
           clearInterval(window._accelInt);
           clearInterval(window._decelInt);
           clearInterval(window._brakeInt);
@@ -2077,15 +2318,16 @@
           clearInterval(window._decelInt);
           const idle = 1500;
           window._decelInt = setInterval(() => {
+            const gear = window.clusterGear || 'P';
+            const spd  = window.clusterSpeed || 0;
             window.clusterRPM = Math.max(idle, window.clusterRPM - 180);
             updateRPMNeedle(window.clusterRPM);
-            const gear = window.clusterGear || 'P';
-            if (gear === 'D' && (window.clusterSpeed || 0) > 0) {
-              updateSpeedNeedle(Math.max(0, window.clusterSpeed - 0.25));
-            } else if (gear === 'R' && (window.clusterSpeed || 0) > 0) {
-              updateSpeedNeedle(Math.max(0, window.clusterSpeed - 0.25));
+            if ((gear === 'D' || gear === 'R') && spd > 0) {
+              updateSpeedNeedle(Math.max(0, spd - 0.5));
             }
-            if (window.clusterRPM <= idle) clearInterval(window._decelInt);
+            if (window.clusterRPM <= idle && (window.clusterSpeed || 0) <= 0) {
+              clearInterval(window._decelInt);
+            }
           }, 40);
         };
         accelBtn.addEventListener('mousedown',   startAccel);
@@ -2142,6 +2384,7 @@
     }
 
     function updateSpeedNeedle(mph) {
+      const prevMph = window.clusterSpeed || 0;
       window.clusterSpeed = mph;
       const cx = 140, cy = 160, r = 108, startDeg = 220, endDeg = 500;
       const pct = Math.min(1, Math.max(0, mph / 140));
@@ -2152,6 +2395,32 @@
       if (needle) needle.setAttribute('d', needlePath(cx, cy, r - 14, fillDeg));
       if (arc)    arc.setAttribute('d', arcPath(cx, cy, r, startDeg, fillDeg));
       if (val)    val.textContent = Math.round(mph);
+
+      // Accumulate distance: avg speed over this 40ms tick in miles
+      // Scale x60 so the odometer visibly ticks during simulation
+      const avgMph = (prevMph + mph) / 2;
+      window._odoAccum = (window._odoAccum || 0) + avgMph * (40 / 3600000) * 60;
+
+      if (fileData) {
+        const baseMiles = readUint32LE(fileData, 0x033a);
+
+        // Update cluster display every tick to show fractional progress
+        const displayMiles = Math.min(999999, baseMiles + Math.floor(window._odoAccum));
+        const odo = document.getElementById('cluster-odo');
+        if (odo) odo.textContent = String(displayMiles).padStart(6, '0');
+
+        // Write to file + repaint hex on each whole mile crossed
+        if (window._odoAccum >= 1) {
+          const addMiles = Math.floor(window._odoAccum);
+          window._odoAccum -= addMiles;
+          const newMiles = Math.min(999999, baseMiles + addMiles);
+          writeUint32LE(fileData, 0x033a, newMiles);
+          writeUint32LE(fileData, 0x133a, newMiles);
+          paintHexViewport();
+          // Refresh param editor if miles tab is open
+          if (activeParam === 'miles') renderEditor('miles');
+        }
+      }
     }
 
     function setGear(g) {
@@ -2364,6 +2633,414 @@
       // Deduplicate (file often has a primary + backup copy)
       return [...results];
     }
+
+    // ── CAN Node panel ────────────────────────────────────────────────────────
+
+    const NODE_X = { ECM: 90, TCM: 190, ABS: 290, BCM: 390, ICM: 490, EPS: 585 };
+    const NODE_COLOR = { ECM:'#FF4500', TCM:'#FF4500', ABS:'#FF4500', BCM:'#5DADE2', ICM:'#27c93f', EPS:'#5DADE2' };
+
+    const NODE_DEFS = {
+      ECM: {
+        label: 'ECM — ENGINE CONTROL MODULE',
+        canId: '0x7E0',
+        rows: () => [
+          { l:'RPM LIMITER',     v: fileData ? readUint16LE(fileData, 0x0322)            : '—', u:'RPM',   off:'0x0322' },
+          { l:'ENGINE HOURS',    v: fileData ? readUint32LE(fileData, 0x0008)            : '—', u:'HRS',   off:'0x0008' },
+          { l:'IGNITION TIMING', v: fileData ? fileData[0x02D0]                          : '—', u:'°×2',  off:'0x02D0' },
+          { l:'THROTTLE POS',    v: fileData ? fileData[0x02C0]                          : '—', u:'pos',  off:'0x02C0' },
+          { l:'COOLANT TEMP',    v: fileData ? fileData[0x0300]                          : '—', u:'ECU',  off:'0x0300' },
+          { l:'INTAKE AIR TEMP', v: fileData ? fileData[0x0310]                          : '—', u:'ECU',  off:'0x0310' },
+          { l:'INJECTOR PW',     v: fileData ? readUint16LE(fileData, 0x02E8)            : '—', u:'×0.01µs', off:'0x02E8' },
+          { l:'O2 LAMBDA TGT',   v: fileData ? fileData[0x0350]                          : '—', u:'λ',   off:'0x0350' },
+          { l:'KNOCK RETARD',    v: fileData ? fileData[0x0360]                          : '—', u:'°',   off:'0x0360' },
+        ]
+      },
+      TCM: {
+        label: 'TCM — TRANSMISSION CTRL MODULE',
+        canId: '0x7E4',
+        rows: () => [
+          { l:'CURRENT GEAR',    v: window.clusterGear || 'P',                              u:'',     off:'—'      },
+          { l:'VEHICLE SPEED',   v: Math.round(window.clusterSpeed || 0),                   u:'MPH',  off:'—'      },
+          { l:'CVT MODE REG',    v: fileData ? fileData[0x02F9]                          : '—', u:'',   off:'0x02F9' },
+        ]
+      },
+      ABS: {
+        label: 'ABS — ANTI-LOCK BRAKE SYSTEM',
+        canId: '0x5D0',
+        rows: () => [
+          { l:'ABS REGISTER',    v: fileData ? fileData[0x0374]                          : '—', u:'',   off:'0x0374' },
+          { l:'TRACTION CTRL',   v: fileData ? fileData[0x0370]                          : '—', u:'',   off:'0x0370' },
+          { l:'BRAKE THRESHOLD', v: fileData ? fileData[0x008A]                          : '—', u:'',   off:'0x008A' },
+          { l:'WHEEL SPEED',     v: Math.round(window.clusterSpeed || 0),                   u:'MPH',  off:'—'      },
+        ]
+      },
+      BCM: {
+        label: 'BCM — BODY CONTROL MODULE',
+        canId: '0x430',
+        rows: () => {
+          const lights = window.clusterLights || {};
+          const mask   = (lights.headlights?1:0)|(lights.highbeam?2:0)|(lights.left?4:0)|(lights.right?8:0);
+          return [
+            { l:'LIGHTING FLAGS',  v: '0x' + mask.toString(16).toUpperCase().padStart(2,'0'),   u:'',   off:'0x03A8' },
+            { l:'HEADLIGHTS',      v: lights.headlights ? 'ON' : 'OFF',                          u:'',   off:'0x03A8' },
+            { l:'HIGH BEAM',       v: lights.highbeam   ? 'ON' : 'OFF',                          u:'',   off:'0x03A8' },
+            { l:'LEFT TURN',       v: lights.left        ? 'ON' : 'OFF',                          u:'',   off:'0x03B0' },
+            { l:'RIGHT TURN',      v: lights.right       ? 'ON' : 'OFF',                          u:'',   off:'0x03B0' },
+            { l:'WINDOW/ACC REG',  v: fileData ? fileData[0x031B]                          : '—', u:'',   off:'0x031B' },
+            { l:'BATTERY ADC',     v: fileData ? readUint16LE(fileData, 0x0390)            : '—', u:'ADC', off:'0x0390' },
+          ];
+        }
+      },
+      ICM: {
+        label: 'ICM — INSTRUMENT CLUSTER MODULE',
+        canId: '0x3D0',
+        rows: () => [
+          { l:'ODOMETER',        v: fileData ? readUint32LE(fileData, 0x033a)            : '—', u:'MI',  off:'0x033A' },
+          { l:'RPM DISPLAY',     v: Math.round(window.clusterRPM || 0),                     u:'RPM', off:'—'      },
+          { l:'SPEED DISPLAY',   v: Math.round(window.clusterSpeed || 0),                   u:'MPH', off:'—'      },
+          { l:'GEAR DISPLAY',    v: window.clusterGear || 'P',                              u:'',    off:'—'      },
+          { l:'VIN OFFSET',      v: '0x005D',                                               u:'17B', off:'0x005D' },
+        ]
+      },
+      EPS: {
+        label: 'EPS — ELECTRIC POWER STEERING',
+        canId: '0x217',
+        rows: () => [
+          { l:'ASSIST LEVEL',    v: fileData ? fileData[0x0380]                          : '—', u:'',   off:'0x0380' },
+          { l:'VEHICLE SPEED',   v: Math.round(window.clusterSpeed || 0),                   u:'MPH', off:'—'      },
+        ]
+      },
+    };
+
+    let activeCanNode = null;
+
+    function showNodePanel(node) {
+      const def   = NODE_DEFS[node];
+      const color = NODE_COLOR[node];
+      const panel = document.getElementById('can-node-panel');
+      const title = document.getElementById('can-node-panel-title');
+      const rows  = document.getElementById('can-node-panel-rows');
+      const hl    = document.getElementById('can-node-hl');
+
+      title.textContent = def.label;
+      title.style.color = color;
+
+      rows.innerHTML = def.rows().map(r => `
+        <div style="display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;border-bottom:1px solid #0e0e0e;">
+          <span style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1.5px;color:#444;">${r.l}</span>
+          <span style="display:flex;gap:6px;align-items:baseline;">
+            <span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:${color};letter-spacing:1px;">${r.v}</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:#333;">${r.u}</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:7px;color:#1e1e1e;">${r.off}</span>
+          </span>
+        </div>`).join('');
+
+      panel.style.display = '';
+
+      // Highlight ring
+      const nx = NODE_X[node];
+      hl.setAttribute('x', nx - 32);
+      hl.setAttribute('stroke', color);
+      hl.setAttribute('opacity', '0.7');
+
+      activeCanNode = node;
+
+      // Refresh live values every second while panel is open
+      clearInterval(window._nodePanelTimer);
+      window._nodePanelTimer = setInterval(() => {
+        if (activeCanNode) showNodePanel(activeCanNode);
+      }, 1000);
+    }
+
+    function hideNodePanel() {
+      document.getElementById('can-node-panel').style.display = 'none';
+      document.getElementById('can-node-hl').setAttribute('opacity', '0');
+      clearInterval(window._nodePanelTimer);
+      activeCanNode = null;
+    }
+
+    // Delegate click to all node hit-areas
+    document.getElementById('cluster-can').addEventListener('click', e => {
+      const hit = e.target.closest('[data-node]');
+      if (!hit) return;
+      const node = hit.getAttribute('data-node');
+      if (activeCanNode === node) {
+        hideNodePanel();
+      } else {
+        showNodePanel(node);
+      }
+    });
+
+    document.getElementById('can-node-panel-close').addEventListener('click', hideNodePanel);
+
+    // ── Bluetooth OBD-II ──────────────────────────────────────────────────────
+
+    // Known BLE service/characteristic UUIDs for common ELM327 adapters
+    const BT_PROFILES = [
+      { // Generic ELM327 BLE clone (most common)
+        service:  '0000fff0-0000-1000-8000-00805f9b34fb',
+        writeChr: '0000fff2-0000-1000-8000-00805f9b34fb',
+        notifyChr:'0000fff1-0000-1000-8000-00805f9b34fb',
+      },
+      { // Vgate iCar Pro / OBDLink CX
+        service:  'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+        writeChr: 'be15bee0-6186-407e-8381-0bd89c4d8df4',
+        notifyChr:'be15bee0-6186-407e-8381-0bd89c4d8df4',
+      },
+      { // OBDLink BLE
+        service:  '00001101-0000-1000-8000-00805f9b34fb',
+        writeChr: '00001101-0000-1000-8000-00805f9b34fb',
+        notifyChr:'00001101-0000-1000-8000-00805f9b34fb',
+      },
+    ];
+
+    const OBD_PIDS = [
+      { cmd:'010C', id:'rpm',  parse: b => ((b[0]<<8|b[1])/4),          label:'RPM'           },
+      { cmd:'010D', id:'spd',  parse: b => Math.round(b[0]*0.621371),    label:'SPEED MPH'     },
+      { cmd:'0105', id:'clt',  parse: b => Math.round((b[0]-40)*9/5+32), label:'COOLANT °F'    },
+      { cmd:'010F', id:'iat',  parse: b => Math.round((b[0]-40)*9/5+32), label:'IAT °F'        },
+      { cmd:'0111', id:'tps',  parse: b => Math.round(b[0]*100/255),     label:'THROTTLE %'    },
+      { cmd:'012F', id:'fuel', parse: b => Math.round(b[0]*100/255),     label:'FUEL %'        },
+      { cmd:'0142', id:'batt', parse: b => ((b[0]<<8|b[1])/1000).toFixed(1), label:'BATTERY V'},
+      { cmd:'010E', id:'ign',  parse: b => (b[0]/2-64).toFixed(1),       label:'TIMING °'      },
+      { cmd:'0104', id:'load', parse: b => Math.round(b[0]*100/255),     label:'ENGINE LOAD %' },
+    ];
+
+    let btDevice    = null;
+    let btWriteChr  = null;
+    let btNotifyChr = null;
+    let btRxBuf     = '';
+    let btResolve   = null;
+    let btPollTimer = null;
+    let btPidIdx    = 0;
+    let btLiveMode  = false;
+
+    function btLog(msg, cls = '') {
+      const log = document.getElementById('bt-log');
+      if (!log) return;
+      const d = document.createElement('div');
+      d.className = 'bt-log-line ' + cls;
+      d.textContent = msg;
+      log.appendChild(d);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function btSetStatus(msg) {
+      const el = document.getElementById('bt-device-info');
+      if (el) el.textContent = msg;
+    }
+
+    function btOnNotify(event) {
+      const chunk = new TextDecoder().decode(event.target.value);
+      btRxBuf += chunk;
+      if (btRxBuf.includes('>')) {
+        const response = btRxBuf.replace(/>/g, '').trim();
+        btRxBuf = '';
+        if (btResolve) { btResolve(response); btResolve = null; }
+      }
+    }
+
+    function btSend(cmd) {
+      return new Promise((resolve, reject) => {
+        if (!btWriteChr) return reject('Not connected');
+        btResolve = resolve;
+        const data = new TextEncoder().encode(cmd + '\r');
+        btLog('→ ' + cmd, 'tx');
+        btWriteChr.writeValue(data).catch(reject);
+        setTimeout(() => {
+          if (btResolve) { btResolve(btRxBuf || 'TIMEOUT'); btRxBuf = ''; btResolve = null; }
+        }, 3000);
+      });
+    }
+
+    async function btInit() {
+      btLog('Initializing ELM327...', 'info');
+      await btSend('ATZ');
+      await new Promise(r => setTimeout(r, 1000));
+      btRxBuf = '';
+      await btSend('ATE0');   // echo off
+      await btSend('ATL0');   // linefeeds off
+      await btSend('ATS0');   // spaces off
+      await btSend('ATH0');   // headers off
+      const proto = document.getElementById('bt-protocol').value;
+      if (proto === 'auto') {
+        await btSend('ATSP0'); // auto protocol
+      } else {
+        await btSend('ATSP' + proto);
+      }
+      btLog('ELM327 ready. Starting PID poll...', 'info');
+      btStartPolling();
+    }
+
+    function btStartPolling() {
+      clearInterval(btPollTimer);
+      btPidIdx = 0;
+      btPollTimer = setInterval(btPollNext, 150);
+    }
+
+    async function btPollNext() {
+      if (!btWriteChr) return;
+      const pid = OBD_PIDS[btPidIdx % OBD_PIDS.length];
+      btPidIdx++;
+      try {
+        const raw = await btSend(pid.cmd);
+        btLog('← ' + raw, 'rx');
+        // Parse hex bytes after mode+PID echo (e.g. "41 0C 1A F8")
+        const parts = raw.replace(/\s+/g, '').match(/.{2}/g);
+        if (!parts || parts.length < 3) return;
+        // Skip mode byte (41) + PID byte
+        const dataBytes = parts.slice(2).map(h => parseInt(h, 16));
+        if (dataBytes.some(isNaN)) return;
+        const val = pid.parse(dataBytes);
+        // Update live reading display
+        const el = document.getElementById('bl-' + pid.id);
+        if (el) el.textContent = val;
+        // Push to cluster
+        btUpdateCluster(pid.id, val, dataBytes);
+      } catch(e) { /* ignore timeout */ }
+    }
+
+    function btUpdateCluster(id, val, bytes) {
+      switch (id) {
+        case 'rpm':
+          window.clusterRPM = val;
+          updateRPMNeedle(val);
+          break;
+        case 'spd':
+          updateSpeedNeedle(val);
+          break;
+        case 'clt':
+          // Update coolant byte in file (°F back to raw: (°F-32)*5/9+40)
+          if (fileData) {
+            const raw = Math.round(((val - 32) * 5 / 9) + 40);
+            fileData[0x0300] = raw & 0xFF;
+            fileData[0x1300] = raw & 0xFF;
+          }
+          break;
+        case 'iat':
+          if (fileData) {
+            const raw = Math.round(((val - 32) * 5 / 9) + 40);
+            fileData[0x0310] = raw & 0xFF;
+            fileData[0x1310] = raw & 0xFF;
+          }
+          break;
+        case 'tps':
+          if (fileData) {
+            const raw = Math.round(val * 255 / 100);
+            fileData[0x02C0] = raw & 0xFF;
+            fileData[0x12C0] = raw & 0xFF;
+          }
+          break;
+        case 'ign':
+          if (fileData) {
+            const raw = Math.round((parseFloat(val) + 64) * 2);
+            fileData[0x02D0] = raw & 0xFF;
+            fileData[0x12D0] = raw & 0xFF;
+          }
+          break;
+      }
+      if (activeParam) renderEditor(activeParam);
+    }
+
+    async function btConnect() {
+      if (!navigator.bluetooth) {
+        btLog('Web Bluetooth not supported. Use Chrome/Edge on desktop.', 'info');
+        return;
+      }
+      btLog('Scanning for OBD-II adapters...', 'info');
+      btSetStatus('SCANNING...');
+      try {
+        btDevice = await navigator.bluetooth.requestDevice({
+          filters: [
+            { name: 'OBDII' }, { name: 'OBD2' }, { name: 'ELM327' },
+            { name: 'iCar' }, { name: 'OBDLink' }, { name: 'Vgate' },
+            { namePrefix: 'OBD' }, { namePrefix: 'ELM' },
+          ],
+          optionalServices: BT_PROFILES.map(p => p.service),
+        });
+
+        btLog('Device: ' + btDevice.name, 'info');
+        btSetStatus('CONNECTING · ' + btDevice.name);
+        btDevice.addEventListener('gattserverdisconnected', btOnDisconnected);
+
+        const server = await btDevice.gatt.connect();
+        let connected = false;
+
+        for (const profile of BT_PROFILES) {
+          try {
+            const svc  = await server.getPrimaryService(profile.service);
+            btWriteChr = await svc.getCharacteristic(profile.writeChr);
+            btNotifyChr = await svc.getCharacteristic(profile.notifyChr);
+            await btNotifyChr.startNotifications();
+            btNotifyChr.addEventListener('characteristicvaluechanged', btOnNotify);
+            connected = true;
+            btLog('Profile matched: ' + profile.service, 'info');
+            break;
+          } catch { /* try next profile */ }
+        }
+
+        if (!connected) throw new Error('No supported BLE service found on this adapter');
+
+        btSetStatus('CONNECTED · ' + btDevice.name);
+        document.getElementById('bt-connect-btn').style.display = 'none';
+        document.getElementById('bt-disconnect-btn').style.display = '';
+        document.getElementById('bt-status-badge').style.display = '';
+        document.getElementById('bt-nav-btn').style.display = '';
+        btLiveMode = true;
+        await btInit();
+
+      } catch (err) {
+        btLog('Error: ' + err.message, 'info');
+        btSetStatus('NOT CONNECTED');
+      }
+    }
+
+    function btDisconnect() {
+      clearInterval(btPollTimer);
+      btLiveMode = false;
+      if (btDevice && btDevice.gatt.connected) btDevice.gatt.disconnect();
+      btWriteChr = null;
+      btNotifyChr = null;
+      btRxBuf = '';
+      btSetStatus('NOT CONNECTED');
+      document.getElementById('bt-connect-btn').style.display = '';
+      document.getElementById('bt-disconnect-btn').style.display = 'none';
+      document.getElementById('bt-status-badge').style.display = 'none';
+      btLog('Disconnected.', 'info');
+    }
+
+    function btOnDisconnected() {
+      btLog('Device disconnected.', 'info');
+      btDisconnect();
+    }
+
+    // BT modal open/close
+    document.getElementById('bt-upload-box').addEventListener('click', () => {
+      document.getElementById('bt-modal').classList.add('open');
+    });
+    document.getElementById('bt-nav-btn').addEventListener('click', () => {
+      document.getElementById('bt-modal').classList.add('open');
+    });
+    document.getElementById('bt-close-btn').addEventListener('click', () => {
+      document.getElementById('bt-modal').classList.remove('open');
+    });
+    document.getElementById('bt-connect-btn').addEventListener('click', btConnect);
+    document.getElementById('bt-disconnect-btn').addEventListener('click', btDisconnect);
+    document.getElementById('bt-clear-log').addEventListener('click', () => {
+      document.getElementById('bt-log').innerHTML = '';
+    });
+    document.getElementById('bt-cmd-send').addEventListener('click', async () => {
+      const inp = document.getElementById('bt-cmd-input');
+      const cmd = inp.value.trim().toUpperCase();
+      if (!cmd || !btWriteChr) return;
+      inp.value = '';
+      const resp = await btSend(cmd);
+      btLog('← ' + resp, 'rx');
+    });
+    document.getElementById('bt-cmd-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('bt-cmd-send').click();
+    });
+
   </script>
 </body>
 </html>

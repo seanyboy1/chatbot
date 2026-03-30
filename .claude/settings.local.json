@@ -30,7 +30,8 @@
       "Bash(pkill -f \"electron electron\")",
       "Bash(pkill -f 'CAN Reader')",
       "Bash(pkill -f 'electron electron')",
-      "Bash(brew upgrade:*)"
+      "Bash(brew upgrade:*)",
+      "Bash(npm list:*)"
     ]
   }
 }
