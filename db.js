@@ -107,6 +107,13 @@ const meshNodeSchema = new mongoose.Schema({
 });
 export const MeshNode = mongoose.models.MeshNode || mongoose.model('MeshNode', meshNodeSchema);
 
+// Admin Session Schema (persists across server restarts)
+const adminSessionSchema = new mongoose.Schema({
+  token: { type: String, required: true, unique: true },
+  expiresAt: { type: Date, required: true, index: { expires: 0 } },
+});
+export const AdminSession = mongoose.models.AdminSession || mongoose.model('AdminSession', adminSessionSchema);
+
 // Sike Node Schema (Blue-SIKE nodes)
 const sikeNodeSchema = new mongoose.Schema({
   nodeId: { type: String, required: true, unique: true },

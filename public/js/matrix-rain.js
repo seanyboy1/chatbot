@@ -40,9 +40,9 @@ export function initMatrixRain(canvasId) {
   }
 
   function onResize() {
+    resizeCanvas();
     columns = Math.floor(canvas.width / fontSize);
     drops = Array(columns).fill(1);
-    resizeCanvas();
   }
 
   window.addEventListener('resize', onResize);

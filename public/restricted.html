@@ -99,6 +99,8 @@
     import { initMatrixRain } from '/js/matrix-rain.js';
     import { saveAuth, isLoggedIn, getRole, getService, getToken } from '/js/auth.js';
 
+    const nextPage = new URLSearchParams(window.location.search).get('next') || '/dashboard';
+
     // Redirect if already logged in
     if (isLoggedIn()) {
       if (getRole() === 'admin') {
@@ -107,7 +109,7 @@
           headers: { 'Authorization': `Bearer ${getToken()}` }
         }).catch(() => null);
         if (r && r.ok) {
-          window.location.href = '/dashboard';
+          window.location.href = nextPage;
         }
         // If reissue fails, fall through and show the login form
       } else {
@@ -157,9 +159,9 @@
           return;
         }
         saveAuth(data.token, data.user, data.role);
-        setStatus('ACCESS GRANTED — LOADING DASHBOARD...', 'success');
+        setStatus('ACCESS GRANTED — REDIRECTING...', 'success');
         setTimeout(() => {
-          window.location.href = '/dashboard';
+          window.location.href = nextPage;
         }, 800);
       } catch {
         setStatus('Connection error. Try again.', 'error');

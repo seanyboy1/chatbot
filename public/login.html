@@ -44,12 +44,12 @@
           </svg>
           <span class="auth-logo-text" id="auth-logo-text">BLUE-NET</span>
         </div>
-        <div class="auth-tagline" id="auth-tagline">NETWORK SOLUTIONS - CLIENT PORTAL</div>
+        <div class="auth-tagline" id="auth-tagline">NETWORK SOLUTIONS — ADMIN ACCESS</div>
 
-        <!-- Tabs -->
-        <div class="auth-tabs">
+        <!-- Tabs: only show register for customer portals -->
+        <div class="auth-tabs" id="auth-tabs">
           <button class="auth-tab active" data-tab="login">LOGIN</button>
-          <button class="auth-tab" data-tab="register">REGISTER</button>
+          <button class="auth-tab" data-tab="register" id="tab-register" style="display:none">REGISTER</button>
         </div>
 
         <!-- Status -->
@@ -125,7 +125,7 @@
           <button type="submit" class="auth-btn" id="register-btn">CREATE ACCOUNT</button>
         </form>
 
-        <div class="auth-footer">
+        <div class="auth-footer" id="auth-footer" style="display:none">
           <a href="/">← RETURN TO HOME</a>
         </div>
       </div>
@@ -139,15 +139,19 @@
     // Redirect if already logged in (skip redirect in customer test mode)
     const params = new URLSearchParams(window.location.search);
     const mode    = params.get('mode');
-    const next    = params.get('next') || '/customer.html';
+    const next    = params.get('next') || '/admin';
     const isBlueTip = next === '/bluetip-profile' || next === '/bluetip-customer' || next === '/bluetip' || next === '/bluetip-home' || params.get('service') === 'bluetip';
     const service = isBlueTip ? 'bluetip' : 'bluenet';
 
-    // Rebrand for Blue-TIP
+    // Rebrand for Blue-TIP customer portal
     if (isBlueTip) {
       document.title = 'BLUE-TIP - SECURE ACCESS';
       document.getElementById('auth-logo-text').textContent = 'BLUE-TIP';
       document.getElementById('auth-tagline').textContent = 'MOBILE WELDING SERVICES - CLIENT PORTAL';
+    }
+    // Show register tab only for customer portals
+    if (isBlueTip || mode === 'customer') {
+      document.getElementById('tab-register').style.display = '';
     }
     if (isLoggedIn() && mode !== 'customer') {
       if (getRole() === 'admin') {
@@ -158,9 +162,8 @@
           headers: { 'Authorization': `Bearer ${getToken()}` }
         }).catch(() => null);
         if (r && r.ok) {
-          window.location.href = '/dashboard';
+          window.location.href = '/admin';
         }
-        // If not ok, fall through and let the user log in normally
       } else {
         window.location.href = next;
       }
@@ -220,7 +223,7 @@
         setStatus('ACCESS GRANTED — CONNECTING...', 'success');
         setTimeout(() => {
           if (data.role === 'admin') {
-            window.location.href = '/dashboard';
+            window.location.href = '/admin';
           } else {
             window.location.href = next;
           }

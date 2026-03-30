@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/css/logo.css">
-  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Pacifico&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Pacifico&family=Black+Ops+One&display=swap" rel="stylesheet">
   <style>
     .dash-page {
       min-height: 100vh;
@@ -128,7 +128,8 @@
       .dash-card-mesh,
       .dash-card-net,
       .dash-card-sike,
-      .dash-card-tip { grid-column: 1; grid-row: auto; }
+      .dash-card-tip,
+      .dash-card-can { grid-column: 1; grid-row: auto; }
     }
 
     .dash-card {
@@ -401,12 +402,35 @@
           <div class="dash-card-arrow">ENTER →</div>
         </a>
 
-        <!-- Center Hub -->
-        <div class="dash-center">
-          <div class="dash-center-pulse"></div>
-          <div class="dash-center-title">CONTROL HUB</div>
-          <div class="dash-center-sub">SELECT A SYSTEM<br>TO MANAGE</div>
-        </div>
+        <!-- CAN Reader — center -->
+        <a href="/can-reader" class="dash-card dash-card-center">
+          <div class="dash-card-icon">
+            <svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" style="color:#FF4500;">
+              <line x1="4" y1="10" x2="56" y2="10" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+              <line x1="4" y1="20" x2="56" y2="20" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+              <line x1="14" y1="10" x2="14" y2="20" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+              <line x1="28" y1="10" x2="28" y2="20" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+              <line x1="42" y1="10" x2="42" y2="20" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+              <rect x="10" y="4"  width="8" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1"/>
+              <rect x="24" y="4"  width="8" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1"/>
+              <rect x="38" y="4"  width="8" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1"/>
+              <rect x="0" y="8.5" width="5" height="3" rx="1" fill="#27c93f" opacity="0.9">
+                <animateTransform attributeName="transform" type="translate" values="0,0;52,0;52,0" dur="2s" repeatCount="indefinite" keyTimes="0;0.8;1"/>
+              </rect>
+              <rect x="0" y="18.5" width="5" height="3" rx="1" fill="#FF4500" opacity="0.9">
+                <animateTransform attributeName="transform" type="translate" values="52,0;0,0;0,0" dur="2.4s" repeatCount="indefinite" keyTimes="0;0.8;1"/>
+              </rect>
+              <rect x="20" y="22" width="20" height="7" rx="1.5" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.2"/>
+              <line x1="24" y1="22" x2="24" y2="29" stroke="currentColor" stroke-width="0.5" opacity="0.3"/>
+              <line x1="28" y1="22" x2="28" y2="29" stroke="currentColor" stroke-width="0.5" opacity="0.3"/>
+              <line x1="32" y1="22" x2="32" y2="29" stroke="currentColor" stroke-width="0.5" opacity="0.3"/>
+              <line x1="36" y1="22" x2="36" y2="29" stroke="currentColor" stroke-width="0.5" opacity="0.3"/>
+            </svg>
+          </div>
+          <div class="dash-card-name">CAN READER</div>
+          <div class="dash-card-desc">ECU / MODULE FILES<br>BIN VIEWER & EDITOR</div>
+          <div class="dash-card-arrow">ENTER →</div>
+        </a>
 
         <!-- Blue-SIKE — middle right -->
         <a href="/bluesike" class="dash-card dash-card-sike">
@@ -434,6 +458,7 @@
           <div class="dash-card-arrow">ENTER →</div>
         </a>
 
+
       </div>
     </div>
   </div>
@@ -443,18 +468,104 @@
     <canvas id="sike-canvas"></canvas>
     <!-- Spray can SVG -->
     <div id="sike-can">
-      <svg viewBox="0 0 30 82" xmlns="http://www.w3.org/2000/svg">
-        <rect x="12" y="0" width="6" height="5" rx="1.5" fill="#888"/>
-        <rect x="10.5" y="3" width="9" height="5" rx="1.5" fill="#555"/>
-        <path d="M10 8 L10 16 Q5 17 5 22 L25 22 Q25 17 20 16 L20 8 Z" fill="#BB2200"/>
-        <rect x="4" y="22" width="22" height="52" rx="5" fill="#DD3300"/>
-        <rect x="6" y="24" width="6" height="48" rx="3" fill="rgba(255,255,255,0.14)"/>
-        <rect x="5" y="30" width="20" height="28" rx="2.5" fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.2)" stroke-width="0.6"/>
-        <line x1="7" y1="36" x2="23" y2="36" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-        <line x1="7" y1="41" x2="23" y2="41" stroke="rgba(255,255,255,0.13)" stroke-width="0.7"/>
-        <line x1="7" y1="46" x2="20" y2="46" stroke="rgba(255,255,255,0.13)" stroke-width="0.7"/>
-        <line x1="7" y1="51" x2="17" y2="51" stroke="rgba(255,255,255,0.08)" stroke-width="0.7"/>
-        <rect x="4" y="70" width="22" height="4" rx="2" fill="#AA2200"/>
+      <svg viewBox="0 0 30 84" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Cylindrical body: dark edge → bright highlight left-of-center → dark edge -->
+          <linearGradient id="sc-body" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stop-color="#5a1000"/>
+            <stop offset="14%"  stop-color="#c02a00"/>
+            <stop offset="30%"  stop-color="#ff4d28"/>
+            <stop offset="44%"  stop-color="#ff6644"/>
+            <stop offset="58%"  stop-color="#e03010"/>
+            <stop offset="78%"  stop-color="#aa2200"/>
+            <stop offset="100%" stop-color="#4a0d00"/>
+          </linearGradient>
+          <!-- Shoulder/neck: metallic dark aluminium -->
+          <linearGradient id="sc-neck" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stop-color="#333"/>
+            <stop offset="22%"  stop-color="#888"/>
+            <stop offset="42%"  stop-color="#c0c0c0"/>
+            <stop offset="60%"  stop-color="#909090"/>
+            <stop offset="100%" stop-color="#2a2a2a"/>
+          </linearGradient>
+          <!-- Actuator button -->
+          <linearGradient id="sc-btn" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#b0b0b0"/>
+            <stop offset="50%"  stop-color="#777"/>
+            <stop offset="100%" stop-color="#444"/>
+          </linearGradient>
+          <!-- Bottom base cap -->
+          <linearGradient id="sc-base" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stop-color="#3a0c00"/>
+            <stop offset="40%"  stop-color="#8a1e00"/>
+            <stop offset="100%" stop-color="#380b00"/>
+          </linearGradient>
+          <!-- Nozzle tip metallic -->
+          <linearGradient id="sc-tip" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"   stop-color="#d0d0d0"/>
+            <stop offset="100%" stop-color="#666"/>
+          </linearGradient>
+          <!-- Label wash -->
+          <linearGradient id="sc-label" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stop-color="rgba(0,0,0,0.35)"/>
+            <stop offset="30%"  stop-color="rgba(0,0,0,0.08)"/>
+            <stop offset="70%"  stop-color="rgba(0,0,0,0.10)"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0.40)"/>
+          </linearGradient>
+        </defs>
+
+        <!-- ── Nozzle stem ── -->
+        <rect x="15.5" y="0" width="3.5" height="3" rx="0.8" fill="url(#sc-tip)"/>
+        <!-- tiny nozzle hole -->
+        <rect x="18" y="0.5" width="1.5" height="1.5" rx="0.5" fill="#222"/>
+
+        <!-- ── Actuator / press button ── -->
+        <rect x="10" y="2.5" width="11" height="5" rx="2.5" fill="url(#sc-btn)"/>
+        <!-- button glint -->
+        <rect x="11" y="3" width="5.5" height="1.8" rx="0.9" fill="rgba(255,255,255,0.42)"/>
+        <!-- button shadow bottom -->
+        <rect x="10" y="6.5" width="11" height="1" rx="0 0 2.5 2.5" fill="rgba(0,0,0,0.35)"/>
+
+        <!-- ── Shoulder / taper ── -->
+        <path d="M9.5 7.5 Q7 9.5 6 13 L24 13 Q23 9.5 20.5 7.5 Z" fill="url(#sc-neck)"/>
+        <!-- shoulder left highlight -->
+        <path d="M9.5 7.5 Q7.5 9.5 6.8 12.5 L9 12.5 Q9.5 10 11 8.5 Z" fill="rgba(255,255,255,0.28)"/>
+        <!-- shoulder seam line -->
+        <line x1="6" y1="13" x2="24" y2="13" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
+
+        <!-- ── Main can body ── -->
+        <rect x="4.5" y="13" width="21" height="57" rx="4" fill="url(#sc-body)"/>
+
+        <!-- ── Specular highlight strip (left-of-center, soft) ── -->
+        <rect x="6" y="14" width="6" height="55" rx="3" fill="rgba(255,255,255,0.09)"/>
+        <rect x="7" y="15" width="3" height="53" rx="1.5" fill="rgba(255,255,255,0.15)"/>
+        <!-- thin bright specular line -->
+        <rect x="8" y="15" width="1" height="53" rx="0.5" fill="rgba(255,255,255,0.22)"/>
+
+        <!-- ── Right edge dark shadow ── -->
+        <rect x="21.5" y="13" width="4" height="57" rx="0 4 4 0" fill="rgba(0,0,0,0.28)"/>
+
+        <!-- ── Label backing ── -->
+        <rect x="4.5" y="26" width="21" height="26" fill="url(#sc-label)"/>
+        <!-- label border lines top/bottom -->
+        <line x1="4.5" y1="26.5" x2="25.5" y2="26.5" stroke="rgba(255,180,60,0.55)" stroke-width="0.7"/>
+        <line x1="4.5" y1="51.5" x2="25.5" y2="51.5" stroke="rgba(255,180,60,0.55)" stroke-width="0.7"/>
+        <!-- label content lines (brand text simulation) -->
+        <rect x="8"  y="30" width="13" height="2.2" rx="1.1"  fill="rgba(255,220,120,0.65)"/>
+        <rect x="10" y="34" width="9"  height="1.4" rx="0.7"  fill="rgba(255,200,100,0.40)"/>
+        <rect x="9"  y="37" width="11" height="1.2" rx="0.6"  fill="rgba(255,255,255,0.22)"/>
+        <rect x="10" y="40" width="8"  height="1"   rx="0.5"  fill="rgba(255,255,255,0.18)"/>
+        <rect x="9"  y="43" width="10" height="1"   rx="0.5"  fill="rgba(255,200,100,0.28)"/>
+        <rect x="8"  y="46" width="13" height="1.4" rx="0.7"  fill="rgba(255,220,120,0.35)"/>
+
+        <!-- ── Bottom rim ── -->
+        <rect x="4.5" y="68" width="21" height="3.5" rx="0 0 1.5 1.5" fill="url(#sc-base)"/>
+        <!-- concave bottom edge shadow -->
+        <ellipse cx="15" cy="71.5" rx="10.5" ry="1.5" fill="rgba(0,0,0,0.40)"/>
+        <!-- bottom plate -->
+        <ellipse cx="15" cy="71.8" rx="9"    ry="1.1" fill="#2a0800"/>
+        <!-- bottom glint -->
+        <ellipse cx="12" cy="71.2" rx="3"    ry="0.5" fill="rgba(180,60,20,0.35)"/>
       </svg>
     </div>
     <div id="sike-dismiss">CLICK ANYWHERE TO DISMISS</div>
@@ -526,64 +637,142 @@
 
       function buildAndAnimate() {
         const fontSize = Math.min(W * 0.28, H * 0.42, 240);
-        const font     = `${fontSize}px "Pacifico", cursive`;
+        const font     = `${fontSize}px "Black Ops One", sans-serif`;
+        const lean     = 0.26;   // wild style forward lean
         const textY    = H / 2;
-        const outlineW = Math.max(3, fontSize * 0.030);
+        const outlineW = Math.max(4, fontSize * 0.038);
 
         const mc = document.createElement('canvas');
         mc.width = W; mc.height = 2;
         const mctx = mc.getContext('2d');
         mctx.font = font;
         const letters = ['S', 'I', 'K', 'E'];
-        const totalW  = mctx.measureText('SIKE').width;
+        const spacing = fontSize * 0.04;
+        const totalW  = mctx.measureText('SIKE').width + spacing * 3;
         const startX  = W / 2 - totalW / 2;
         let cumW = 0;
         const ranges = letters.map(ch => {
           const w = mctx.measureText(ch).width;
           const r = { ch, x0: startX + cumW, x1: startX + cumW + w };
-          cumW += w; return r;
+          cumW += w + spacing; return r;
         });
 
-        // ── Build cursive letter pixel data — blue ──
-        const letterData = ranges.map(({ ch, x0, x1 }) => {
+        // Per-letter wild style color palettes
+        const lColors = [
+          { top: '#ff22ee', mid: '#cc00bb', bot: '#660088', shadow: '#220033' }, // S magenta/purple
+          { top: '#00eeff', mid: '#0099ff', bot: '#0033cc', shadow: '#001144' }, // I cyan/blue
+          { top: '#44ff66', mid: '#00cc33', bot: '#006622', shadow: '#002211' }, // K green
+          { top: '#ffee00', mid: '#ff9900', bot: '#cc4400', shadow: '#441100' }, // E gold/orange
+        ];
+
+        // Helper: draw a filled arrow pointing right
+        function drawArrow(ctx, ax, ay, aw, ah, color) {
+          ctx.fillStyle = color;
+          ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+          ctx.lineWidth = Math.max(2, outlineW * 0.55);
+          ctx.lineJoin = 'miter';
+          ctx.beginPath();
+          ctx.moveTo(ax,           ay - ah * 0.4);
+          ctx.lineTo(ax + aw,      ay);
+          ctx.lineTo(ax,           ay + ah * 0.4);
+          ctx.lineTo(ax + aw * 0.3, ay);
+          ctx.closePath();
+          ctx.fill(); ctx.stroke();
+        }
+
+        // Helper: draw a 4-point star sparkle
+        function drawStar(ctx, sx, sy, r, color) {
+          ctx.fillStyle = color;
+          ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          for (let i = 0; i < 8; i++) {
+            const a = (i * Math.PI / 4) - Math.PI / 8;
+            const rad = i % 2 === 0 ? r : r * 0.36;
+            i === 0
+              ? ctx.moveTo(sx + rad * Math.cos(a), sy + rad * Math.sin(a))
+              : ctx.lineTo(sx + rad * Math.cos(a), sy + rad * Math.sin(a));
+          }
+          ctx.closePath();
+          ctx.fill(); ctx.stroke();
+        }
+
+        // ── Build wild-style letter pixel data ──
+        const letterData = ranges.map(({ ch, x0, x1 }, idx) => {
           const lc   = document.createElement('canvas');
           lc.width   = W; lc.height = H;
           const lctx = lc.getContext('2d');
+
+          // Apply wild style forward lean (italic shear)
+          lctx.setTransform(1, 0, -lean, 1, textY * lean, 0);
           lctx.font = font; lctx.textAlign = 'left'; lctx.textBaseline = 'middle';
 
-          // White outer halo (drawn first so face covers inside)
-          lctx.strokeStyle = 'rgba(255,255,255,0.85)';
-          lctx.lineWidth   = outlineW * 2.4;
-          lctx.lineJoin    = 'round';
-          lctx.lineCap     = 'round';
+          const col = lColors[idx];
+          const shadowOff = fontSize * 0.055;
+
+          // 3D block shadow — stacked fills offset down-right
+          for (let s = shadowOff; s > 0; s -= shadowOff / 6) {
+            lctx.globalAlpha = 0.12 + (1 - s / shadowOff) * 0.45;
+            lctx.fillStyle = col.shadow;
+            lctx.fillText(ch, x0 + s, textY + s * 0.65);
+          }
+          lctx.globalAlpha = 1;
+
+          // Thick outer black stroke
+          lctx.strokeStyle = 'rgba(0,0,0,0.97)';
+          lctx.lineWidth   = outlineW * 4.8;
+          lctx.lineJoin    = 'round'; lctx.lineCap = 'round';
           lctx.strokeText(ch, x0, textY);
 
-          // Blue gradient face
-          const faceG = lctx.createLinearGradient(0, textY - fontSize*0.5, 0, textY + fontSize*0.5);
-          faceG.addColorStop(0,    '#87CEFA');  // light sky blue
-          faceG.addColorStop(0.45, '#1E90FF');  // dodger blue
-          faceG.addColorStop(1,    '#0047AB');  // cobalt blue
+          // Colored dark inner outline
+          lctx.strokeStyle = col.bot;
+          lctx.lineWidth   = outlineW * 2.8;
+          lctx.strokeText(ch, x0, textY);
+
+          // Main vibrant gradient fill
+          const faceG = lctx.createLinearGradient(0, textY - fontSize * 0.5, 0, textY + fontSize * 0.5);
+          faceG.addColorStop(0,    col.top);
+          faceG.addColorStop(0.42, col.mid);
+          faceG.addColorStop(1,    col.bot);
           lctx.fillStyle = faceG;
           lctx.fillText(ch, x0, textY);
 
-          // Light shimmer at top
-          const hlG = lctx.createLinearGradient(0, textY - fontSize*0.5, 0, textY - fontSize*0.05);
-          hlG.addColorStop(0, 'rgba(220,240,255,0.60)');
-          hlG.addColorStop(1, 'rgba(220,240,255,0)');
+          // White top-half highlight
+          const hlG = lctx.createLinearGradient(0, textY - fontSize * 0.5, 0, textY + fontSize * 0.05);
+          hlG.addColorStop(0,   'rgba(255,255,255,0.70)');
+          hlG.addColorStop(0.4, 'rgba(255,255,255,0.18)');
+          hlG.addColorStop(1,   'rgba(255,255,255,0)');
           lctx.fillStyle = hlG;
           lctx.fillText(ch, x0, textY);
 
-          // Dark outline
-          lctx.strokeStyle = 'rgba(0,10,40,0.90)';
-          lctx.lineWidth   = outlineW * 0.65;
-          lctx.lineJoin    = 'round';
+          // Thin crisp white edge stroke
+          lctx.strokeStyle = 'rgba(255,255,255,0.70)';
+          lctx.lineWidth   = outlineW * 0.45;
           lctx.strokeText(ch, x0, textY);
 
+          // ── Wild style arrows ──
+          const aw = fontSize * 0.20;
+          // Arrow right of letter (pointing right)
+          drawArrow(lctx, x1 + fontSize * 0.01, textY + fontSize * 0.08, aw, aw, col.top);
+          // Arrow left of letter (pointing left — mirrored)
+          lctx.save();
+          lctx.scale(-1, 1);
+          drawArrow(lctx, -(x0 - fontSize * 0.01), textY - fontSize * 0.12, aw * 0.75, aw * 0.75, col.mid);
+          lctx.restore();
+
+          // ── Star sparkles ──
+          const sr = fontSize * 0.072;
+          drawStar(lctx, x0 + (x1 - x0) * 0.72, textY - fontSize * 0.52, sr, '#ffffff');
+          drawStar(lctx, x0 + (x1 - x0) * 0.18, textY + fontSize * 0.50, sr * 0.65, col.top);
+
+          lctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
+
+          const scanBuf = Math.ceil(fontSize * 0.75);
           const pix  = lctx.getImageData(0, 0, W, H).data;
           const byY  = new Array(H).fill(null).map(() => []);
           let yMin = H, yMax = 0;
-          const xMin = Math.max(0,     Math.floor(x0) - 4);
-          const xMax = Math.min(W - 1, Math.ceil(x1) + 6);
+          const xMin = Math.max(0,     Math.floor(x0) - scanBuf);
+          const xMax = Math.min(W - 1, Math.ceil(x1)  + scanBuf);
           for (let y = 0; y < H; y++) {
             for (let x = xMin; x <= xMax; x++) {
               const i = (y * W + x) * 4;
@@ -608,7 +797,7 @@
             total: 35 + Math.random() * 115,
             speed: 1.0 + Math.random() * 2.2,
             r:     1.6 + Math.random() * 2.8,
-            hue:   Math.round(205 + Math.random() * 20)  // blue range
+            hue:   Math.round(280 + Math.random() * 80)  // purple/magenta wild range
           });
         }
 
@@ -732,8 +921,8 @@
         runAll(0);
       }
 
-      // Wait for Pacifico to be ready before measuring/rendering
-      document.fonts.load(`${Math.min(W * 0.28, H * 0.42, 240)}px "Pacifico"`).then(buildAndAnimate);
+      // Wait for Black Ops One to be ready before measuring/rendering
+      document.fonts.load(`${Math.min(W * 0.28, H * 0.42, 240)}px "Black Ops One"`).then(buildAndAnimate);
     }
   </script>
 </body>

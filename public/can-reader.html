@@ -1,0 +1,2369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CAN READER</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    body { margin: 0; background: #000; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .can-page {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    /* ── Nav ── */
+    .can-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 24px;
+      border-bottom: 1px solid rgba(255,69,0,0.25);
+      background: rgba(10,10,10,0.95);
+      position: relative;
+      z-index: 2;
+    }
+
+    .can-nav-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 3px;
+      color: #FF4500;
+      text-shadow: 0 0 20px rgba(255,69,0,0.6);
+    }
+
+    .can-nav > a:hover .can-nav-title {
+      text-shadow: 0 0 30px rgba(255,69,0,1), 0 0 60px rgba(255,69,0,0.3);
+    }
+
+    .can-nav > a:hover svg {
+      filter: drop-shadow(0 0 8px rgba(255,69,0,0.8)) !important;
+    }
+
+    .back-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      color: #555;
+      background: none;
+      border: 1px solid #333;
+      padding: 5px 14px;
+      border-radius: 3px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .back-btn:hover { color: #FF4500; border-color: #FF4500; }
+
+    /* ── Upload Zone ── */
+    .upload-zone {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .upload-box {
+      border: 2px dashed rgba(255,69,0,0.4);
+      border-radius: 8px;
+      padding: 60px 80px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .upload-box:hover,
+    .upload-box.drag-over {
+      border-color: #FF4500;
+      background: rgba(255,69,0,0.04);
+    }
+
+    #compare-upload-box:hover {
+      border-color: #5DADE2 !important;
+      background: rgba(93,173,226,0.04) !important;
+      cursor: pointer;
+    }
+
+    .upload-box input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .upload-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 0 8px rgba(255,69,0,0.5));
+    }
+
+    .upload-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: #FF4500;
+      margin-bottom: 8px;
+    }
+
+    .upload-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: #444;
+    }
+
+    /* ── Reader Layout ── */
+    .reader-layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .reader-sidebar {
+      width: 160px;
+      min-width: 160px;
+      border-right: 1px solid rgba(255,69,0,0.2);
+      background: rgba(10,10,10,0.95);
+      display: flex;
+      flex-direction: column;
+      padding: 16px 10px;
+      gap: 6px;
+      overflow-y: auto;
+    }
+
+    .sidebar-file-info {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: #444;
+      border-bottom: 1px solid #222;
+      padding-bottom: 12px;
+      margin-bottom: 6px;
+      word-break: break-all;
+      line-height: 1.6;
+    }
+
+    .sidebar-file-info span {
+      color: #FF4500;
+      display: block;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      margin-bottom: 4px;
+    }
+
+    .sidebar-section {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: #333;
+      margin-top: 8px;
+      margin-bottom: 1px;
+    }
+
+    .param-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #555;
+      background: none;
+      border: 1px solid #222;
+      border-radius: 3px;
+      padding: 8px 6px;
+      cursor: pointer;
+      text-align: left;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      width: 100%;
+    }
+    .param-btn:hover {
+      color: #FF4500;
+      border-color: rgba(255,69,0,0.4);
+      background: rgba(255,69,0,0.04);
+    }
+    .param-btn.active {
+      color: #FF4500;
+      border-color: #FF4500;
+      background: rgba(255,69,0,0.07);
+      text-shadow: 0 0 8px rgba(255,69,0,0.4);
+    }
+    .param-btn.unknown {
+      color: #2a2a2a;
+      border-color: #1a1a1a;
+      cursor: default;
+    }
+    .param-btn.unknown:hover {
+      color: #2a2a2a;
+      border-color: #1a1a1a;
+      background: none;
+    }
+
+    .change-file-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      color: #333;
+      background: none;
+      border: 1px solid #222;
+      border-radius: 3px;
+      padding: 6px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: auto;
+      transition: color 0.15s, border-color 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .change-file-btn input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .change-file-btn:hover { color: #FF4500; border-color: #FF4500; }
+
+    /* ── Main Content ── */
+    .reader-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Param Editor Panel ── */
+    .param-editor {
+      border-bottom: 1px solid rgba(255,69,0,0.2);
+      background: rgba(13,13,13,0.98);
+      padding: 20px 24px;
+    }
+
+    .param-editor-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: #FF4500;
+      margin-bottom: 4px;
+    }
+
+    .param-editor-desc {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      color: #444;
+      margin-bottom: 16px;
+    }
+
+    .param-unknown-msg {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #333;
+      padding: 20px 0;
+    }
+
+    .param-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .param-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .param-field label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: #444;
+    }
+
+    .param-field .current-val {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 22px;
+      color: #FF4500;
+      text-shadow: 0 0 12px rgba(255,69,0,0.5);
+      letter-spacing: 2px;
+    }
+
+    .param-field .current-unit {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: #555;
+      letter-spacing: 2px;
+    }
+
+    .param-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .param-input {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 16px;
+      color: #FF4500;
+      background: rgba(255,69,0,0.05);
+      border: 1px solid rgba(255,69,0,0.3);
+      border-radius: 3px;
+      padding: 6px 12px;
+      width: 140px;
+      outline: none;
+      letter-spacing: 2px;
+    }
+    .param-input:focus { border-color: #FF4500; background: rgba(255,69,0,0.08); }
+
+    .param-apply-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #000;
+      background: #FF4500;
+      border: none;
+      border-radius: 3px;
+      padding: 8px 18px;
+      cursor: pointer;
+      transition: background 0.15s, box-shadow 0.15s;
+      align-self: flex-end;
+    }
+    .param-apply-btn:hover {
+      background: #ff6a33;
+      box-shadow: 0 0 14px rgba(255,69,0,0.5);
+    }
+
+    .param-download-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #FF4500;
+      background: none;
+      border: 1px solid #FF4500;
+      border-radius: 3px;
+      padding: 8px 18px;
+      cursor: pointer;
+      transition: background 0.15s, box-shadow 0.15s;
+      align-self: flex-end;
+    }
+    .param-download-btn:hover {
+      background: rgba(255,69,0,0.08);
+      box-shadow: 0 0 10px rgba(255,69,0,0.3);
+    }
+
+    .param-offset-info {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: #333;
+      margin-top: 10px;
+    }
+
+    .param-msg {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      margin-top: 8px;
+      height: 16px;
+    }
+    .param-msg.success { color: #27c93f; }
+    .param-msg.error   { color: #e74c3c; }
+
+    /* ── Hex Viewer ── */
+    .hex-viewer {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overflow-anchor: none;
+      padding: 12px 16px;
+      background: rgba(0,0,0,0.6);
+    }
+
+    .hex-viewer pre {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: #2a4a2a;
+      line-height: 1.7;
+      margin: 0;
+      white-space: pre;
+      overflow: hidden;
+    }
+
+    .hex-line { display: block; }
+    .hex-line .hex-offset { color: #2a3a2a; }
+    .hex-line .hex-bytes  { color: #1e3a1e; }
+    .hex-line .hex-ascii  { color: #1a2e1a; }
+
+    .hex-line.highlighted .hex-offset { color: #FF6633; }
+    .hex-line.highlighted .hex-bytes  { color: #FF4500; text-shadow: 0 0 6px rgba(255,69,0,0.5); }
+    .hex-line.highlighted .hex-ascii  { color: #FF6633; }
+
+    .hex-byte-hl {
+      background: rgba(255,69,0,0.25);
+      border-radius: 2px;
+      color: #FF4500 !important;
+      text-shadow: 0 0 6px rgba(255,69,0,0.6) !important;
+    }
+
+    /* Changed (written) bytes — green glow */
+    .hex-byte-changed {
+      background: rgba(39,201,63,0.18);
+      border-radius: 2px;
+      color: #27c93f !important;
+      text-shadow: 0 0 5px rgba(39,201,63,0.7) !important;
+    }
+    .hex-line.changed .hex-offset { color: #1a4a22; }
+    .hex-line.changed .hex-bytes  { color: #234d28; }
+    .hex-line.changed .hex-ascii  { color: #1a4a22; }
+
+    /* ── Scrollbar ── */
+    .hex-viewer::-webkit-scrollbar { width: 6px; }
+    .hex-viewer::-webkit-scrollbar-track { background: #0a0a0a; }
+    .hex-viewer::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+    .hex-viewer::-webkit-scrollbar-thumb:hover { background: #FF4500; }
+
+    .mc-light {
+      font-size: 11px;
+      color: #1a1a1a;
+      cursor: default;
+      transition: color 0.2s, text-shadow 0.2s;
+    }
+    .mc-light.on { color: #FF4500; text-shadow: 0 0 6px rgba(255,69,0,0.8); }
+    .mc-light.on-yellow { color: #ffbd2e; text-shadow: 0 0 6px rgba(255,189,46,0.8); }
+
+    .mc-toggle {
+      font-size: 11px;
+      color: #222;
+      cursor: pointer;
+      transition: color 0.15s, text-shadow 0.15s;
+      padding: 2px 3px;
+      border-radius: 2px;
+    }
+    .mc-toggle:hover { color: #444; }
+    .mc-toggle.on-yellow { color: #ffbd2e; text-shadow: 0 0 6px rgba(255,189,46,0.8); }
+    .mc-toggle.on-blue   { color: #5DADE2; text-shadow: 0 0 6px rgba(93,173,226,0.8); }
+
+    .cluster-light-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      background: none;
+      border: 1px solid #222;
+      border-radius: 3px;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+    .cluster-light-btn:hover { box-shadow: 0 0 8px currentColor; }
+
+    #compare-modal { display: none; }
+    #compare-modal.open { display: flex; }
+
+    #cmp-output::-webkit-scrollbar { width: 6px; }
+    #cmp-output::-webkit-scrollbar-track { background: #0a0a0a; }
+    #cmp-output::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+
+    .cmp-line-same   { color: #1e3a1e; }
+    .cmp-line-diff   { color: #FF4500; background: rgba(255,69,0,0.08); border-radius: 2px; }
+    .cmp-byte-a      { color: #FF4500; }
+    .cmp-byte-b      { color: #5DADE2; }
+    .cmp-offset      { color: #2a3a2a; margin-right: 8px; }
+    .cmp-offset-diff { color: #FF6633; margin-right: 8px; }
+
+    @media (max-width: 600px) {
+      .reader-sidebar { width: 120px; min-width: 120px; }
+      .upload-box { padding: 40px 30px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrix-rain"></canvas>
+
+  <div class="can-page">
+    <nav class="can-nav">
+      <a href="/dashboard" onclick="event.preventDefault();window.location.href='/dashboard';" style="display:flex;align-items:center;gap:10px;text-decoration:none;cursor:pointer;" title="Back to Dashboard">
+        <svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" style="height:28px;width:auto;flex-shrink:0;filter:drop-shadow(0 0 5px rgba(255,69,0,0.45));">
+          <line x1="4" y1="10" x2="56" y2="10" stroke="#FF4500" stroke-width="1.2" opacity="0.6"/>
+          <line x1="4" y1="20" x2="56" y2="20" stroke="#FF4500" stroke-width="1.2" opacity="0.6"/>
+          <line x1="14" y1="10" x2="14" y2="20" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+          <line x1="28" y1="10" x2="28" y2="20" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+          <line x1="42" y1="10" x2="42" y2="20" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+          <rect x="10" y="4"  width="8" height="6" rx="1" fill="none" stroke="#FF4500" stroke-width="1"/>
+          <rect x="24" y="4"  width="8" height="6" rx="1" fill="none" stroke="#FF4500" stroke-width="1"/>
+          <rect x="38" y="4"  width="8" height="6" rx="1" fill="none" stroke="#FF4500" stroke-width="1"/>
+          <rect x="0" y="8.5" width="5" height="3" rx="1" fill="#27c93f" opacity="0.9">
+            <animateTransform attributeName="transform" type="translate" values="0,0;52,0;52,0" dur="2s" repeatCount="indefinite" keyTimes="0;0.8;1"/>
+          </rect>
+          <rect x="0" y="18.5" width="5" height="3" rx="1" fill="#FF4500" opacity="0.9">
+            <animateTransform attributeName="transform" type="translate" values="52,0;0,0;0,0" dur="2.4s" repeatCount="indefinite" keyTimes="0;0.8;1"/>
+          </rect>
+          <rect x="20" y="22" width="20" height="7" rx="1.5" fill="none" stroke="#FF4500" stroke-width="1.2" opacity="0.5"/>
+          <line x1="24" y1="22" x2="24" y2="29" stroke="#FF4500" stroke-width="0.5" opacity="0.3"/>
+          <line x1="28" y1="22" x2="28" y2="29" stroke="#FF4500" stroke-width="0.5" opacity="0.3"/>
+          <line x1="32" y1="22" x2="32" y2="29" stroke="#FF4500" stroke-width="0.5" opacity="0.3"/>
+          <line x1="36" y1="22" x2="36" y2="29" stroke="#FF4500" stroke-width="0.5" opacity="0.3"/>
+        </svg>
+        <div class="can-nav-title" style="transition:text-shadow 0.2s;">CAN READER</div>
+      </a>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="back-btn" id="new-file-btn" style="display:none;position:relative;overflow:hidden;">+ NEW FILE<input type="file" id="new-file-input" accept=".bin" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;"></button>
+        <a href="/dashboard" onclick="event.preventDefault();window.location.href='/dashboard';" class="back-btn">← DASHBOARD</a>
+      </div>
+    </nav>
+
+    <!-- Upload Zone -->
+    <div class="upload-zone" id="upload-zone">
+      <div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;">
+        <div class="upload-box" id="upload-box">
+          <input type="file" id="file-input" accept=".bin">
+          <div class="upload-icon">📄</div>
+          <div class="upload-label">OPEN FILE</div>
+          <div class="upload-sub">VIEW &amp; EDIT A .BIN FILE</div>
+        </div>
+        <div class="upload-box" id="compare-upload-box" style="border-color:rgba(93,173,226,0.35);">
+          <div class="upload-icon">⇄</div>
+          <div class="upload-label" style="color:#5DADE2;">COMPARE FILES</div>
+          <div class="upload-sub">DIFF TWO .BIN FILES</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reader (hidden until file loaded) -->
+    <div class="reader-layout" id="reader-layout" style="display:none;">
+
+      <!-- Sidebar -->
+      <div class="reader-sidebar">
+        <div class="sidebar-file-info" id="sidebar-file-info">
+          <span>FILE</span>
+          <div id="file-name-display" style="word-break:break-all;white-space:normal;">—</div>
+          <span style="margin-top:8px;">VEHICLE</span>
+          <div id="vehicle-info-display" style="color:#27c93f;font-size:10px;letter-spacing:1px;">—</div>
+        </div>
+
+        <div class="sidebar-section">PARAMETERS</div>
+
+        <button class="param-btn" id="dtc-btn" style="color:#ffbd2e;border-color:#2a2200;">⊙ FAULT CODES</button>
+        <button class="param-btn" data-param="miles">⊙ MILES</button>
+        <button class="param-btn" data-param="rpm">⊙ RPM</button>
+        <button class="param-btn" data-param="lights">⊙ LIGHTS</button>
+        <button class="param-btn" data-param="fuel">⊙ FUEL</button>
+        <button class="param-btn" data-param="engine">⊙ ENGINE HRS</button>
+        <button class="param-btn" data-param="vin">⊙ VIN / ID</button>
+        <button class="param-btn" data-param="transmission">⊙ TRANSMISSION</button>
+        <button class="param-btn" data-param="brakes">⊙ BRAKES</button>
+        <button class="param-btn" data-param="abs">⊙ ABS</button>
+        <button class="param-btn" data-param="windows">⊙ WINDOWS</button>
+
+        <div style="flex:1;"></div>
+
+        <div class="sidebar-section">TOOLS</div>
+
+        <button class="param-btn" id="compare-btn" style="color:#5DADE2;border-color:#1a2a3a;">⊙ COMPARE</button>
+
+        <button class="change-file-btn">
+          CHANGE FILE
+          <input type="file" id="change-file-input" accept=".bin">
+        </button>
+      </div>
+
+      <!-- Main -->
+      <div class="reader-main">
+
+        <!-- Parameter Editor -->
+        <div class="param-editor" id="param-editor">
+          <div class="param-unknown-msg">← SELECT A PARAMETER</div>
+        </div>
+
+        <!-- Hex + Cluster row -->
+        <div style="flex:1;display:flex;overflow:hidden;min-height:0;">
+
+          <!-- Hex Viewer -->
+          <div class="hex-viewer" id="hex-viewer" style="flex:1;height:100%;overflow-y:auto;overflow-x:hidden;">
+            <pre id="hex-pre"></pre>
+          </div>
+
+          <!-- Cluster Panel — dashboard pinned top, CAN diagram pinned below -->
+          <div id="cluster-panel" style="flex:1.5;border-left:1px solid rgba(39,201,63,0.2);background:rgba(8,8,8,0.98);display:flex;flex-direction:column;overflow:hidden;">
+
+            <!-- Dashboard section: fixed, never scrolls away -->
+            <div id="cluster-dash" style="flex-shrink:0;overflow-y:auto;padding:12px 14px 8px;max-height:62%;">
+              <div style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:3px;color:#27c93f;margin-bottom:8px;text-shadow:0 0 8px rgba(39,201,63,0.4);text-align:center;">INSTRUMENT CLUSTER</div>
+              <div id="cluster-panel-inner"></div>
+            </div>
+
+            <!-- CAN Bus Data Flow Diagram — fills remaining space -->
+            <div id="cluster-can" style="flex:1;min-height:150px;overflow-y:auto;border-top:1px solid #111;padding:10px 14px 14px;">
+              <div style="font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:3px;color:#27c93f;margin-bottom:10px;text-shadow:0 0 8px rgba(39,201,63,0.3);text-align:center;">CAN BUS DATA FLOW</div>
+              <svg viewBox="0 0 680 185" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block;background:#040404;border:1px solid #0e0e0e;border-radius:6px;">
+                <defs>
+                  <radialGradient id="node-glow-o" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#FF4500" stop-opacity="0.08"/>
+                    <stop offset="100%" stop-color="#FF4500" stop-opacity="0"/>
+                  </radialGradient>
+                  <radialGradient id="node-glow-b" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#5DADE2" stop-opacity="0.08"/>
+                    <stop offset="100%" stop-color="#5DADE2" stop-opacity="0"/>
+                  </radialGradient>
+                  <radialGradient id="node-glow-g" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#27c93f" stop-opacity="0.1"/>
+                    <stop offset="100%" stop-color="#27c93f" stop-opacity="0"/>
+                  </radialGradient>
+                </defs>
+
+                <!-- Bus labels -->
+                <text x="8" y="39" font-family="Share Tech Mono,monospace" font-size="7" fill="#FF4500" opacity="0.7" letter-spacing="0.5">CAN H</text>
+                <text x="8" y="56" font-family="Share Tech Mono,monospace" font-size="7" fill="#27c93f" opacity="0.7" letter-spacing="0.5">CAN L</text>
+
+                <!-- Left terminator 120Ω -->
+                <rect x="48" y="29" width="13" height="29" rx="2" fill="#080808" stroke="#252525" stroke-width="1"/>
+                <text x="54.5" y="40" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="5" fill="#333">120</text>
+                <text x="54.5" y="51" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="5" fill="#333">Ω</text>
+
+                <!-- Right terminator 120Ω -->
+                <rect x="619" y="29" width="13" height="29" rx="2" fill="#080808" stroke="#252525" stroke-width="1"/>
+                <text x="625.5" y="40" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="5" fill="#333">120</text>
+                <text x="625.5" y="51" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="5" fill="#333">Ω</text>
+
+                <!-- CAN H bus line (orange) -->
+                <line x1="61" y1="35" x2="619" y2="35" stroke="#FF4500" stroke-width="1.5" opacity="0.45"/>
+                <!-- CAN L bus line (green) -->
+                <line x1="61" y1="52" x2="619" y2="52" stroke="#27c93f" stroke-width="1.5" opacity="0.45"/>
+
+                <!-- ── Nodes ── -->
+                <!-- ECM at x=90 — orange -->
+                <line x1="90" y1="52" x2="90" y2="78" stroke="#1e1e1e" stroke-width="1"/>
+                <rect x="62" y="78" width="56" height="40" rx="3" fill="url(#node-glow-o)" stroke="#FF4500" stroke-width="1"/>
+                <text x="90" y="94" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#FF4500" letter-spacing="1">ECM</text>
+                <text x="90" y="108" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#333" letter-spacing="0.5">ENGINE</text>
+                <circle cx="90" cy="35" r="3.5" fill="#FF4500" opacity="0.6">
+                  <animate attributeName="opacity" values="0.6;0.1;0.6" dur="0.8s" repeatCount="indefinite" begin="0s"/>
+                </circle>
+
+                <!-- TCM at x=190 — orange -->
+                <line x1="190" y1="52" x2="190" y2="78" stroke="#1e1e1e" stroke-width="1"/>
+                <rect x="162" y="78" width="56" height="40" rx="3" fill="url(#node-glow-o)" stroke="#FF4500" stroke-width="1"/>
+                <text x="190" y="94" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#FF4500" letter-spacing="1">TCM</text>
+                <text x="190" y="108" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#333" letter-spacing="0.5">TRANS</text>
+                <circle cx="190" cy="35" r="3.5" fill="#FF4500" opacity="0.6">
+                  <animate attributeName="opacity" values="0.6;0.1;0.6" dur="1.2s" repeatCount="indefinite" begin="0.35s"/>
+                </circle>
+
+                <!-- ABS at x=290 — orange -->
+                <line x1="290" y1="52" x2="290" y2="78" stroke="#1e1e1e" stroke-width="1"/>
+                <rect x="262" y="78" width="56" height="40" rx="3" fill="url(#node-glow-o)" stroke="#FF4500" stroke-width="1"/>
+                <text x="290" y="94" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#FF4500" letter-spacing="1">ABS</text>
+                <text x="290" y="108" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#333" letter-spacing="0.5">BRAKES</text>
+                <circle cx="290" cy="35" r="3.5" fill="#FF4500" opacity="0.6">
+                  <animate attributeName="opacity" values="0.6;0.1;0.6" dur="0.65s" repeatCount="indefinite" begin="0.15s"/>
+                </circle>
+
+                <!-- BCM at x=390 — blue -->
+                <line x1="390" y1="52" x2="390" y2="78" stroke="#1e1e1e" stroke-width="1"/>
+                <rect x="362" y="78" width="56" height="40" rx="3" fill="url(#node-glow-b)" stroke="#5DADE2" stroke-width="1"/>
+                <text x="390" y="94" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5DADE2" letter-spacing="1">BCM</text>
+                <text x="390" y="108" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#333" letter-spacing="0.5">BODY</text>
+                <circle cx="390" cy="35" r="3.5" fill="#5DADE2" opacity="0.6">
+                  <animate attributeName="opacity" values="0.6;0.1;0.6" dur="1.0s" repeatCount="indefinite" begin="0.6s"/>
+                </circle>
+
+                <!-- ICM at x=490 — green (this module = current file) -->
+                <line x1="490" y1="52" x2="490" y2="78" stroke="#27c93f" stroke-width="1.2"/>
+                <rect x="462" y="78" width="56" height="40" rx="3" fill="url(#node-glow-g)" stroke="#27c93f" stroke-width="1.5"/>
+                <text x="490" y="94" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#27c93f" letter-spacing="1">ICM</text>
+                <text x="490" y="108" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#27c93f" opacity="0.6" letter-spacing="0.5">CLUSTER</text>
+                <!-- "active" pulse ring -->
+                <circle cx="490" cy="98" r="26" fill="none" stroke="#27c93f" stroke-width="0.8" opacity="0">
+                  <animate attributeName="r" values="22;32;22" dur="2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="490" cy="35" r="3.5" fill="#27c93f" opacity="0.9">
+                  <animate attributeName="opacity" values="0.9;0.2;0.9" dur="0.5s" repeatCount="indefinite" begin="0s"/>
+                </circle>
+
+                <!-- EPS at x=585 — blue -->
+                <line x1="585" y1="52" x2="585" y2="78" stroke="#1e1e1e" stroke-width="1"/>
+                <rect x="557" y="78" width="56" height="40" rx="3" fill="url(#node-glow-b)" stroke="#5DADE2" stroke-width="1"/>
+                <text x="585" y="94" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#5DADE2" letter-spacing="1">EPS</text>
+                <text x="585" y="108" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#333" letter-spacing="0.5">STEERING</text>
+                <circle cx="585" cy="35" r="3.5" fill="#5DADE2" opacity="0.6">
+                  <animate attributeName="opacity" values="0.6;0.1;0.6" dur="1.4s" repeatCount="indefinite" begin="0.45s"/>
+                </circle>
+
+                <!-- CAN IDs below nodes -->
+                <text x="90"  y="130" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6.5" fill="#1e1e1e">0x7E0</text>
+                <text x="190" y="130" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6.5" fill="#1e1e1e">0x7E4</text>
+                <text x="290" y="130" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6.5" fill="#1e1e1e">0x5D0</text>
+                <text x="390" y="130" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6.5" fill="#1e1e1e">0x430</text>
+                <text x="490" y="130" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6.5" fill="#1e1e1e">0x3D0</text>
+                <text x="585" y="130" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6.5" fill="#1e1e1e">0x217</text>
+
+                <!-- JS-driven packets land here -->
+                <g id="can-packets"></g>
+
+                <!-- Bus load bar -->
+                <text x="61" y="148" font-family="Share Tech Mono,monospace" font-size="6" fill="#222" letter-spacing="1">BUS LOAD</text>
+                <rect x="61" y="153" width="558" height="3" rx="1.5" fill="#0d0d0d"/>
+                <rect x="61" y="153" width="385" height="3" rx="1.5" fill="#FF4500" opacity="0.25">
+                  <animate attributeName="width" values="385;260;430;310;385" dur="4s" repeatCount="indefinite"/>
+                </rect>
+                <text x="340" y="172" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="7" fill="#1e1e1e" letter-spacing="1.5">500 KBPS · ISO 11898 · CAN 2.0B</text>
+              </svg>
+</div></div></div>
+      </div><!-- end reader-main -->
+
+    </div><!-- end reader-layout -->
+  </div><!-- end can-page -->
+
+  <!-- Compare Modal -->
+  <div id="compare-modal" style="position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.88);flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid rgba(93,173,226,0.3);background:rgba(10,10,10,0.98);">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:3px;color:#5DADE2;text-shadow:0 0 14px rgba(93,173,226,0.5);">FILE COMPARE</div>
+      <button id="compare-close" style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#555;background:none;border:1px solid #333;padding:5px 14px;border-radius:3px;cursor:pointer;">✕ CLOSE</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:16px;padding:16px 24px;border-bottom:1px solid #1a1a1a;background:rgba(10,10,10,0.95);flex-wrap:wrap;">
+      <div style="flex:1;min-width:180px;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#444;margin-bottom:6px;">FILE A</div>
+        <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#5DADE2;border:1px solid rgba(93,173,226,0.3);border-radius:3px;padding:5px 12px;cursor:pointer;position:relative;display:inline-block;">
+          SELECT FILE A
+          <input type="file" id="cmp-file-a-input" accept=".bin" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
+        </label>
+        <div id="cmp-file-a-name" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#5DADE2;letter-spacing:1px;margin-top:5px;"></div>
+      </div>
+      <div style="color:#333;font-family:'Share Tech Mono',monospace;font-size:18px;">⇄</div>
+      <div style="flex:1;min-width:180px;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#444;margin-bottom:6px;">FILE B</div>
+        <label style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#5DADE2;border:1px solid rgba(93,173,226,0.3);border-radius:3px;padding:5px 12px;cursor:pointer;position:relative;display:inline-block;">
+          SELECT FILE B
+          <input type="file" id="cmp-file-b-input" accept=".bin" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
+        </label>
+        <div id="cmp-file-b-name" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#5DADE2;letter-spacing:1px;margin-top:5px;"></div>
+      </div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;" id="cmp-diff-count"></div>
+    </div>
+
+    <!-- Side-by-side hex panels -->
+    <div style="flex:1;display:flex;overflow:hidden;min-height:0;">
+
+      <!-- File A panel -->
+      <div style="flex:1;display:flex;flex-direction:column;border-right:1px solid #1a1a1a;min-width:0;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#5DADE2;padding:6px 12px;background:rgba(10,10,10,0.95);border-bottom:1px solid #1a1a1a;flex-shrink:0;" id="cmp-label-a">FILE A</div>
+        <div id="cmp-panel-a" style="flex:1;overflow-y:auto;padding:8px 12px;">
+          <pre style="font-family:'Share Tech Mono',monospace;font-size:11px;margin:0;line-height:1.7;color:#2a4a2a;white-space:pre;" id="cmp-pre-a"><span style="color:#333;letter-spacing:2px;">SELECT FILE A</span></pre>
+        </div>
+      </div>
+
+      <!-- File B panel -->
+      <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#5DADE2;padding:6px 12px;background:rgba(10,10,10,0.95);border-bottom:1px solid #1a1a1a;flex-shrink:0;" id="cmp-label-b">FILE B</div>
+        <div id="cmp-panel-b" style="flex:1;overflow-y:auto;padding:8px 12px;">
+          <pre style="font-family:'Share Tech Mono',monospace;font-size:11px;margin:0;line-height:1.7;color:#2a4a2a;white-space:pre;" id="cmp-pre-b"><span style="color:#333;letter-spacing:2px;">SELECT FILE B</span></pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/js/matrix-rain.js"></script>
+  <script>
+    // ── Parameter definitions ──────────────────────────────────────────────────
+    const PARAMS = {
+      miles: {
+        label: 'ODOMETER',
+        desc: 'Total distance traveled (primary @ 0x033A, backup @ 0x133A)',
+        offsets: [0x033a, 0x133a],
+        type: 'uint32le',
+        unit: 'MILES',
+        min: 0,
+        max: 999999
+      },
+      rpm: {
+        label: 'RPM LIMITER',
+        desc: 'Engine rev limiter (primary @ 0x0322, backup @ 0x1322)',
+        offsets: [0x0322, 0x1322],
+        type: 'uint16le',
+        unit: 'RPM',
+        min: 1000,
+        max: 12000
+      },
+      lights: {
+        label: 'LIGHTING CONFIG',
+        desc: 'Feature enable flag (primary @ 0x03A8, backup @ 0x13A8) — 0x01 = ON, 0x00 = OFF',
+        offsets: [0x03A8, 0x13A8],
+        type: 'uint8',
+        unit: '',
+        min: 0,
+        max: 1
+      },
+      fuel: {
+        label: 'FUEL CALIBRATION MAP',
+        desc: 'Binary fuel calibration map @ 0x0800 — read-only',
+        offsets: [0x0800, 0x1800],
+        type: 'map',
+        unit: null
+      },
+      engine: {
+        label: 'ENGINE HOURS',
+        desc: 'Total engine runtime hours (primary @ 0x0008, backup @ 0x1008)',
+        offsets: [0x0008, 0x1008],
+        type: 'uint32le',
+        unit: 'HRS',
+        min: 0,
+        max: 99999
+      },
+      vin: {
+        label: 'VIN / IDENTIFIERS',
+        desc: 'Vehicle identification number @ 0x005D',
+        offsets: [0x005D],
+        type: 'vin',
+        unit: null
+      },
+      transmission: {
+        label: 'TRANSMISSION',
+        desc: 'CVT mode register — candidate @ 0x02F9 (value 0x02). NOTE: full TCM data is in a separate CAN module.',
+        offsets: [0x02F9, 0x12F9],
+        type: 'uint8',
+        unit: '',
+        min: 0,
+        max: 255
+      },
+      brakes: {
+        label: 'BRAKE SYSTEM',
+        desc: 'Brake threshold candidate @ 0x008A (value 0x20=32). NOTE: brake ECU data is in a separate module.',
+        offsets: [0x008A, 0x108A],
+        type: 'uint8',
+        unit: '',
+        min: 0,
+        max: 255
+      },
+      abs: {
+        label: 'ABS MODULE',
+        desc: 'ABS candidate register @ 0x0374 (value 0x3C=60). NOTE: ABS controller data is in a separate CAN module.',
+        offsets: [0x0374, 0x1374],
+        type: 'uint8',
+        unit: '',
+        min: 0,
+        max: 255
+      },
+      windows: {
+        label: 'WINDOW / ACCESSORY',
+        desc: 'Accessory / power window flag candidate @ 0x031B.',
+        offsets: [0x031B, 0x131B],
+        type: 'uint8',
+        unit: '',
+        min: 0,
+        max: 1
+      },
+      climate: {
+        label: 'A/C & HEAT',
+        desc: 'A/C compressor enable @ 0x0420 — 0x01=A/C ON, 0x00=OFF. Fan speed & temp setpoint adjacent bytes.',
+        offsets: [0x0420, 0x1420],
+        type: 'uint8',
+        unit: '',
+        min: 0,
+        max: 255
+      },
+      blinkers: {
+        label: 'TURN SIGNALS',
+        desc: 'BCM turn/hazard flags @ 0x03B0 — bit 0: left, bit 1: right, bit 2: hazard, bit 3: brake lamps.',
+        offsets: [0x03B0, 0x13B0],
+        type: 'uint8',
+        unit: '',
+        min: 0,
+        max: 255
+      },
+      airbag: {
+        label: 'AIRBAG / SRS',
+        desc: 'SRS module status byte @ 0x0480 — 0x00=OK, 0x01=deployed, bit 2=seatbelt fault, bit 3=crash latch.',
+        offsets: [0x0480, 0x1480],
+        type: 'uint8',
+        unit: '',
+        min: 0,
+        max: 255
+      },
+      tpms: {
+        label: 'TIRE PRESSURE',
+        desc: 'TPMS low-pressure threshold @ 0x0490 — value × 0.25 = PSI (e.g. 128 = 32 PSI). All 4 sensors share threshold.',
+        offsets: [0x0490, 0x1490],
+        type: 'uint16le',
+        unit: '×0.25psi',
+        min: 0,
+        max: 1000
+      },
+      cruise: {
+        label: 'CRUISE CONTROL',
+        desc: 'Cruise set-speed register @ 0x02E0 — value in MPH. 0 = disabled/not set.',
+        offsets: [0x02E0, 0x12E0],
+        type: 'uint8',
+        unit: 'MPH',
+        min: 0,
+        max: 140
+      },
+      battery: {
+        label: 'BATTERY',
+        desc: 'Battery voltage calibration offset @ 0x0390 — raw ADC counts. Used to fine-tune voltage sensor readings.',
+        offsets: [0x0390, 0x1390],
+        type: 'uint16le',
+        unit: 'ADC',
+        min: 0,
+        max: 65535
+      },
+      coolant: {
+        label: 'COOLANT TEMP',
+        desc: 'Coolant temp correction @ 0x0300 — raw sensor counts (255 = max, ~230°F). Used for fan and fuel trim.',
+        offsets: [0x0300, 0x1300],
+        type: 'uint8',
+        unit: 'ECU',
+        min: 0,
+        max: 255
+      },
+      iat: {
+        label: 'INTAKE AIR TEMP',
+        desc: 'Intake air temperature sensor correction @ 0x0310 — raw counts. Affects fuel/ignition density corrections.',
+        offsets: [0x0310, 0x1310],
+        type: 'uint8',
+        unit: 'ECU',
+        min: 0,
+        max: 255
+      },
+      ignition: {
+        label: 'IGNITION TIMING',
+        desc: 'Base ignition advance @ 0x02D0 — degrees BTDC × 2 (e.g. value 30 = 15° BTDC). Affects power & efficiency.',
+        offsets: [0x02D0, 0x12D0],
+        type: 'uint8',
+        unit: '°×2',
+        min: 0,
+        max: 60
+      },
+      throttle: {
+        label: 'THROTTLE',
+        desc: 'Throttle body idle position calibration @ 0x02C0 — raw position counts. Sets minimum airflow at idle.',
+        offsets: [0x02C0, 0x12C0],
+        type: 'uint8',
+        unit: 'pos',
+        min: 0,
+        max: 255
+      },
+      injectors: {
+        label: 'INJECTORS',
+        desc: 'Injector base pulse width @ 0x02E8 — units of 0.01µs. Controls fuel delivery at idle/base load.',
+        offsets: [0x02E8, 0x12E8],
+        type: 'uint16le',
+        unit: '×0.01µs',
+        min: 0,
+        max: 65535
+      },
+      o2: {
+        label: 'O2 SENSORS',
+        desc: 'Lambda target register @ 0x0350 — 0x80 = stoich (λ=1.0 / 14.7:1 AFR). <0x80=rich, >0x80=lean.',
+        offsets: [0x0350, 0x1350],
+        type: 'uint8',
+        unit: 'λ',
+        min: 0,
+        max: 255
+      },
+      knock: {
+        label: 'KNOCK SENSOR',
+        desc: 'Knock retard limit @ 0x0360 — max degrees of ignition retard allowed before limp mode.',
+        offsets: [0x0360, 0x1360],
+        type: 'uint8',
+        unit: '°',
+        min: 0,
+        max: 30
+      },
+      traction: {
+        label: 'TRACTION CTRL',
+        desc: 'Traction / stability control wheel-slip threshold @ 0x0370 — higher = more slip allowed before cut.',
+        offsets: [0x0370, 0x1370],
+        type: 'uint8',
+        unit: '',
+        min: 0,
+        max: 255
+      },
+      steering: {
+        label: 'POWER STEERING',
+        desc: 'EPS assist level calibration @ 0x0380 — higher value = more steering assist at low speed.',
+        offsets: [0x0380, 0x1380],
+        type: 'uint8',
+        unit: '',
+        min: 0,
+        max: 255
+      }
+    };
+
+    let fileData     = null;   // Uint8Array of current file (working copy)
+    let originalData = null;   // Uint8Array snapshot at load time — for change detection
+    let fileName     = '';
+    let activeParam  = null;
+
+    // ── Vehicle detection ──────────────────────────────────────────────────────
+
+    // Ordered: [regex, display label]
+    const FILENAME_PATTERNS = [
+      // GMC
+      [/yukon\s*xl\s*denali/i, 'GMC YUKON XL DENALI'],
+      [/yukon\s*xl/i, 'GMC YUKON XL'],
+      [/yukon\s*denali/i, 'GMC YUKON DENALI'],
+      [/yukon/i, 'GMC YUKON'],
+      [/sierra\s*denali/i, 'GMC SIERRA DENALI'],
+      [/sierra/i, 'GMC SIERRA'],
+      [/canyon/i, 'GMC CANYON'],
+      [/terrain/i, 'GMC TERRAIN'],
+      [/acadia/i, 'GMC ACADIA'],
+      [/envoy/i, 'GMC ENVOY'],
+      // Chevrolet
+      [/suburban/i, 'CHEVROLET SUBURBAN'],
+      [/silverado/i, 'CHEVROLET SILVERADO'],
+      [/tahoe/i, 'CHEVROLET TAHOE'],
+      [/equinox/i, 'CHEVROLET EQUINOX'],
+      [/traverse/i, 'CHEVROLET TRAVERSE'],
+      [/colorado/i, 'CHEVROLET COLORADO'],
+      [/camaro/i, 'CHEVROLET CAMARO'],
+      [/corvette/i, 'CHEVROLET CORVETTE'],
+      [/malibu/i, 'CHEVROLET MALIBU'],
+      [/impala/i, 'CHEVROLET IMPALA'],
+      [/blazer/i, 'CHEVROLET BLAZER'],
+      [/trailblazer/i, 'CHEVROLET TRAILBLAZER'],
+      [/trax/i, 'CHEVROLET TRAX'],
+      // Cadillac
+      [/escalade\s*esv/i, 'CADILLAC ESCALADE ESV'],
+      [/escalade/i, 'CADILLAC ESCALADE'],
+      [/cts/i, 'CADILLAC CTS'],
+      [/ats/i, 'CADILLAC ATS'],
+      [/srx/i, 'CADILLAC SRX'],
+      [/xt5/i, 'CADILLAC XT5'],
+      [/xt6/i, 'CADILLAC XT6'],
+      // Ford
+      [/f[\-\s]?350/i, 'FORD F-350'],
+      [/f[\-\s]?250/i, 'FORD F-250'],
+      [/f[\-\s]?150/i, 'FORD F-150'],
+      [/explorer/i, 'FORD EXPLORER'],
+      [/expedition/i, 'FORD EXPEDITION'],
+      [/escape/i, 'FORD ESCAPE'],
+      [/ranger/i, 'FORD RANGER'],
+      [/bronco/i, 'FORD BRONCO'],
+      [/mustang/i, 'FORD MUSTANG'],
+      [/edge/i, 'FORD EDGE'],
+      [/fusion/i, 'FORD FUSION'],
+      [/focus/i, 'FORD FOCUS'],
+      [/transit/i, 'FORD TRANSIT'],
+      [/excursion/i, 'FORD EXCURSION'],
+      // Dodge / Ram
+      [/ram\s*1500/i, 'RAM 1500'],
+      [/ram\s*2500/i, 'RAM 2500'],
+      [/ram\s*3500/i, 'RAM 3500'],
+      [/charger/i, 'DODGE CHARGER'],
+      [/challenger/i, 'DODGE CHALLENGER'],
+      [/durango/i, 'DODGE DURANGO'],
+      [/dakota/i, 'DODGE DAKOTA'],
+      [/journey/i, 'DODGE JOURNEY'],
+      [/viper/i, 'DODGE VIPER'],
+      [/grand\s*caravan/i, 'DODGE GRAND CARAVAN'],
+      // Jeep
+      [/grand\s*cherokee/i, 'JEEP GRAND CHEROKEE'],
+      [/wrangler/i, 'JEEP WRANGLER'],
+      [/gladiator/i, 'JEEP GLADIATOR'],
+      [/cherokee/i, 'JEEP CHEROKEE'],
+      [/compass/i, 'JEEP COMPASS'],
+      [/renegade/i, 'JEEP RENEGADE'],
+      // Toyota
+      [/tundra/i, 'TOYOTA TUNDRA'],
+      [/4runner/i, 'TOYOTA 4RUNNER'],
+      [/tacoma/i, 'TOYOTA TACOMA'],
+      [/sequoia/i, 'TOYOTA SEQUOIA'],
+      [/land\s*cruiser/i, 'TOYOTA LAND CRUISER'],
+      [/highlander/i, 'TOYOTA HIGHLANDER'],
+      [/rav4/i, 'TOYOTA RAV4'],
+      [/camry/i, 'TOYOTA CAMRY'],
+      [/corolla/i, 'TOYOTA COROLLA'],
+      [/prius/i, 'TOYOTA PRIUS'],
+      [/sienna/i, 'TOYOTA SIENNA'],
+      // Lexus
+      [/lx\s*570/i, 'LEXUS LX570'],
+      [/gx\s*460/i, 'LEXUS GX460'],
+      [/rx\s*350/i, 'LEXUS RX350'],
+      [/is\s*250/i, 'LEXUS IS250'],
+      [/lexus/i, 'LEXUS'],
+      // Honda
+      [/pilot/i, 'HONDA PILOT'],
+      [/odyssey/i, 'HONDA ODYSSEY'],
+      [/ridgeline/i, 'HONDA RIDGELINE'],
+      [/passport/i, 'HONDA PASSPORT'],
+      [/cr[\-\s]?v/i, 'HONDA CR-V'],
+      [/hr[\-\s]?v/i, 'HONDA HR-V'],
+      [/accord/i, 'HONDA ACCORD'],
+      [/civic/i, 'HONDA CIVIC'],
+      // Nissan
+      [/titan/i, 'NISSAN TITAN'],
+      [/pathfinder/i, 'NISSAN PATHFINDER'],
+      [/armada/i, 'NISSAN ARMADA'],
+      [/frontier/i, 'NISSAN FRONTIER'],
+      [/murano/i, 'NISSAN MURANO'],
+      [/rogue/i, 'NISSAN ROGUE'],
+      [/altima/i, 'NISSAN ALTIMA'],
+      [/maxima/i, 'NISSAN MAXIMA'],
+      [/350z/i, 'NISSAN 350Z'],
+      [/370z/i, 'NISSAN 370Z'],
+      [/sentra/i, 'NISSAN SENTRA'],
+      // BMW
+      [/x5/i, 'BMW X5'], [/x3/i, 'BMW X3'], [/x7/i, 'BMW X7'],
+      [/m3/i, 'BMW M3'], [/m5/i, 'BMW M5'],
+      [/3\s*series/i, 'BMW 3 SERIES'], [/5\s*series/i, 'BMW 5 SERIES'],
+      // Mercedes
+      [/g[\-\s]?wagon/i, 'MERCEDES G-WAGON'],
+      [/gle/i, 'MERCEDES GLE'], [/glc/i, 'MERCEDES GLC'],
+      [/c[\-\s]?class/i, 'MERCEDES C-CLASS'], [/e[\-\s]?class/i, 'MERCEDES E-CLASS'],
+      [/s[\-\s]?class/i, 'MERCEDES S-CLASS'],
+      // Tesla
+      [/model\s*s/i, 'TESLA MODEL S'], [/model\s*3/i, 'TESLA MODEL 3'],
+      [/model\s*x/i, 'TESLA MODEL X'], [/model\s*y/i, 'TESLA MODEL Y'],
+      // Polaris
+      [/rzr/i, 'POLARIS RZR'], [/sportsman/i, 'POLARIS SPORTSMAN'],
+      [/polaris\s*ranger/i, 'POLARIS RANGER'], [/polaris\s*general/i, 'POLARIS GENERAL'],
+    ];
+
+    const WMI_MAP = {
+      '4XA':'POLARIS','4XB':'POLARIS',
+      '1FA':'FORD','1FB':'FORD','1FC':'FORD','1FD':'FORD','1FT':'FORD',
+      '1G1':'CHEVROLET','1G6':'CADILLAC','1GC':'CHEVROLET','1GT':'GMC',
+      '1HG':'HONDA','2HG':'HONDA','19X':'HONDA','SHH':'HONDA',
+      '1J4':'JEEP','1C4':'JEEP','1C6':'RAM','3C6':'RAM',
+      '1N4':'NISSAN','1N6':'NISSAN',
+      '2T1':'TOYOTA','JTD':'TOYOTA','JTF':'TOYOTA','JT2':'TOYOTA',
+      '5YJ':'TESLA','7SA':'TESLA',
+      'WBA':'BMW','WBS':'BMW','WDB':'MERCEDES-BENZ','WDD':'MERCEDES-BENZ',
+      'WAU':'AUDI','KMH':'HYUNDAI','KNA':'KIA',
+      'SAL':'LAND ROVER','SAJ':'JAGUAR',
+    };
+    const MODEL_YEAR_MAP = {
+      'A':1980,'B':1981,'C':1982,'D':1983,'E':1984,'F':1985,'G':1986,
+      'H':1987,'J':1988,'K':1989,'L':1990,'M':1991,'N':1992,'P':1993,
+      'R':1994,'S':1995,'T':1996,'V':1997,'W':1998,'X':1999,'Y':2000,
+      '1':2001,'2':2002,'3':2003,'4':2004,'5':2005,'6':2006,'7':2007,
+      '8':2008,'9':2009,
+      'A2':2010,'B2':2011,'C2':2012,'D2':2013,'E2':2014,'F2':2015,
+      'G2':2016,'H2':2017,'J2':2018,'K2':2019,'L2':2020,'M2':2021,
+      'N2':2022,'P2':2023,'R2':2024,'S2':2025,
+    };
+
+    function detectVehicle(data, name) {
+      // 1. Filename keywords (most reliable for user-named files)
+      const baseName = (name || '').replace(/\.[^.]+$/, '');
+      for (const [pattern, label] of FILENAME_PATTERNS) {
+        if (pattern.test(baseName)) {
+          // Try to extract year from filename
+          const yearMatch = baseName.match(/\b(19[6-9]\d|20[0-3]\d)\b/);
+          return yearMatch ? yearMatch[1] + ' ' + label : label;
+        }
+      }
+
+      // 2. VIN at 0x005D
+      const vinOffset = 0x005D;
+      if (data.length > vinOffset + 17) {
+        const raw = data.slice(vinOffset, vinOffset + 17);
+        const vin = String.fromCharCode(...raw);
+        if (/^[A-HJ-NPR-Z0-9]{17}$/i.test(vin)) {
+          const wmi = vin.substring(0, 3).toUpperCase();
+          const modelYearCh = vin[9].toUpperCase();
+          const make = WMI_MAP[wmi] || WMI_MAP[wmi.substring(0, 2)] || null;
+          const year = MODEL_YEAR_MAP[modelYearCh + '2'] || MODEL_YEAR_MAP[modelYearCh] || null;
+          if (make) return (year ? year + ' ' : '') + make + '  [VIN: ' + vin + ']';
+        }
+      }
+
+      // 3. File size fallback
+      const sz = data.length;
+      if (sz === 0x20000) return 'ECU DUMP — 128K';
+      if (sz === 0x10000) return 'ECU DUMP — 64K';
+      if (sz === 0x8000)  return 'ECU DUMP — 32K';
+      return 'UNKNOWN VEHICLE';
+    }
+
+    // ── File loading ───────────────────────────────────────────────────────────
+    function loadFile(file) {
+      if (!file || !file.name.toLowerCase().endsWith('.bin')) {
+        alert('Please select a .bin file.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = e => {
+        fileData     = new Uint8Array(e.target.result);
+        originalData = new Uint8Array(fileData);
+        fileName     = file.name;
+        document.getElementById('upload-zone').style.display = 'none';
+        document.getElementById('reader-layout').style.display = 'flex';
+        document.getElementById('new-file-btn').style.display = '';
+        document.getElementById('file-name-display').textContent = file.name;
+        document.getElementById('vehicle-info-display').textContent = detectVehicle(fileData, fileName);
+        activeParam = null;
+        document.querySelectorAll('.param-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('param-editor').innerHTML = '<div class="param-unknown-msg">← SELECT A PARAMETER</div>';
+        renderHex();
+        renderCluster();
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    document.getElementById('file-input').addEventListener('change', e => {
+      loadFile(e.target.files[0]);
+    });
+    document.getElementById('change-file-input').addEventListener('change', e => {
+      loadFile(e.target.files[0]);
+    });
+    document.getElementById('new-file-input').addEventListener('change', e => {
+      loadFile(e.target.files[0]);
+    });
+
+    // Drag & drop
+    const uploadBox = document.getElementById('upload-box');
+    uploadBox.addEventListener('dragover', e => { e.preventDefault(); uploadBox.classList.add('drag-over'); });
+    uploadBox.addEventListener('dragleave', () => uploadBox.classList.remove('drag-over'));
+    uploadBox.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadBox.classList.remove('drag-over');
+      loadFile(e.dataTransfer.files[0]);
+    });
+
+    // ── Param button clicks ────────────────────────────────────────────────────
+    document.querySelectorAll('.param-btn:not(.unknown)').forEach(btn => {
+      btn.addEventListener('click', () => selectParam(btn.dataset.param));
+    });
+
+    function selectParam(key) {
+      activeParam = key;
+      document.querySelectorAll('.param-btn').forEach(b => b.classList.remove('active'));
+      const btn = document.querySelector(`.param-btn[data-param="${key}"]`);
+      if (btn) btn.classList.add('active');
+      renderEditor(key);
+      renderHex(key);
+    }
+
+    // ── Editor ─────────────────────────────────────────────────────────────────
+    function renderEditor(key) {
+      const p = PARAMS[key];
+      const el = document.getElementById('param-editor');
+
+      if (!p) { el.innerHTML = '<div class="param-unknown-msg">UNKNOWN PARAMETER</div>'; return; }
+
+      // Unknown offset
+      if (!p.offsets) {
+        el.innerHTML = `
+          <div class="param-editor-title">${p.label}</div>
+          <div class="param-editor-desc">${p.desc}</div>
+          <div class="param-unknown-msg">OFFSET NOT MAPPED FOR THIS FILE TYPE</div>`;
+        return;
+      }
+
+      // VIN — read ASCII from fixed offset
+      if (p.type === 'vin') {
+        let vin = '';
+        for (let i = p.offsets[0]; i < p.offsets[0] + 17 && i < fileData.length; i++) {
+          const c = fileData[i];
+          if (c >= 32 && c < 127) vin += String.fromCharCode(c); else break;
+        }
+        el.innerHTML = `
+          <div class="param-editor-title">${p.label}</div>
+          <div class="param-editor-desc">${p.desc}</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:22px;color:#FF6633;letter-spacing:4px;margin:8px 0;">${vin}</div>
+          <div class="param-offset-info">OFFSET: 0x${p.offsets[0].toString(16).toUpperCase().padStart(4,'0')}</div>`;
+        return;
+      }
+
+      // Fuel calibration map — read-only hex preview
+      if (p.type === 'map') {
+        let rows = '';
+        for (let i = p.offsets[0]; i < p.offsets[0] + 48 && i < fileData.length; i += 16) {
+          const hex = Array.from(fileData.slice(i, i+16)).map(b => b.toString(16).padStart(2,'0').toUpperCase()).join(' ');
+          rows += `<div style="color:#2a4a2a;font-size:10px;line-height:1.8;">${i.toString(16).padStart(8,'0').toUpperCase()}  ${hex}</div>`;
+        }
+        el.innerHTML = `
+          <div class="param-editor-title">${p.label}</div>
+          <div class="param-editor-desc">${p.desc}</div>
+          <div style="font-family:'Share Tech Mono',monospace;margin-top:6px;">${rows}</div>
+          <div class="param-offset-info">OFFSET: 0x${p.offsets[0].toString(16).toUpperCase().padStart(4,'0')}</div>`;
+        return;
+      }
+
+      // Read current value
+      const currentVal = p.type === 'uint8'   ? fileData[p.offsets[0]]
+                       : p.type === 'uint16le' ? readUint16LE(fileData, p.offsets[0])
+                       :                        readUint32LE(fileData, p.offsets[0]);
+
+      const backupStr = p.offsets[1] != null
+        ? ` · BACKUP: 0x${p.offsets[1].toString(16).toUpperCase().padStart(4,'0')}` : '';
+
+      el.innerHTML = `
+        <div class="param-editor-title">${p.label}</div>
+        <div class="param-editor-desc">${p.desc}</div>
+        <div class="param-row">
+          <div class="param-field">
+            <label>CURRENT VALUE</label>
+            <div class="current-val" id="current-display">${currentVal}</div>
+            <div class="current-unit">${p.unit}</div>
+          </div>
+          <div style="color:#333;font-size:20px;">→</div>
+          <div class="param-input-group">
+            <label style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#444;">NEW VALUE</label>
+            <input class="param-input" id="param-new-val" type="number" min="${p.min}" max="${p.max}" placeholder="${currentVal}">
+          </div>
+          <button class="param-apply-btn" id="apply-btn">APPLY</button>
+          <button class="param-download-btn" id="download-btn">DOWNLOAD</button>
+        </div>
+        <div class="param-offset-info">PRIMARY: 0x${p.offsets[0].toString(16).toUpperCase().padStart(4,'0')}${backupStr}</div>
+        <div class="param-msg" id="param-msg"></div>`;
+
+      document.getElementById('apply-btn').addEventListener('click', () => applyValue(key));
+      document.getElementById('download-btn').addEventListener('click', downloadFile);
+      document.getElementById('param-new-val').addEventListener('keydown', e => {
+        if (e.key === 'Enter') applyValue(key);
+      });
+    }
+
+    function applyValue(key) {
+      const p = PARAMS[key];
+      const input = document.getElementById('param-new-val');
+      const msgEl = document.getElementById('param-msg');
+      const val = parseInt(input.value, 10);
+
+      if (isNaN(val) || val < p.min || val > p.max) {
+        msgEl.textContent = `VALUE MUST BE ${p.min}–${p.max}`;
+        msgEl.className = 'param-msg error';
+        return;
+      }
+
+      // Write to all offsets (primary + backup)
+      if (p.type === 'uint8') {
+        p.offsets.forEach(off => { fileData[off] = val & 0xFF; });
+      } else if (p.type === 'uint16le') {
+        p.offsets.forEach(off => writeUint16LE(fileData, off, val));
+      } else {
+        p.offsets.forEach(off => writeUint32LE(fileData, off, val));
+      }
+
+      document.getElementById('current-display').textContent = val;
+      input.value = '';
+      input.placeholder = val;
+
+      msgEl.textContent = '✓ APPLIED — DOWNLOAD TO SAVE';
+      msgEl.className = 'param-msg success';
+      setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 4000);
+      // Auto-update odometer checksum (0xDEAD - miles, big-endian at 0x033E / 0x133E)
+      if (key === 'miles') {
+        const chk = (0xDEAD - val) & 0xFFFF;
+        fileData[0x033E] = (chk >> 8) & 0xFF;
+        fileData[0x033F] =  chk & 0xFF;
+        fileData[0x133E] = (chk >> 8) & 0xFF;
+        fileData[0x133F] =  chk & 0xFF;
+      }
+      // Update cluster odometer live
+      const odo = document.getElementById('cluster-odo');
+      if (odo && key === 'miles') odo.textContent = String(val).padStart(6, '0');
+
+      renderHex(key);
+    }
+
+    function downloadFile() {
+      if (!fileData) return;
+      const blob = new Blob([fileData], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName.replace('.bin', '_modified.bin');
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ── Hex renderer ──────────────────────────────────────────────────────────
+    // ── Virtual hex renderer ───────────────────────────────────────────────────
+    const ROW_H    = 19;   // px per hex line (matches line-height:1.7 at font-size:11px)
+    const OVERSCAN = 40;   // extra rows to render above/below viewport
+
+    let hexActiveKey  = null;
+    let hexHlOffsets  = new Set();
+    let hexHlLines    = new Set();
+    let hexScrollBound = false;
+
+    function buildHexRow(lineIdx) {
+      const i       = lineIdx * 16;
+      const isHl    = hexHlLines.has(lineIdx);
+      let bytesStr  = '', asciiStr = '', lineChanged = false;
+      for (let b = 0; b < 16; b++) {
+        const absOff  = i + b;
+        const byteVal = absOff < fileData.length ? fileData[absOff].toString(16).padStart(2,'0') : '  ';
+        const changed = originalData && absOff < fileData.length && originalData[absOff] !== fileData[absOff];
+        if (changed) lineChanged = true;
+        if (hexHlOffsets.has(absOff)) {
+          // Selected parameter — orange (takes priority)
+          bytesStr += `<span class="hex-byte-hl">${byteVal}</span> `;
+        } else if (changed) {
+          // Written since load — green
+          bytesStr += `<span class="hex-byte-changed">${byteVal}</span> `;
+        } else {
+          bytesStr += byteVal + ' ';
+        }
+        if (b === 7) bytesStr += ' ';
+        if (absOff < fileData.length) {
+          const c = fileData[absOff];
+          asciiStr += (c >= 32 && c < 127) ? String.fromCharCode(c).replace(/[<>&]/g,'?') : '.';
+        }
+      }
+      const cls = ['hex-line', isHl ? 'highlighted' : '', lineChanged ? 'changed' : ''].filter(Boolean).join(' ');
+      const id  = (isHl || lineChanged) ? ` id="hex-line-${lineIdx}"` : '';
+      return `<span class="${cls}"${id}><span class="hex-offset">${i.toString(16).padStart(8,'0')}</span>  <span class="hex-bytes">${bytesStr}</span> <span class="hex-ascii">${asciiStr}</span></span>`;
+    }
+
+    function paintHexViewport() {
+      if (!fileData) return;
+      const viewer   = document.getElementById('hex-viewer');
+      const pre      = document.getElementById('hex-pre');
+      const totalRows = Math.ceil(fileData.length / 16);
+      const scrollTop = viewer.scrollTop;
+      const viewH    = viewer.clientHeight;
+
+      const firstVis = Math.max(0, Math.floor(scrollTop / ROW_H) - OVERSCAN);
+      const lastVis  = Math.min(totalRows - 1, Math.ceil((scrollTop + viewH) / ROW_H) + OVERSCAN);
+
+      const topSpacer = firstVis * ROW_H;
+      const botSpacer = (totalRows - 1 - lastVis) * ROW_H;
+
+      const rows = [];
+      for (let r = firstVis; r <= lastVis; r++) rows.push(buildHexRow(r));
+
+      pre.innerHTML =
+        `<span style="display:block;height:${topSpacer}px;"></span>` +
+        rows.join('') +
+        `<span style="display:block;height:${botSpacer}px;"></span>`;
+    }
+
+    function renderHex(activeKey) {
+      if (!fileData) return;
+      hexActiveKey = activeKey ?? hexActiveKey;
+      const p = activeKey !== undefined ? (activeKey ? PARAMS[activeKey] : null) : (hexActiveKey ? PARAMS[hexActiveKey] : null);
+
+      hexHlOffsets = (p && p.offsets) ? new Set(p.offsets.flatMap(base => {
+        const size = p.type === 'uint8' ? 1 : p.type === 'uint16le' ? 2 : p.type === 'vin' ? 17 : p.type === 'map' ? 48 : 4;
+        return Array.from({length: size}, (_, i) => base + i);
+      })) : new Set();
+      hexHlLines   = new Set([...hexHlOffsets].map(o => Math.floor(o / 16)));
+
+      // Bind scroll once
+      if (!hexScrollBound) {
+        document.getElementById('hex-viewer').addEventListener('scroll', paintHexViewport, { passive: true });
+        hexScrollBound = true;
+      }
+
+      paintHexViewport();
+
+      // Scroll highlighted line to top of viewer
+      if (hexHlLines.size > 0) {
+        const firstLine = Math.min(...hexHlLines);
+        const viewer = document.getElementById('hex-viewer');
+        // Frame 1: jump to estimated position so the target row is rendered
+        requestAnimationFrame(() => {
+          viewer.scrollTop = Math.max(0, firstLine * ROW_H);
+          paintHexViewport();
+          // Frame 2: browser has painted — measure actual element position and pin to top
+          requestAnimationFrame(() => {
+            const lineEl = document.getElementById(`hex-line-${firstLine}`);
+            if (lineEl) {
+              const vTop = viewer.getBoundingClientRect().top;
+              const lTop = lineEl.getBoundingClientRect().top;
+              viewer.scrollTop += lTop - vTop - 8;
+            }
+          });
+        });
+      }
+    }
+
+    // ── Binary helpers ─────────────────────────────────────────────────────────
+    function readUint16LE(buf, offset) {
+      return buf[offset] | (buf[offset+1] << 8);
+    }
+    function writeUint16LE(buf, offset, val) {
+      buf[offset]   = val & 0xFF;
+      buf[offset+1] = (val >> 8) & 0xFF;
+    }
+    function readUint32LE(buf, offset) {
+      return buf[offset] | (buf[offset+1] << 8) | (buf[offset+2] << 16) | (buf[offset+3] << 24);
+    }
+
+    function writeUint32LE(buf, offset, val) {
+      buf[offset]   =  val        & 0xFF;
+      buf[offset+1] = (val >> 8)  & 0xFF;
+      buf[offset+2] = (val >> 16) & 0xFF;
+      buf[offset+3] = (val >> 24) & 0xFF;
+    }
+
+    // ── Compare ────────────────────────────────────────────────────────────────
+    let cmpFileA = null, cmpFileB = null;
+
+    function openCompare() {
+      // Pre-populate file A with currently loaded file if available
+      if (fileData) {
+        cmpFileA = fileData;
+        document.getElementById('cmp-file-a-name').textContent = fileName;
+      }
+      document.getElementById('compare-modal').classList.add('open');
+    }
+
+    document.getElementById('compare-upload-box').addEventListener('click', openCompare);
+    document.getElementById('compare-btn').addEventListener('click', openCompare);
+
+    document.getElementById('compare-close').addEventListener('click', () => {
+      document.getElementById('compare-modal').classList.remove('open');
+    });
+
+    function loadCmpFile(file, slot) {
+      if (!file || !file.name.toLowerCase().endsWith('.bin')) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const data = new Uint8Array(ev.target.result);
+        if (slot === 'a') {
+          cmpFileA = data;
+          document.getElementById('cmp-file-a-name').textContent = file.name;
+          document.getElementById('cmp-label-a').textContent = 'FILE A — ' + file.name;
+        } else {
+          cmpFileB = data;
+          document.getElementById('cmp-file-b-name').textContent = file.name;
+          document.getElementById('cmp-label-b').textContent = 'FILE B — ' + file.name;
+        }
+        if (cmpFileA && cmpFileB) runCompare();
+        else document.getElementById('cmp-output').innerHTML = '<div style="color:#333;letter-spacing:2px;">SELECT BOTH FILES TO COMPARE</div>';
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    document.getElementById('cmp-file-a-input').addEventListener('change', e => loadCmpFile(e.target.files[0], 'a'));
+    document.getElementById('cmp-file-b-input').addEventListener('change', e => loadCmpFile(e.target.files[0], 'b'));
+
+    function renderCmpPanel(buf, otherBuf, preId) {
+      const len = Math.max(buf.length, otherBuf.length);
+      const lines = [];
+      for (let i = 0; i < len; i += 16) {
+        const chunk  = buf.slice(i, i + 16);
+        const other  = otherBuf.slice(i, i + 16);
+        let hasDiff = false;
+        for (let j = 0; j < 16; j++) {
+          if ((chunk[j] ?? 0xFF) !== (other[j] ?? 0xFF)) { hasDiff = true; break; }
+        }
+
+        const offsetColor = hasDiff ? '#FF6633' : '#2a3a2a';
+        let bytesStr = '';
+        let asciiStr = '';
+        for (let j = 0; j < 16; j++) {
+          const val   = chunk[j] !== undefined ? chunk[j] : null;
+          const oVal  = other[j] !== undefined ? other[j] : null;
+          const hex   = val !== null ? val.toString(16).padStart(2, '0') : '--';
+          const diff  = val !== oVal;
+          if (hasDiff && diff) {
+            bytesStr += `<span style="color:${preId==='cmp-pre-a'?'#FF4500':'#5DADE2'};background:rgba(${preId==='cmp-pre-a'?'255,69,0':'93,173,226'},0.15);border-radius:2px;">${hex}</span> `;
+          } else {
+            bytesStr += `<span style="color:${hasDiff?'#3a5a3a':'#1e3a1e'};">${hex}</span> `;
+          }
+          if (j === 7) bytesStr += ' ';
+          if (val !== null) asciiStr += (val >= 32 && val < 127) ? String.fromCharCode(val).replace(/[<>&]/g, '?') : '.';
+          else asciiStr += ' ';
+        }
+
+        const bg = hasDiff ? (preId==='cmp-pre-a' ? 'rgba(255,69,0,0.04)' : 'rgba(93,173,226,0.04)') : 'transparent';
+        lines.push(`<span style="display:block;background:${bg};"><span style="color:${offsetColor};">${i.toString(16).padStart(8,'0')}</span>  ${bytesStr} <span style="color:${hasDiff?'#444':'#1a2a1a'};">${asciiStr}</span></span>`);
+      }
+      document.getElementById(preId).innerHTML = lines.join('');
+    }
+
+    function runCompare() {
+      if (!cmpFileA || !cmpFileB) return;
+
+      renderCmpPanel(cmpFileA, cmpFileB, 'cmp-pre-a');
+      renderCmpPanel(cmpFileB, cmpFileA, 'cmp-pre-b');
+
+      // Count diffs
+      let diffCount = 0;
+      const len = Math.max(cmpFileA.length, cmpFileB.length);
+      for (let i = 0; i < len; i += 16) {
+        for (let j = 0; j < 16; j++) {
+          if ((cmpFileA[i+j] ?? 0xFF) !== (cmpFileB[i+j] ?? 0xFF)) { diffCount++; break; }
+        }
+      }
+
+      const diffLabel = diffCount === 0
+        ? '<span style="color:#27c93f;letter-spacing:2px;">✓ IDENTICAL</span>'
+        : `<span style="color:#FF4500;">${diffCount} DIFF${diffCount>1?'S':''}</span>`;
+      document.getElementById('cmp-diff-count').innerHTML = diffLabel;
+
+      // Sync scrolling between panels
+      const panelA = document.getElementById('cmp-panel-a');
+      const panelB = document.getElementById('cmp-panel-b');
+      let syncing = false;
+      panelA.onscroll = () => { if (!syncing) { syncing=true; panelB.scrollTop=panelA.scrollTop; syncing=false; } };
+      panelB.onscroll = () => { if (!syncing) { syncing=true; panelA.scrollTop=panelB.scrollTop; syncing=false; } };
+    }
+
+    // ── DTC / Fault Codes ──────────────────────────────────────────────────────
+    const DTC_DB = {
+      0x0011: { code:'P0011', name:'Camshaft Position Timing Over-Advanced (Bank 1)', causes:['Low or dirty engine oil','Faulty camshaft phaser/actuator solenoid','Stuck oil control valve (OCV)','Timing chain stretch or jumped teeth'], symptoms:['Rough idle or stalling','Reduced engine power','Rattling noise on startup','Poor fuel economy'], fix:'Check oil level and condition first. If oil is fine, test the OCV solenoid resistance (spec ~7–12Ω). Inspect timing chain for stretch. Clear code and retest.' },
+      0x0016: { code:'P0016', name:'Crankshaft/Camshaft Position Correlation', causes:['Stretched or worn timing chain','Jumped timing teeth','Faulty crank or cam position sensor','Reluctor wheel damage'], symptoms:['Hard start or no start','Engine runs rough','Check engine light'], fix:'Inspect timing chain and tensioner. Verify crank and cam sensor air gaps. Compare crank/cam signal waveforms with a scope.' },
+      0x0030: { code:'P0030', name:'O2 Sensor Heater Control Circuit (Bank 1 Sensor 1)', causes:['Blown O2 sensor heater fuse','Open or short in heater circuit wiring','Failed O2 sensor heater element','Faulty ECM output'], symptoms:['Slow cold-start fuel correction','Slightly rich running when cold','Check engine light'], fix:'Check heater fuse first. Test sensor heater resistance (~3–15Ω warm). Inspect wiring for chafing. Replace sensor if heater element is open.' },
+      0x0031: { code:'P0031', name:'O2 Sensor Heater Low (Bank 1 Sensor 1)', causes:['Short to ground in heater circuit','Failed O2 sensor','Corroded connector pins'], symptoms:['Longer warm-up time','Slightly rich cold start','Check engine light'], fix:'Check for short to ground on heater signal wire. Inspect connector for corrosion. Replace O2 sensor if wiring checks out.' },
+      0x0032: { code:'P0032', name:'O2 Sensor Heater High (Bank 1 Sensor 1)', causes:['Short to voltage in heater circuit','Failed ECM driver','Wiring rubbing on hot exhaust'], symptoms:['Check engine light only (usually no driveability issue)'], fix:'Inspect heater circuit wiring for short to B+. Test ECM output. Replace sensor or repair wiring as needed.' },
+      0x0087: { code:'P0087', name:'Fuel System Pressure Too Low', causes:['Weak or failing fuel pump','Clogged fuel filter','Faulty fuel pressure regulator leaking down','Restricted fuel line or kinked hose','Low fuel level'], symptoms:['Hard start, especially hot','Hesitation and stumble under load','Engine cuts out at high RPM','Loss of power on hills'], fix:'Check fuel pressure at rail (spec varies, typically 45–65 PSI). If low, test pump flow volume. Replace filter first — it\'s cheap insurance. Check regulator vacuum line for fuel.' },
+      0x0088: { code:'P0088', name:'Fuel System Pressure Too High', causes:['Stuck closed fuel pressure regulator','Pinched return line','Wrong fuel pressure regulator installed'], symptoms:['Rich running, black smoke','Fuel smell','Flooded engine feel'], fix:'Check fuel return line for kinks. Test regulator — should hold steady pressure and drop ~5 PSI when vacuum applied. Replace regulator if stuck.' },
+      0x0101: { code:'P0101', name:'Mass Air Flow Sensor Out of Range', causes:['Dirty or contaminated MAF sensor element','Air leak between MAF and throttle body','Damaged intake boot/hose','Faulty MAF sensor'], symptoms:['Rough idle','Hesitation on acceleration','Poor fuel economy','Black smoke (rich) or lean surge'], fix:'Clean MAF sensor with MAF-safe spray cleaner. Inspect intake for cracks or loose clamps. Test MAF voltage/frequency output at idle vs wide-open throttle.' },
+      0x0102: { code:'P0102', name:'Mass Air Flow Sensor Low Input', causes:['Disconnected or damaged MAF sensor','Open in signal wire','Air entering after MAF sensor (large vacuum leak)','Contaminated sensor element'], symptoms:['Engine may not start','Very rough idle','Extreme rich or lean condition'], fix:'Check MAF connector and wiring first. Verify 12V power and ground at sensor. Inspect intake tube for holes. Replace sensor if wiring is good.' },
+      0x0103: { code:'P0103', name:'Mass Air Flow Sensor High Input', causes:['Short to voltage on signal wire','Faulty MAF sensor outputting max signal','Water intrusion into sensor'], symptoms:['Very lean running','Surge at idle','Check engine light'], fix:'Inspect signal wire for short to power. Test MAF output — should be ~0.5–1V at idle, increasing with RPM. Replace sensor if output is pegged high.' },
+      0x0105: { code:'P0105', name:'MAP Sensor Circuit Malfunction', causes:['Disconnected MAP sensor vacuum hose','Failed MAP sensor','Open/short in sensor wiring','Faulty ECM'], symptoms:['Rough idle','Poor throttle response','Engine may stall'], fix:'Check vacuum hose for cracks or disconnection. Verify 5V reference and ground at sensor. MAP should read ~1V at idle vacuum, ~4.5V at WOT. Replace if out of range.' },
+      0x0107: { code:'P0107', name:'MAP Sensor Low Input', causes:['Open circuit in signal wire','MAP sensor failed low','Vacuum hose blocked creating false high vacuum'], symptoms:['Very rich running','Black smoke','Stumbling idle'], fix:'Check signal wire continuity. Apply 18 in/Hg vacuum to sensor — output should drop proportionally. Replace sensor if reading stays at 0V.' },
+      0x0108: { code:'P0108', name:'MAP Sensor High Input', causes:['Short to voltage on signal wire','Failed MAP sensor outputting high voltage','Vacuum hose disconnected (reads atmospheric)'], symptoms:['Very lean running','Possible detonation/knock','Hard start'], fix:'Disconnect sensor — ECM should see ~0V. If still high, wiring has short to power. If drops, sensor is faulty. Check vacuum line for disconnection.' },
+      0x0112: { code:'P0112', name:'Intake Air Temp Sensor Low Input', causes:['Short to ground in IAT signal wire','Failed IAT sensor','Water in connector'], symptoms:['ECM thinks intake air is very hot','Lean fuel trim','Reduced power in cold weather'], fix:'Check IAT resistance — should be ~2–3kΩ at room temp, increasing as temp drops. Short to ground in wiring will show very low resistance. Repair wiring or replace sensor.' },
+      0x0113: { code:'P0113', name:'Intake Air Temp Sensor High Input', causes:['Open circuit in IAT wiring','Disconnected sensor','Failed IAT sensor'], symptoms:['ECM thinks intake is very cold','Rich running','Poor fuel economy when warm'], fix:'Check connector and signal wire continuity. IAT sensor open circuit will read max voltage (~5V). Replace sensor or repair open wire.' },
+      0x0117: { code:'P0117', name:'Engine Coolant Temp Sensor Low', causes:['Short to ground in ECT signal wire','Failed ECT sensor (stuck low resistance)','Water/coolant in connector'], symptoms:['Cooling fan runs constantly','Transmission won\'t shift to higher gears','Rich running (ECM thinks engine is always cold)','Poor fuel economy'], fix:'Check ECT resistance — should be ~200–300Ω hot, ~2–3kΩ cold. Very low resistance means short or failed sensor. Replace sensor; they\'re cheap.' },
+      0x0118: { code:'P0118', name:'Engine Coolant Temp Sensor High', causes:['Open circuit in ECT wiring','Disconnected ECT sensor','Failed sensor (stuck high resistance)'], symptoms:['Engine overheating gauge incorrect','No cooling fan activation','Lean mixture (ECM thinks engine never warms up)'], fix:'With engine warm, ECT should read ~200Ω. Disconnect sensor — should see ~5V (open circuit). Replace sensor or repair broken wire.' },
+      0x0121: { code:'P0121', name:'Throttle Position Sensor Range/Performance', causes:['TPS not properly adjusted (carburetor engines)','Worn TPS wiper track','Loose TPS mounting','Intermittent TPS wiring'], symptoms:['Hesitation on tip-in','Surging at cruise','Erratic idle'], fix:'Check TPS voltage sweep from closed (~0.5V) to WOT (~4.5V) — should be smooth with no dropouts. Replace if voltage jumps or drops during sweep.' },
+      0x0122: { code:'P0122', name:'Throttle Position Sensor Low Input', causes:['Short to ground in TPS signal wire','TPS adjusted too far closed','Failed TPS'], symptoms:['Engine won\'t rev up properly','Stumble on acceleration','Limp mode possible'], fix:'Check TPS signal wire for short to ground. At closed throttle, TPS should read ~0.45–0.5V. Below 0.2V indicates fault. Replace sensor if wiring is good.' },
+      0x0123: { code:'P0123', name:'Throttle Position Sensor High Input', causes:['Short to voltage on TPS signal wire','TPS adjusted too far open','Failed TPS'], symptoms:['High idle','Rich running','Possible limp mode'], fix:'Disconnect TPS — if voltage drops to 0, wiring has short to power. TPS at WOT should be ~4.5V, not 5V. Replace sensor or repair wiring.' },
+      0x0128: { code:'P0128', name:'Coolant Thermostat Below Regulating Temp', causes:['Stuck open thermostat (most common)','Missing or wrong thermostat','Air pocket in coolant system'], symptoms:['Heater doesn\'t get hot','Engine takes very long to warm up','Poor fuel economy','Temp gauge stays low'], fix:'Most common fix: replace the thermostat. Cheap part. Verify by monitoring coolant temp — should reach 195–205°F within 5–7 min of startup. Burp coolant system after replacement.' },
+      0x0130: { code:'P0130', name:'O2 Sensor Circuit Malfunction (Bank 1 Sensor 1)', causes:['Failed upstream O2 sensor','Open or shorted sensor wiring','Exhaust leak before sensor (dilutes reading)','Contaminated sensor (oil/coolant burn-off)'], symptoms:['Poor fuel economy','Rich or lean running','Failed emissions test'], fix:'Check for exhaust leaks upstream of sensor. Test sensor signal — should oscillate rapidly between 0.1–0.9V in closed loop. A flat signal means dead sensor. Replace sensor.' },
+      0x0171: { code:'P0171', name:'System Too Lean (Bank 1)', causes:['Vacuum leak (most common — intake manifold gasket, brake booster hose, PCV)','Dirty/failing MAF sensor','Weak fuel pump or clogged injectors','Faulty fuel pressure regulator','O2 sensor lazy/failed'], symptoms:['Rough idle','Hesitation','Check engine light','Engine may surge at light throttle'], fix:'Start with a smoke test for vacuum leaks. Clean MAF sensor. Check fuel pressure (min 40 PSI at idle). Test injector pulse and spray pattern. Long-term fuel trim >+10% confirms lean.' },
+      0x0172: { code:'P0172', name:'System Too Rich (Bank 1)', causes:['Leaking fuel injector(s)','Faulty coolant temp sensor (reads cold constantly)','High fuel pressure','Stuck open fuel pressure regulator','Excessive crank case vapors (PCV)'], symptoms:['Black smoke from exhaust','Strong fuel smell','Fouled spark plugs','Poor fuel economy'], fix:'Check for raw fuel smell in oil (injector leak-down). Test fuel pressure — should hold after key off. Check ECT sensor. Long-term fuel trim < -10% confirms rich condition.' },
+      0x0201: { code:'P0201', name:'Injector Circuit Malfunction (Cylinder 1)', causes:['Failed injector (open or short)','Broken injector wiring','Corroded injector connector','Faulty ECM injector driver'], symptoms:['Cylinder 1 misfire','Rough idle','Loss of power'], fix:'Test injector resistance (should be ~12–16Ω for high-impedance). Check for 12V power at injector connector. Use a noid light to confirm ECM is pulsing. Replace injector if resistance is out of spec.' },
+      0x0300: { code:'P0300', name:'Random/Multiple Cylinder Misfire', causes:['Worn or fouled spark plugs','Worn ignition wires or coil packs','Low compression (worn rings or valves)','Vacuum leak','Dirty or clogged fuel injectors','Low fuel pressure'], symptoms:['Rough shaking idle','Flashing check engine light (severe misfire)','Loss of power','Fuel smell from exhaust'], fix:'Start with spark plugs and coils (cheapest). Pull plugs — look for fouling, gap wear, or cracks. Check compression (should be within 10% cylinder-to-cylinder). If one cylinder is low, suspect rings or valves.' },
+      0x0301: { code:'P0301', name:'Cylinder 1 Misfire', causes:['Faulty spark plug (Cyl 1)','Bad ignition coil (Cyl 1)','Leaking injector or no pulse (Cyl 1)','Low compression in Cyl 1','Intake manifold vacuum leak near Cyl 1'], symptoms:['Rough idle with a distinct "chop"','Vibration at idle','Loss of power','Raw fuel smell'], fix:'Swap the Cyl 1 coil with another cylinder — if misfire moves, coil is bad. Swap plugs same way. Do a compression test on Cyl 1. Check injector resistance and noid light.' },
+      0x0302: { code:'P0302', name:'Cylinder 2 Misfire', causes:['Faulty spark plug (Cyl 2)','Bad ignition coil (Cyl 2)','Leaking or dead injector (Cyl 2)','Low compression in Cyl 2'], symptoms:['Rough idle','Vibration','Loss of power'], fix:'Same diagnostic approach as P0301 — swap coil and plug to another cylinder to isolate the fault. Compression test Cyl 2.' },
+      0x0325: { code:'P0325', name:'Knock Sensor Circuit Malfunction', causes:['Failed knock sensor','Open or short in knock sensor wiring','Loose knock sensor (torque spec critical)','Engine detonation damaging sensor'], symptoms:['Check engine light','ECM may retard timing as precaution reducing power','Possible pinging noise under load'], fix:'Check knock sensor resistance (~100kΩ) and torque (do NOT overtighten — typically 15–20 ft-lb). Inspect wiring for damage. Avoid low-octane fuel.' },
+      0x0335: { code:'P0335', name:'Crankshaft Position Sensor Circuit Malfunction', causes:['Failed CKP sensor','Damaged reluctor ring (missing or bent teeth)','Open or short in CKP wiring','Excessive air gap between sensor and reluctor'], symptoms:['Engine won\'t start or stalls unexpectedly','Intermittent no-start','Engine cuts out at speed'], fix:'Check air gap (typically 0.030–0.070"). Test sensor resistance (~200–900Ω). Inspect reluctor ring for damage. Check wiring — CKP signal is critical for spark and injection timing.' },
+      0x0340: { code:'P0340', name:'Camshaft Position Sensor Circuit Malfunction', causes:['Failed CMP sensor','Broken tone wheel on camshaft','Wiring open or short','Timing jumped (sensor sees wrong pattern)'], symptoms:['Hard start or no start','Rough running','Check engine light'], fix:'Test sensor resistance and wiring. Verify timing marks are aligned. A scope showing an erratic or missing cam signal points to a bad sensor or damaged tone wheel.' },
+      0x0351: { code:'P0351', name:'Ignition Coil A Primary Circuit Malfunction', causes:['Failed ignition coil','Open or short in coil primary wiring','Faulty ECM coil driver'], symptoms:['Misfire on cylinders fired by Coil A','Rough idle','No-start if coil-on-plug and single cylinder'], fix:'Measure coil primary resistance (typically 0.4–2Ω). Swap coil with known-good to confirm. Check for 12V power supply and ECM ground pulse using a test light.' },
+      0x0420: { code:'P0420', name:'Catalyst System Efficiency Below Threshold', causes:['Worn-out catalytic converter (most common after 100k miles)','Exhaust leak before downstream O2 sensor','Rich running condition contaminating cat','Failed downstream O2 sensor reading incorrectly'], symptoms:['Check engine light only (usually no driveability issue)','Possible slight sulfur smell','Failed emissions'], fix:'Check for exhaust leaks near downstream O2 sensor first. Compare upstream vs downstream O2 sensor waveforms — downstream should be relatively flat if cat is working. If cat is confirmed bad, replace it.' },
+      0x0480: { code:'P0480', name:'Cooling Fan Relay 1 Control Circuit', causes:['Faulty cooling fan relay','Open in relay control circuit wiring','Failed ECM fan output'], symptoms:['Cooling fan won\'t turn on','Engine overheating in traffic','AC performance reduced'], fix:'Swap relay with identical relay (horn relay often same part). Check 12V to relay coil and ECM ground pulse. If relay clicks but fan won\'t spin, test fan motor directly.' },
+      0x0500: { code:'P0500', name:'Vehicle Speed Sensor Malfunction', causes:['Failed VSS (wheel speed or transmission output)','Damaged VSS tone ring','Open in VSS wiring','ABS module communication issue'], symptoms:['Speedometer not working','Transmission shifts at wrong points','Traction control disabled'], fix:'Test VSS resistance (~190–250Ω for magnetic type). Check tone ring for damage. Verify wiring continuity. On some vehicles VSS signal comes from ABS module.' },
+      0x0562: { code:'P0562', name:'System Voltage Low', causes:['Weak or failing battery','Failing alternator (not charging)','Corroded battery terminals or ground straps','High electrical load with undersized charging system'], symptoms:['Dim lights','Slow cranking','Erratic gauge behavior','Multiple random codes stored'], fix:'Test battery load (should hold >9.6V under load). Test alternator output (should be 13.5–14.5V at idle). Clean battery terminals. Check main ground strap from battery to chassis and engine.' },
+      0x0563: { code:'P0563', name:'System Voltage High', causes:['Overcharging alternator (bad voltage regulator)','Wiring issue causing spikes','Battery sensor malfunction'], symptoms:['Burning smell','Lights flickering bright','Battery boiling/bubbling'], fix:'Test alternator voltage — should not exceed 14.8V. A reading above 15V means regulator is failed. Replace alternator. Check battery for overcharging damage.' },
+      0x0601: { code:'P0601', name:'Internal Control Module Memory Checksum Error', causes:['ECM/PCM internal failure','Corrupted flash memory (bad flash programming)','Power spike or voltage drop during programming'], symptoms:['Multiple random codes','Engine may not start','Erratic behavior'], fix:'Try disconnecting battery for 15 minutes to force reboot. If code returns, ECM likely needs reflashing or replacement. Do not attempt DIY flash — can brick the module.' },
+      0x0627: { code:'P0627', name:'Fuel Pump Control Circuit Open', causes:['Faulty fuel pump relay','Open in fuel pump power circuit','Failed fuel pump module','Blown fuel pump fuse'], symptoms:['Engine cranks but won\'t start','No fuel pressure','No audible fuel pump prime when key is turned'], fix:'Listen for pump prime on key-on (2 sec buzz). Check fuel pump fuse and relay. Test for 12V at pump connector with key on. If no voltage, trace circuit from relay to pump.' },
+      0x0641: { code:'P0641', name:'Sensor Reference Voltage A Circuit Open', causes:['Open in 5V reference wire from ECM','Short to ground pulling down reference voltage','Multiple sensors failing simultaneously (reference wire shorted)'], symptoms:['Multiple sensor codes stored at once (TPS, MAP, TPS all fail together)','Erratic engine behavior'], fix:'When multiple sensor codes appear together, suspect the shared 5V reference circuit. Unplug sensors one at a time — when voltage returns to 5V, that sensor or its wiring is pulling it down.' },
+      0x1101: { code:'P1101', name:'MAF Sensor Out of Self-Test Range (Polaris)', causes:['Aftermarket cold-air intake without MAF recalibration','Air leak between MAF and throttle','Dirty MAF sensor element'], symptoms:['Rough idle with modified intake','Lean or rich condition','Check engine light after intake install'], fix:'Clean MAF sensor. If aftermarket intake was installed, ECM may need recalibration or a tune. Check for air leaks in new intake tubing.' },
+      0x1171: { code:'P1171', name:'Fuel System Lean During Acceleration (Polaris)', causes:['Weak fuel pump unable to keep up with demand','Clogged fuel filter','Dirty injectors with poor spray pattern','Throttle body deposits'], symptoms:['Stumble or hesitation on hard acceleration','Surge when getting on throttle','Worse at higher elevation'], fix:'Test fuel pressure under load (WOT). Should maintain minimum pressure. Replace filter. Have injectors flow-tested or use a professional injector cleaner treatment.' },
+      0x4001: { code:'C0001', name:'ABS Hydraulic Pump Motor Circuit Failure', causes:['Failed ABS pump motor','Open or short in pump motor wiring','Faulty ABS module'], symptoms:['ABS warning light on','ABS system disabled','Brake pedal may feel different'], fix:'Test pump motor resistance and check for 12V supply during ABS activation. ABS pump motors are typically part of the HECU assembly — often must be replaced as a unit.' },
+      0x4031: { code:'C0031', name:'Right Front Wheel Speed Sensor Signal = 0', causes:['Failed RF wheel speed sensor','Damaged sensor tone ring (broken teeth)','Open in sensor wiring','Sensor air gap too large (out of spec)'], symptoms:['ABS light on','Traction/stability control disabled','ABS activates unnecessarily at low speeds'], fix:'Check sensor air gap (spec ~0.020–0.050"). Inspect tone ring for missing teeth or debris. Test sensor resistance (~1000–1900Ω for passive type). Clean tone ring and recheck.' },
+      0xC100: { code:'U0100', name:'Lost Communication With ECM/PCM', causes:['Open or short in CAN bus wiring','ECM not powered or grounded','Faulty CAN bus terminating resistor (should be ~60Ω across bus)','Other module dragging down CAN bus'], symptoms:['Multiple warning lights on','No communication with scanner','Transmission may go into limp mode'], fix:'Check CAN bus resistance (should be ~60Ω between CAN-H and CAN-L with ignition off). Check ECM power and grounds. Disconnect modules one at a time to find a faulty node dragging the bus down.' },
+      0xC110: { code:'U0110', name:'Lost Communication With TCM', causes:['TCM not powered','Open in CAN wiring to TCM','Faulty TCM'], symptoms:['Transmission in limp mode (fixed gear)','No upshifts','Transmission warning light'], fix:'Verify TCM power and ground. Check CAN wiring between ECM and TCM. Test for CAN signals at TCM connector with oscilloscope.' },
+      0xC121: { code:'U0121', name:'Lost Communication With ABS Control Module', causes:['ABS module not powered','CAN bus fault','Damaged ABS module'], symptoms:['ABS and traction control lights on','Stability control disabled','No wheel speed data to other modules'], fix:'Check ABS module fuse and power supply. Verify CAN wiring continuity. If module powers up but won\'t communicate, module may need replacement or reprogramming.' },
+    };
+
+    document.getElementById('dtc-btn').addEventListener('click', () => {
+      if (!fileData) return;
+      document.querySelectorAll('.param-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('dtc-btn').classList.add('active');
+      activeParam = null;
+      renderHex();
+      scanDTCs();
+    });
+
+    function decodeDTC(word) {
+      // OBD-II 2-byte DTC encoding
+      const type = (word >> 14) & 0x03;
+      const prefix = ['P', 'C', 'B', 'U'][type];
+      const digit1 = (word >> 12) & 0x03;
+      const digit2 = (word >> 8)  & 0x0F;
+      const digit3 = (word >> 4)  & 0x0F;
+      const digit4 =  word        & 0x0F;
+      return `${prefix}${digit1}${digit2.toString(16).toUpperCase()}${digit3.toString(16).toUpperCase()}${digit4.toString(16).toUpperCase()}`;
+    }
+
+    function scanDTCs() {
+      const el = document.getElementById('param-editor');
+      const buf = fileData;
+      const found = [];
+      const seen = new Set();
+
+      for (let i = 0; i <= buf.length - 2; i++) {
+        const wordBE = (buf[i] << 8) | buf[i+1];
+        const wordLE = (buf[i+1] << 8) | buf[i];
+
+        // Skip all-zero, all-FF, and implausible values
+        if (wordBE === 0x0000 || wordBE === 0xFFFF) continue;
+
+        // Check if it looks like a valid DTC (P/C/B/U range)
+        const type = (wordBE >> 14) & 0x03;
+        // Only proceed if first nibble after type is 0-3 (valid DTC digit)
+        const d1 = (wordBE >> 12) & 0x03;
+        if (d1 > 3) continue;
+        // Value must be in range of real fault codes (avoid noise)
+        const numericVal = wordBE & 0x3FFF;
+        if (numericVal === 0) continue;
+
+        const code = decodeDTC(wordBE);
+        const key = wordBE & 0xFFFF;
+        if (seen.has(key)) continue;
+
+        const info = DTC_DB[key];
+        if (info) {
+          seen.add(key);
+          found.push({ offset: i, code: info.code, info });
+        }
+      }
+
+      if (found.length === 0) {
+        el.innerHTML = `
+          <div class="param-editor-title" style="color:#ffbd2e;">FAULT CODE SCAN</div>
+          <div class="param-editor-desc">Scanned ${buf.length} bytes for OBD-II / manufacturer DTCs</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#27c93f;letter-spacing:2px;margin-top:12px;">✓ NO STORED FAULT CODES FOUND</div>`;
+        return;
+      }
+
+      const rows = found.map((f, idx) => `
+        <div data-dtc-idx="${idx}" style="display:flex;align-items:flex-start;gap:14px;padding:8px 10px;border-bottom:1px solid #111;cursor:pointer;border-radius:3px;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,189,46,0.06)'" onmouseout="this.style.background=''" >
+          <div style="font-family:'Share Tech Mono',monospace;font-size:14px;color:#ffbd2e;letter-spacing:2px;min-width:66px;text-shadow:0 0 8px rgba(255,189,46,0.4);">${f.info.code}</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#888;letter-spacing:1px;line-height:1.6;flex:1;">
+            ${f.info.name}
+            <span style="color:#333;display:block;">@ offset 0x${f.offset.toString(16).toUpperCase().padStart(4,'0')}</span>
+          </div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#444;align-self:center;">→</div>
+        </div>`).join('');
+
+      el.innerHTML = `
+        <div class="param-editor-title" style="color:#ffbd2e;">FAULT CODE SCAN</div>
+        <div class="param-editor-desc">Scanned ${buf.length} bytes · <span style="color:#ffbd2e;">${found.length} code${found.length > 1 ? 's' : ''} found</span> · <span style="color:#555;">click a code for details</span></div>
+        <div id="dtc-list" style="max-height:160px;overflow-y:auto;margin-top:8px;">${rows}</div>`;
+
+      document.querySelectorAll('[data-dtc-idx]').forEach(row => {
+        row.addEventListener('click', () => showDTCDetail(found[+row.dataset.dtcIdx]));
+      });
+    }
+
+    function showDTCDetail(f) {
+      const el = document.getElementById('param-editor');
+      const info = f.info;
+
+      const causeItems  = info.causes.map(c  => `<li>${c}</li>`).join('');
+      const symptomItems = info.symptoms.map(s => `<li>${s}</li>`).join('');
+
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <button id="dtc-back" style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1.5px;color:#555;background:none;border:1px solid #333;border-radius:3px;padding:4px 10px;cursor:pointer;">← BACK</button>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:16px;color:#ffbd2e;letter-spacing:3px;text-shadow:0 0 10px rgba(255,189,46,0.5);">${info.code}</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#666;letter-spacing:1px;">${info.name}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-height:180px;overflow-y:auto;">
+          <div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#FF4500;margin-bottom:6px;">COMMON CAUSES</div>
+            <ul style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#777;letter-spacing:0.5px;line-height:1.8;margin:0;padding-left:16px;">${causeItems}</ul>
+          </div>
+          <div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#FF4500;margin-bottom:6px;">SYMPTOMS</div>
+            <ul style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#777;letter-spacing:0.5px;line-height:1.8;margin:0;padding-left:16px;">${symptomItems}</ul>
+          </div>
+          <div style="grid-column:1/-1;">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#27c93f;margin-bottom:6px;">HOW TO FIX</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#777;letter-spacing:0.5px;line-height:1.8;">${info.fix}</div>
+          </div>
+        </div>`;
+
+      document.getElementById('dtc-back').addEventListener('click', scanDTCs);
+    }
+
+    // ── Mini Cluster (sidebar) ─────────────────────────────────────────────────
+    window.clusterLights  = window.clusterLights  || { headlights:false, highbeam:false, left:false, right:false };
+    window.clusterRPM     = window.clusterRPM     || 0;
+    window.clusterEngineOn= window.clusterEngineOn|| false;
+    window.clusterStarting= window.clusterStarting|| false;
+
+    // ── Cluster ────────────────────────────────────────────────────────────────
+
+    function arcPath(cx, cy, r, startDeg, endDeg) {
+      const s = (startDeg - 90) * Math.PI / 180;
+      const e = (endDeg   - 90) * Math.PI / 180;
+      const x1 = cx + r * Math.cos(s), y1 = cy + r * Math.sin(s);
+      const x2 = cx + r * Math.cos(e), y2 = cy + r * Math.sin(e);
+      const large = (endDeg - startDeg) > 180 ? 1 : 0;
+      return `M${x1},${y1} A${r},${r},0,${large},1,${x2},${y2}`;
+    }
+
+    function needlePath(cx, cy, len, deg) {
+      const a = (deg - 90) * Math.PI / 180;
+      const tipX = cx + len * Math.cos(a);
+      const tipY = cy + len * Math.sin(a);
+      const baseA = (deg - 90 + 90) * Math.PI / 180;
+      const b1x = cx + 4 * Math.cos(baseA), b1y = cy + 4 * Math.sin(baseA);
+      const b2x = cx - 4 * Math.cos(baseA), b2y = cy - 4 * Math.sin(baseA);
+      return `M${b1x},${b1y} L${tipX},${tipY} L${b2x},${b2y} Z`;
+    }
+
+    function gauge(id, cx, cy, r, label, minVal, maxVal, value, color, unit, startDeg, endDeg, numTicks) {
+      const pct    = Math.min(1, Math.max(0, (value - minVal) / (maxVal - minVal)));
+      const fillDeg = startDeg + pct * (endDeg - startDeg);
+      const nDeg   = fillDeg;
+      const tickCount = numTicks !== undefined ? numTicks : 8;
+
+      // tick marks + number labels at major ticks
+      let ticks = '';
+      for (let t = 0; t <= tickCount; t++) {
+        const deg = startDeg + (t / tickCount) * (endDeg - startDeg);
+        const a   = (deg - 90) * Math.PI / 180;
+        const isMajor = (t % 2 === 0);
+        const outerR = r + 2, innerR = r - (isMajor ? 12 : 6);
+        ticks += `<line x1="${cx + outerR*Math.cos(a)}" y1="${cy + outerR*Math.sin(a)}" x2="${cx + innerR*Math.cos(a)}" y2="${cy + innerR*Math.sin(a)}" stroke="${isMajor?'#444':'#2a2a2a'}" stroke-width="${isMajor?1.5:0.8}"/>`;
+        if (isMajor) {
+          const lr = r - 26;
+          const lx = cx + lr * Math.cos(a);
+          const ly = cy + lr * Math.sin(a);
+          const numVal = Math.round(minVal + (t / tickCount) * (maxVal - minVal));
+          ticks += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="#555">${numVal}</text>`;
+        }
+      }
+
+      return `
+        <!-- ${label} gauge -->
+        <path d="${arcPath(cx,cy,r,startDeg,endDeg)}" fill="none" stroke="#1a1a1a" stroke-width="8"/>
+        <path id="${id}-arc" d="${arcPath(cx,cy,r,startDeg,fillDeg)}" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round" style="filter:drop-shadow(0 0 4px ${color})"/>
+        ${ticks}
+        <path id="${id}-needle" d="${needlePath(cx,cy,r-14,nDeg)}" fill="${color}" style="filter:drop-shadow(0 0 3px ${color})"/>
+        <circle cx="${cx}" cy="${cy}" r="5" fill="#111" stroke="${color}" stroke-width="1.5"/>
+        <text x="${cx}" y="${cy+r*0.55}" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#555" letter-spacing="1">${label}</text>
+        <text id="${id}-val" x="${cx}" y="${cy+r*0.7}" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="11" fill="${color}">${value}${unit}</text>`;
+    }
+
+    function startBlinkers() {
+      clearInterval(window._blinkInt);
+      const L = window.clusterLights;
+      if (!L.left && !L.right) return;
+      let on = true;
+      window._blinkInt = setInterval(() => {
+        on = !on;
+        const la = document.getElementById('lturn-arrow');
+        const ra = document.getElementById('rturn-arrow');
+        if (la && L.left)  la.setAttribute('opacity', on ? 1 : 0.08);
+        if (ra && L.right) ra.setAttribute('opacity', on ? 1 : 0.08);
+      }, 500);
+    }
+
+    function renderCluster() {
+      clearInterval(window._blinkInt);
+      const el   = document.getElementById('cluster-panel-inner');
+      const miles = fileData ? readUint32LE(fileData, 0x033a) : 0;
+
+      // Scan DTCs to determine which warning lights should be on
+      const activeDTCs = new Set();
+      if (fileData) {
+        const buf = fileData;
+        for (let i = 0; i <= buf.length - 2; i++) {
+          const word = (buf[i] << 8) | buf[i+1];
+          if (word === 0x0000 || word === 0xFFFF) continue;
+          if (DTC_DB[word & 0xFFFF]) activeDTCs.add(word & 0xFFFF);
+        }
+      }
+
+      const hasEngine  = [...activeDTCs].some(k => k >= 0x0100 && k <= 0x06FF);
+      const hasBatt    = [...activeDTCs].some(k => k === 0x0562 || k === 0x0563 || k === 0x0560);
+      const hasABS     = [...activeDTCs].some(k => k >= 0x4000 && k <= 0x40FF);
+      const hasCAN     = [...activeDTCs].some(k => k >= 0xC000);
+
+      // Warning light helper
+      function warnLight(x, y, icon, label, on, color='#FF4500') {
+        const c = on ? color : '#1a1a1a';
+        const tc = on ? color : '#333';
+        const glow = on ? `filter:drop-shadow(0 0 6px ${color})` : '';
+        return `<g>
+          <circle cx="${x}" cy="${y}" r="12" fill="${on?'rgba(255,69,0,0.08)':'#0d0d0d'}" stroke="${c}" stroke-width="1"/>
+          <text x="${x}" y="${y+1}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="${c}" style="${glow}">${icon}</text>
+          <text x="${x}" y="${y+18}" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="${tc}" letter-spacing="0.5">${label}</text>
+        </g>`;
+      }
+
+      // Lights toggle state (persisted on window)
+      window.clusterLights = window.clusterLights || { headlights: false, highbeam: false, left: false, right: false };
+      const L = window.clusterLights;
+
+      window.clusterGear  = window.clusterGear  || 'P';
+      window.clusterSpeed = window.clusterSpeed || 0;
+      const eng    = window.clusterEngineOn;
+      const rpmVal = Math.round(window.clusterRPM / 1000 * 10) / 10;
+
+      el.innerHTML = `
+        <div style="position:relative;height:100%;display:flex;flex-direction:column;gap:10px;">
+
+          <svg viewBox="0 0 700 280" width="100%" xmlns="http://www.w3.org/2000/svg" style="background:radial-gradient(ellipse at center,${eng?'#0d1008':'#0d0d0d'} 60%,#050505);border:1px solid ${eng?'#1a2a1a':'#1a1a1a'};border-radius:10px;display:block;transition:background 0.5s;">
+
+            <!-- Speedometer (left) — 0‑140 MPH, 7 divisions: 0,20,40,60,80,100,120,140 -->
+            ${gauge('spd', 140, 160, 108, 'MPH', 0, 140, Math.round(window.clusterSpeed||0), '#FF4500', '', 220, 500, 7)}
+
+            <!-- RPM gauge (right) — 0‑8 ×1000, 8 divisions -->
+            ${gauge('rpm', 560, 160, 108, 'RPM ×1000', 0, 8, rpmVal, '#27c93f', '', 220, 500, 8)}
+
+            <!-- Odometer center display -->
+            <rect x="266" y="120" width="168" height="64" rx="5" fill="#050505" stroke="${eng?'#2a3a2a':'#222'}" stroke-width="1.2"/>
+            <rect x="267" y="121" width="166" height="62" rx="4" fill="none" stroke="#111" stroke-width="0.5"/>
+            <text x="350" y="135" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="9" fill="#444" letter-spacing="3">ODOMETER</text>
+            <text id="cluster-odo" x="350" y="162" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="26" fill="#FF4500" letter-spacing="5" style="text-shadow:0 0 12px rgba(255,69,0,0.8);">${String(miles).padStart(6,'0')}</text>
+            <text x="350" y="177" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="#333" letter-spacing="2">MILES</text>
+
+            <!-- Fuel bar -->
+            <text x="350" y="208" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="#333" letter-spacing="2">FUEL</text>
+            <rect x="280" y="213" width="140" height="7" rx="3" fill="#111" stroke="#1a1a1a"/>
+            <rect x="280" y="213" width="84"  height="7" rx="3" fill="#FF4500" opacity="0.45"/>
+            <text x="276" y="224" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="#333">E</text>
+            <text x="424" y="224" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="#333">F</text>
+
+            <!-- Warning lights row (top center) -->
+            ${warnLight(250, 55, '⚙', 'ENG',  hasEngine || window.clusterStarting, '#FF4500')}
+            ${warnLight(290, 55, '⚡', 'BATT', hasBatt   || window.clusterStarting, '#ffbd2e')}
+            ${warnLight(330, 55, '⊕', 'ABS',  hasABS    || window.clusterStarting, '#FF4500')}
+            ${warnLight(370, 55, '◉', 'CAN',  hasCAN    || window.clusterStarting, '#FF4500')}
+            ${warnLight(410, 55, '◎', 'OIL',  window.clusterStarting,              '#FF4500')}
+            ${warnLight(450, 55, '✦', 'TEMP', window.clusterStarting,              '#FF4500')}
+
+            <!-- Turn / light indicators bottom -->
+            ${warnLight(290, 248, '◐', 'HEAD',   L.headlights, '#5DADE2')}
+            ${warnLight(330, 248, '●', 'HIGH',   L.highbeam,   '#5DADE2')}
+
+            <!-- Left blinker arrow (top left corner) -->
+            <g id="lturn-arrow" opacity="${L.left ? 1 : 0.1}">
+              <polygon points="14,32 34,22 34,27 52,27 52,37 34,37 34,42" fill="#ffbd2e" style="filter:drop-shadow(0 0 5px #ffbd2e)"/>
+              <text x="33" y="52" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#ffbd2e" letter-spacing="0.5">L.TURN</text>
+            </g>
+
+            <!-- Right blinker arrow (top right corner) -->
+            <g id="rturn-arrow" opacity="${L.right ? 1 : 0.1}">
+              <polygon points="686,32 666,22 666,27 648,27 648,37 666,37 666,42" fill="#ffbd2e" style="filter:drop-shadow(0 0 5px #ffbd2e)"/>
+              <text x="667" y="52" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="6" fill="#ffbd2e" letter-spacing="0.5">R.TURN</text>
+            </g>
+
+            <!-- PRND gear selector display (center bottom) -->
+            ${(() => {
+              const gear = window.clusterGear || 'P';
+              const gColors = {P:'#27c93f', R:'#FF4500', N:'#ffbd2e', D:'#5DADE2'};
+              return ['P','R','N','D'].map((g, i) => {
+                const active = gear === g;
+                const gx = 290 + i * 40;
+                const gc = gColors[g];
+                return `
+                  ${active ? `<rect x="${gx-14}" y="232" width="28" height="26" rx="3" fill="${gc}" opacity="0.08" stroke="${gc}" stroke-width="1.2"/>` : ''}
+                  <text x="${gx}" y="250" text-anchor="middle" font-family="Share Tech Mono,monospace"
+                    font-size="${active?18:12}" fill="${active?gc:'#252525'}"
+                    ${active?`style="filter:drop-shadow(0 0 8px ${gc})"`:''}>
+                    ${g}
+                  </text>`;
+              }).join('');
+            })()}
+
+            <!-- Current gear badge on speedometer -->
+            ${(() => {
+              const gear = window.clusterGear || 'P';
+              const gc = {P:'#27c93f',R:'#FF4500',N:'#ffbd2e',D:'#5DADE2'}[gear];
+              const label = gear === 'R' ? 'REV' : gear === 'D' ? 'FWD' : gear === 'N' ? 'NEUT' : 'PARK';
+              return `<text x="140" y="200" text-anchor="middle" font-family="Share Tech Mono,monospace" font-size="8" fill="${gc}" letter-spacing="2" opacity="0.8">${label}</text>`;
+            })()}
+
+            <!-- Dividers -->
+            <line x1="254" y1="12" x2="254" y2="268" stroke="#1a1a1a" stroke-width="0.7"/>
+            <line x1="446" y1="12" x2="446" y2="268" stroke="#1a1a1a" stroke-width="0.7"/>
+          </svg>
+
+          <!-- Engine + drive controls -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+            <button id="engine-btn" style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;padding:7px 18px;border-radius:3px;cursor:pointer;border:1px solid ${eng?'#27c93f':'#333'};color:${eng?'#27c93f':'#555'};background:${eng?'rgba(39,201,63,0.08)':'none'};">${eng?'■ STOP ENGINE':'▶ START ENGINE'}</button>
+            <button id="accel-btn" style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;padding:7px 18px;border-radius:3px;cursor:pointer;border:1px solid ${eng?'#FF4500':'#222'};color:${eng?'#FF4500':'#333'};background:none;user-select:none;" ${eng?'':'disabled'}>⬆ GAS</button>
+            <button id="brake-btn" style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;padding:7px 18px;border-radius:3px;cursor:pointer;border:1px solid ${eng?'#ffbd2e':'#222'};color:${eng?'#ffbd2e':'#333'};background:none;user-select:none;" ${eng?'':'disabled'}>⬇ BRAKE</button>
+          </div>
+
+          <!-- Gear selector P R N D -->
+          <div style="display:flex;gap:6px;justify-content:center;">
+            ${['P','R','N','D'].map(g => {
+              const active = (window.clusterGear||'P') === g;
+              const gc = {P:'#27c93f',R:'#FF4500',N:'#ffbd2e',D:'#5DADE2'}[g];
+              const canSelect = eng || g === 'P';
+              return `<button class="gear-btn" data-gear="${g}"
+                style="font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:3px;
+                       padding:7px 16px;border-radius:3px;cursor:${canSelect?'pointer':'default'};
+                       border:1px solid ${active?gc:'#222'};color:${active?gc:'#333'};
+                       background:${active?`rgba(${g==='P'?'39,201,63':g==='R'?'255,69,0':g==='N'?'255,189,46':'93,173,226'},0.07)`:'none'};
+                       font-weight:bold;${active?`text-shadow:0 0 10px ${gc};`:''}
+                       ${!canSelect?'opacity:0.3;':''}"
+                ${canSelect?'':' disabled'}>${g}</button>`;
+            }).join('')}
+          </div>
+
+          <!-- Light toggle buttons -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+            <button class="cluster-light-btn" data-light="left"       style="color:${L.left?'#ffbd2e':'#333'};border-color:${L.left?'#ffbd2e':'#222'};">◄ LEFT TURN</button>
+            <button class="cluster-light-btn" data-light="headlights" style="color:${L.headlights?'#5DADE2':'#333'};border-color:${L.headlights?'#5DADE2':'#222'};">HEADLIGHTS</button>
+            <button class="cluster-light-btn" data-light="highbeam"   style="color:${L.highbeam?'#5DADE2':'#333'};border-color:${L.highbeam?'#5DADE2':'#222'};">HIGH BEAM</button>
+            <button class="cluster-light-btn" data-light="right"      style="color:${L.right?'#ffbd2e':'#333'};border-color:${L.right?'#ffbd2e':'#222'};">RIGHT TURN ►</button>
+          </div>
+        </div>`;
+
+      // Light toggles — update file byte and repaint hex viewer
+      const LIGHT_BITS = { headlights: 0x01, highbeam: 0x02, left: 0x04, right: 0x08 };
+      document.querySelectorAll('.cluster-light-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          window.clusterLights[btn.dataset.light] = !window.clusterLights[btn.dataset.light];
+          // Write bitmask to file at lighting offset
+          if (fileData) {
+            let mask = 0;
+            Object.entries(LIGHT_BITS).forEach(([k, bit]) => {
+              if (window.clusterLights[k]) mask |= bit;
+            });
+            fileData[0x03A8] = mask;
+            fileData[0x13A8] = mask;
+            paintHexViewport();
+          }
+          renderCluster();
+          startBlinkers();
+        });
+      });
+
+      // Gear buttons
+      document.querySelectorAll('.gear-btn:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', () => setGear(btn.dataset.gear));
+      });
+
+      // Start / Stop engine
+      document.getElementById('engine-btn').addEventListener('click', () => {
+        if (window.clusterEngineOn) {
+          window.clusterEngineOn = false;
+          window.clusterRPM   = 0;
+          window.clusterSpeed = 0;
+          window.clusterGear  = 'P';
+          clearInterval(window._accelInt);
+          clearInterval(window._decelInt);
+          clearInterval(window._brakeInt);
+          _stopCANIdleTraffic();
+          updateSpeedNeedle(0);
+          renderCluster();
+        } else {
+          startEngineSequence();
+        }
+      });
+
+      // GAS — hold to accelerate (RPM + speed if in gear)
+      const accelBtn = document.getElementById('accel-btn');
+      if (accelBtn && !accelBtn.disabled) {
+        const startAccel = () => {
+          clearInterval(window._decelInt);
+          clearInterval(window._brakeInt);
+          clearInterval(window._accelInt);
+          window._accelInt = setInterval(() => {
+            const gear = window.clusterGear || 'P';
+            window.clusterRPM = Math.min(7200, window.clusterRPM + 220);
+            updateRPMNeedle(window.clusterRPM);
+            if (gear === 'D') {
+              updateSpeedNeedle(Math.min(140, (window.clusterSpeed || 0) + 0.75));
+            } else if (gear === 'R') {
+              updateSpeedNeedle(Math.min(25, (window.clusterSpeed || 0) + 0.3));
+            }
+          }, 40);
+        };
+        const stopAccel = () => {
+          clearInterval(window._accelInt);
+          clearInterval(window._decelInt);
+          const idle = 1500;
+          window._decelInt = setInterval(() => {
+            window.clusterRPM = Math.max(idle, window.clusterRPM - 180);
+            updateRPMNeedle(window.clusterRPM);
+            const gear = window.clusterGear || 'P';
+            if (gear === 'D' && (window.clusterSpeed || 0) > 0) {
+              updateSpeedNeedle(Math.max(0, window.clusterSpeed - 0.25));
+            } else if (gear === 'R' && (window.clusterSpeed || 0) > 0) {
+              updateSpeedNeedle(Math.max(0, window.clusterSpeed - 0.25));
+            }
+            if (window.clusterRPM <= idle) clearInterval(window._decelInt);
+          }, 40);
+        };
+        accelBtn.addEventListener('mousedown',   startAccel);
+        accelBtn.addEventListener('touchstart',  startAccel, { passive: true });
+        accelBtn.addEventListener('mouseup',     stopAccel);
+        accelBtn.addEventListener('mouseleave',  stopAccel);
+        accelBtn.addEventListener('touchend',    stopAccel);
+      }
+
+      // BRAKE — hold to slow down; hard braking triggers ABS frames
+      const brakeBtn = document.getElementById('brake-btn');
+      if (brakeBtn && !brakeBtn.disabled) {
+        const startBrake = () => {
+          clearInterval(window._accelInt);
+          clearInterval(window._brakeInt);
+          window._brakeInt = setInterval(() => {
+            const spd = window.clusterSpeed || 0;
+            if (spd > 0) {
+              updateSpeedNeedle(Math.max(0, spd - 2.2));
+              if (spd > 15) spawnCANFrame('ABS', 'high');  // ABS active at speed
+              spawnCANFrame('BCM', 'low');                  // brake lights
+            }
+            // RPM drop when braking to a stop
+            window.clusterRPM = Math.max(1500, window.clusterRPM - 80);
+            updateRPMNeedle(window.clusterRPM);
+          }, 40);
+        };
+        const stopBrake = () => { clearInterval(window._brakeInt); };
+        brakeBtn.addEventListener('mousedown',   startBrake);
+        brakeBtn.addEventListener('touchstart',  startBrake, { passive: true });
+        brakeBtn.addEventListener('mouseup',     stopBrake);
+        brakeBtn.addEventListener('mouseleave',  stopBrake);
+        brakeBtn.addEventListener('touchend',    stopBrake);
+      }
+    }
+
+    function updateRPMNeedle(rpm) {
+      const cx = 560, cy = 160, r = 108, startDeg = 220, endDeg = 500;
+      const pct = Math.min(1, Math.max(0, (rpm / 1000) / 8));
+      const fillDeg = startDeg + pct * (endDeg - startDeg);
+      const needle = document.getElementById('rpm-needle');
+      const arc    = document.getElementById('rpm-arc');
+      const val    = document.getElementById('rpm-val');
+      if (needle) needle.setAttribute('d', needlePath(cx, cy, r - 14, fillDeg));
+      if (arc)    arc.setAttribute('d',    arcPath(cx, cy, r, startDeg, fillDeg));
+      if (val)    val.textContent = Math.round(rpm / 1000 * 10) / 10;
+
+      // Write live RPM into file bytes and repaint hex viewer
+      if (fileData) {
+        writeUint16LE(fileData, 0x0322, rpm);
+        writeUint16LE(fileData, 0x1322, rpm);
+        paintHexViewport();
+      }
+    }
+
+    function updateSpeedNeedle(mph) {
+      window.clusterSpeed = mph;
+      const cx = 140, cy = 160, r = 108, startDeg = 220, endDeg = 500;
+      const pct = Math.min(1, Math.max(0, mph / 140));
+      const fillDeg = startDeg + pct * (endDeg - startDeg);
+      const needle = document.getElementById('spd-needle');
+      const arc    = document.getElementById('spd-arc');
+      const val    = document.getElementById('spd-val');
+      if (needle) needle.setAttribute('d', needlePath(cx, cy, r - 14, fillDeg));
+      if (arc)    arc.setAttribute('d', arcPath(cx, cy, r, startDeg, fillDeg));
+      if (val)    val.textContent = Math.round(mph);
+    }
+
+    function setGear(g) {
+      const prev = window.clusterGear || 'P';
+      if (prev === g) return;
+      // Shifting into P/N while moving → forced stop
+      if ((g === 'P' || g === 'N') && (window.clusterSpeed || 0) > 0) {
+        clearInterval(window._accelInt);
+        clearInterval(window._decelInt);
+        clearInterval(window._brakeInt);
+        updateSpeedNeedle(0);
+      }
+      window.clusterGear = g;
+      // CAN: TCM broadcasts gear change, ECM adjusts throttle map
+      spawnCANFrame('TCM', 'high');
+      setTimeout(() => spawnCANFrame('ECM', 'normal'), 70);
+      if (g === 'D' || g === 'R') {
+        setTimeout(() => spawnCANFrame('ABS', 'low'), 140);  // wheel sensors arm
+        setTimeout(() => spawnCANFrame('BCM', 'low'), 200);  // shift indicator lights
+      }
+      if (g === 'R') setTimeout(() => spawnCANFrame('BCM', 'normal'), 80); // reverse lamps
+      renderCluster();
+    }
+
+    function startEngineSequence() {
+      // ECM init broadcast flood — all modules wake up and respond
+      ['ECM','TCM','ABS','BCM','ICM','EPS'].forEach((n, i) =>
+        setTimeout(() => spawnCANFrame(n, 'high'), i * 80));
+      window.clusterEngineOn  = true;
+      window.clusterStarting  = true;
+      window.clusterRPM       = 0;
+      renderCluster();
+
+      // After 1.5s: lights-off, ramp to idle RPM
+      setTimeout(() => {
+        window.clusterStarting = false;
+        renderCluster();
+        // Ramp needle to idle (1500 rpm) then start continuous CAN traffic
+        let r = 0;
+        const rampInt = setInterval(() => {
+          r = Math.min(1500, r + 80);
+          window.clusterRPM = r;
+          updateRPMNeedle(r);
+          if (r >= 1500) { clearInterval(rampInt); _startCANIdleTraffic(); }
+        }, 30);
+      }, 1500);
+    }
+
+    // ── Realistic CAN Bus Frame Animation ─────────────────────────────────────
+    // Real CAN: a frame originates from ONE node, propagates BOTH directions
+    // simultaneously on the differential pair (CAN H + CAN L together).
+    // Other nodes receive the frame; high-priority frames pre-empt lower ones.
+
+    const _CAN = {
+      X1: 61, X2: 619,   // bus extents
+      HY: 35, LY: 52,    // CAN H and CAN L Y positions
+      packets: [],
+      raf: null,
+      accelTimer: null,
+      idleTimers: [],
+      // Node X positions match diagram
+      nodes: { ECM: 90, TCM: 190, ABS: 290, BCM: 390, ICM: 490, EPS: 585 }
+    };
+
+    // Spawn a CAN frame from a specific node — travels both directions on both lines
+    function spawnCANFrame(nodeKey, priority) {
+      const grp = document.getElementById('can-packets');
+      if (!grp) return;
+      const srcX = _CAN.nodes[nodeKey] || 340;
+      priority = priority || 'normal';
+
+      // Priority → visual properties
+      const cfg = {
+        high:   { bits: 5, spd: 8,   opacity: 0.92 },
+        normal: { bits: 3, spd: 5.5, opacity: 0.72 },
+        low:    { bits: 2, spd: 4,   opacity: 0.38 },
+      }[priority] || { bits: 3, spd: 5.5, opacity: 0.72 };
+
+      // Left propagation
+      if (srcX > _CAN.X1 + 15) {
+        _emitFrame(grp, srcX, _CAN.HY, -1, '#FF4500', cfg);
+        _emitFrame(grp, srcX, _CAN.LY, -1, '#27c93f', cfg);
+      }
+      // Right propagation
+      if (srcX < _CAN.X2 - 15) {
+        _emitFrame(grp, srcX, _CAN.HY,  1, '#FF4500', cfg);
+        _emitFrame(grp, srcX, _CAN.LY,  1, '#27c93f', cfg);
+      }
+
+      if (!_CAN.raf) _runCANAnim();
+    }
+
+    // Build a frame as a lead dot + trailing bits (simulates bit stream)
+    function _emitFrame(grp, srcX, y, dir, color, cfg) {
+      for (let b = 0; b < cfg.bits; b++) {
+        const trailPx = b * (dir > 0 ? -7 : 7);
+        const dotX    = srcX + trailPx;
+        if (dotX < _CAN.X1 - 12 || dotX > _CAN.X2 + 12) continue;
+
+        const el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        const r  = b === 0 ? 3.4 : Math.max(1.2, 2.8 - b * 0.45);
+        const op = (cfg.opacity * (1 - b * 0.18)).toFixed(2);
+        el.setAttribute('r',       r.toFixed(1));
+        el.setAttribute('fill',    color);
+        el.setAttribute('cx',      dotX);
+        el.setAttribute('cy',      y);
+        el.setAttribute('opacity', op);
+        if (b === 0) el.style.filter = `drop-shadow(0 0 5px ${color})`;
+        grp.appendChild(el);
+
+        // Each bit travels slightly slower than the one in front (natural dispersion)
+        const spd = cfg.spd - b * 0.3;
+        _CAN.packets.push({ el, x: dotX, y, dir, spd: Math.max(1.5, spd) });
+      }
+    }
+
+    function _runCANAnim() {
+      if (_CAN.packets.length === 0) { _CAN.raf = null; return; }
+      _CAN.packets = _CAN.packets.filter(p => {
+        p.x += p.dir * p.spd;
+        const done = p.dir > 0 ? p.x > _CAN.X2 + 10 : p.x < _CAN.X1 - 10;
+        if (done) { p.el.remove(); return false; }
+        p.el.setAttribute('cx', p.x.toFixed(1));
+        return true;
+      });
+      _CAN.raf = requestAnimationFrame(_runCANAnim);
+    }
+
+    // Periodic background traffic while engine runs (ECM/ABS/BCM broadcast continuously)
+    function _startCANIdleTraffic() {
+      _stopCANIdleTraffic();
+      const schedule = [
+        { node: 'ECM', pri: 'low', ms: 250  },  // RPM, throttle pos
+        { node: 'ECM', pri: 'low', ms: 380  },  // vehicle speed
+        { node: 'ABS', pri: 'low', ms: 620  },  // wheel speeds
+        { node: 'TCM', pri: 'low', ms: 490  },  // gear/torque
+        { node: 'BCM', pri: 'low', ms: 1100 },  // body status
+        { node: 'ICM', pri: 'low', ms: 2000 },  // display updates
+      ];
+      _CAN.idleTimers = schedule.map(s =>
+        setInterval(() => spawnCANFrame(s.node, s.pri), s.ms)
+      );
+    }
+    function _stopCANIdleTraffic() {
+      _CAN.idleTimers.forEach(t => clearInterval(t));
+      _CAN.idleTimers = [];
+    }
+
+    // ── Dashboard interaction hooks ────────────────────────────────────────────
+
+    // Cluster button clicks
+    document.getElementById('cluster-panel').addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn || btn.id === 'accel-btn') return;
+
+      if (btn.id === 'engine-btn' && window.clusterEngineOn) {
+        // Engine STOP — ECM broadcasts shutdown to all modules
+        ['ECM','TCM','ABS','BCM','ICM'].forEach((n, i) =>
+          setTimeout(() => spawnCANFrame(n, 'normal'), i * 90));
+        _stopCANIdleTraffic();
+      } else if (btn.dataset && btn.dataset.light) {
+        // Light toggle — BCM command, ICM updates display
+        spawnCANFrame('BCM', 'normal');
+        setTimeout(() => spawnCANFrame('ICM', 'low'), 140);
+      }
+      // All other buttons get a generic cluster-panel message
+    });
+
+    // Accel held — ECM + TCM trading RPM/torque frames rapidly
+    document.getElementById('cluster-panel').addEventListener('mousedown', e => {
+      if (!e.target.closest('#accel-btn')) return;
+      clearInterval(_CAN.accelTimer);
+      _CAN.accelTimer = setInterval(() => {
+        spawnCANFrame('ECM', 'normal');
+        setTimeout(() => spawnCANFrame('TCM', 'normal'), 65);
+      }, 170);
+    });
+    document.getElementById('cluster-panel').addEventListener('touchstart', e => {
+      if (!e.target.closest('#accel-btn')) return;
+      clearInterval(_CAN.accelTimer);
+      _CAN.accelTimer = setInterval(() => {
+        spawnCANFrame('ECM', 'normal');
+        setTimeout(() => spawnCANFrame('TCM', 'normal'), 65);
+      }, 170);
+    }, { passive: true });
+    const _stopAccelCAN = () => { clearInterval(_CAN.accelTimer); _CAN.accelTimer = null; };
+    document.addEventListener('mouseup',  _stopAccelCAN);
+    document.addEventListener('touchend', _stopAccelCAN);
+
+    // Param APPLY — ICM writes value to bus
+    document.getElementById('reader-main')?.addEventListener('click', e => {
+      if (e.target.closest('#apply-btn, .param-apply-btn')) {
+        spawnCANFrame('ICM', 'high');
+        setTimeout(() => spawnCANFrame('ECM', 'normal'), 120);
+      }
+    });
+
+    function extractStrings(buf) {
+      const results = new Set();
+      let current = '';
+      for (let i = 0; i < buf.length; i++) {
+        const c = buf[i];
+        if (c >= 32 && c < 127) {
+          current += String.fromCharCode(c);
+        } else {
+          if (current.length >= 5) results.add(current.trim());
+          current = '';
+        }
+      }
+      // Deduplicate (file often has a primary + backup copy)
+      return [...results];
+    }
+  </script>
+</body>
+</html>

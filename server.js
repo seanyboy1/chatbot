@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { connectDB, ActivityLog, Session, User, ChatSession, ServiceRequest, MeshNode, SikeNode } from './db.js';
+import { connectDB, ActivityLog, Session, User, ChatSession, ServiceRequest, MeshNode, SikeNode, AdminSession } from './db.js';
 import crypto from 'crypto';
 import fs from 'fs';
 import multer from 'multer';
@@ -13,7 +13,7 @@ import cors from 'cors';
 import { parse as parseCookieLib } from 'cookie';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = process.env.ELECTRON_RESOURCE_DIR || dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -132,17 +132,28 @@ const adminSessions = new Map(); // token → expiresAt
 const ADMIN_SESSION_TTL = 12 * 60 * 60 * 1000; // 12 hours
 
 // ── Admin page guard (server-side, checks httpOnly cookie) ───────────────────
-function requireAdminPage(req, res, next) {
+async function requireAdminPage(req, res, next) {
   const cookies = parseCookies(req.headers.cookie);
   const token = cookies.admin_session;
-  if (!token) return res.redirect('/login');
+  if (!token) return res.redirect('/');
+
+  // Check in-memory first (fast path)
   const expiry = adminSessions.get(token);
-  if (!expiry || Date.now() > expiry) {
-    adminSessions.delete(token);
-    res.setHeader('Set-Cookie', 'admin_session=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict');
-    return res.redirect('/login');
-  }
-  next();
+  if (expiry && Date.now() <= expiry) return next();
+
+  // Fall back to MongoDB (survives server restarts)
+  try {
+    await connectDB();
+    const dbSession = await AdminSession.findOne({ token });
+    if (dbSession && dbSession.expiresAt > new Date()) {
+      adminSessions.set(token, dbSession.expiresAt.getTime()); // warm in-memory cache
+      return next();
+    }
+  } catch { /* if DB unavailable, fall through to deny */ }
+
+  adminSessions.delete(token);
+  res.setHeader('Set-Cookie', 'admin_session=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict');
+  return res.redirect('/');
 }
 
 // ── Admin password: migrate plaintext → hashed on startup ───────────────────
@@ -366,6 +377,10 @@ app.get('/bluesike', requireAdminPage, (req, res) => {
   res.sendFile(join(__dirname, 'public', 'bluesike.html'));
 });
 
+app.get('/can-reader', requireAdminPage, (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'can-reader.html'));
+});
+
 // ── Blue-SIKE Nodes ──────────────────────────────────────────────────────────
 app.get('/api/bluesike/nodes', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
@@ -469,7 +484,10 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
       : (adminPlain && password === adminPlain);
     if (valid) {
       const token = 'admin-' + crypto.randomBytes(24).toString('hex');
-      adminSessions.set(token, Date.now() + ADMIN_SESSION_TTL);
+      const expiresAt = new Date(Date.now() + ADMIN_SESSION_TTL);
+      adminSessions.set(token, expiresAt.getTime());
+      // Persist to MongoDB so session survives server restarts
+      connectDB().then(() => AdminSession.create({ token, expiresAt })).catch(() => {});
       const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
       const cookieFlags = `HttpOnly; SameSite=Strict; Path=/; Max-Age=${ADMIN_SESSION_TTL / 1000}${isSecure ? '; Secure' : ''}`;
       res.setHeader('Set-Cookie', `admin_session=${token}; ${cookieFlags}`);

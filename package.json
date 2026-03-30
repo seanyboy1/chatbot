@@ -1,11 +1,14 @@
 {
-  "name": "chatbot",
+  "name": "can-reader",
   "version": "1.0.0",
-  "description": "Matrix-style terminal chatbot",
-  "main": "server.js",
+  "description": "CAN Reader — ECU binary file editor",
+  "main": "electron-main.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "app": "electron electron-main.js",
+    "build:mac": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --dir",
+    "build:win": "electron-builder --win"
   },
   "keywords": [],
   "author": "",
@@ -22,5 +25,40 @@
     "mongoose": "^9.2.0",
     "multer": "^2.1.1",
     "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "electron": "^41.1.0",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.bluenet.canreader",
+    "productName": "CAN Reader",
+    "files": [
+      "electron-main.js",
+      "server.js",
+      "db.js",
+      "public/**/*",
+      "node_modules/**/*",
+      ".env"
+    ],
+    "asarUnpack": [
+      "package.json",
+      "server.js",
+      "db.js",
+      ".env",
+      "public/**/*",
+      "node_modules/**/*"
+    ],
+    "afterPack": "./afterPack.cjs",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "build/icon.icns",
+      "target": [{"target": "dir", "arch": ["arm64"]}],
+      "identity": null
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    }
   }
 }
