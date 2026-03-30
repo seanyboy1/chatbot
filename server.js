@@ -1,5 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
+import net from 'net';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { connectDB, ActivityLog, Session, User, ChatSession, ServiceRequest, MeshNode, SikeNode, AdminSession } from './db.js';
@@ -48,16 +51,24 @@ app.use(helmet({
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+// Default to localhost only when no origins are configured — never open with credentials
+const defaultOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow same-origin, non-browser, or explicitly whitelisted origins
-    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) return cb(null, true);
+    const list = allowedOrigins.length > 0 ? allowedOrigins : defaultOrigins;
+    if (!origin || list.includes(origin)) return cb(null, true);
     cb(new Error('CORS not allowed'));
   },
   credentials: true,
 }));
 
 app.use(express.json({ limit: '50kb' }));
+
+// Validate imageUrl is a safe local upload path (prevents javascript:, data:, external URLs)
+function validateImageUrl(url) {
+  if (!url) return true;
+  return /^\/uploads\/[a-zA-Z0-9_\-/.]+$/.test(url);
+}
 
 // Skip ngrok browser warning for all responses (allows API calls from mobile to pass through)
 app.use((req, res, next) => {
@@ -123,6 +134,14 @@ const uploadLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 20,
   message: { error: 'Too many uploads.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  message: { error: 'Too many registration attempts. Try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -334,9 +353,12 @@ app.post('/api/mesh/nodes', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
   const { nodeId, name, lat, lon, desc, online, imageUrl } = req.body;
   if (!nodeId || !name || lat == null || lon == null) return res.status(400).json({ error: 'nodeId, name, lat, lon required.' });
+  if (!validateImageUrl(imageUrl)) return res.status(400).json({ error: 'Invalid imageUrl.' });
+  const latN = parseFloat(lat), lonN = parseFloat(lon);
+  if (isNaN(latN) || latN < -90 || latN > 90 || isNaN(lonN) || lonN < -180 || lonN > 180) return res.status(400).json({ error: 'Invalid coordinates.' });
   try {
     await connectDB();
-    const node = await MeshNode.create({ nodeId, name, lat, lon, desc, imageUrl, online: online !== false });
+    const node = await MeshNode.create({ nodeId, name, lat: latN, lon: lonN, desc, imageUrl, online: online !== false });
     res.json({ node });
   } catch (err) {
     res.status(500).json({ error: 'Failed to save node.' });
@@ -346,6 +368,7 @@ app.post('/api/mesh/nodes', requireAuth, async (req, res) => {
 app.put('/api/mesh/nodes/:nodeId', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
   const { name, desc, online, imageUrl } = req.body;
+  if (imageUrl !== undefined && !validateImageUrl(imageUrl)) return res.status(400).json({ error: 'Invalid imageUrl.' });
   try {
     await connectDB();
     const update = {};
@@ -397,9 +420,12 @@ app.post('/api/bluesike/nodes', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
   const { nodeId, name, lat, lon, desc, online, imageUrl } = req.body;
   if (!nodeId || !name || lat == null || lon == null) return res.status(400).json({ error: 'nodeId, name, lat, lon required.' });
+  if (!validateImageUrl(imageUrl)) return res.status(400).json({ error: 'Invalid imageUrl.' });
+  const latN = parseFloat(lat), lonN = parseFloat(lon);
+  if (isNaN(latN) || latN < -90 || latN > 90 || isNaN(lonN) || lonN < -180 || lonN > 180) return res.status(400).json({ error: 'Invalid coordinates.' });
   try {
     await connectDB();
-    const node = await SikeNode.create({ nodeId, name, lat, lon, desc, imageUrl, online: online !== false });
+    const node = await SikeNode.create({ nodeId, name, lat: latN, lon: lonN, desc, imageUrl, online: online !== false });
     res.json({ node });
   } catch (err) {
     res.status(500).json({ error: 'Failed to save node.' });
@@ -409,14 +435,15 @@ app.post('/api/bluesike/nodes', requireAuth, async (req, res) => {
 app.put('/api/bluesike/nodes/:nodeId', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
   const { name, desc, online, lat, lon, imageUrl } = req.body;
+  if (imageUrl !== undefined && !validateImageUrl(imageUrl)) return res.status(400).json({ error: 'Invalid imageUrl.' });
   try {
     await connectDB();
     const update = {};
     if (name     !== undefined) update.name     = name;
     if (desc     !== undefined) update.desc     = desc;
     if (online   !== undefined) update.online   = online;
-    if (lat      !== undefined) update.lat      = lat;
-    if (lon      !== undefined) update.lon      = lon;
+    if (lat      !== undefined) update.lat      = parseFloat(lat);
+    if (lon      !== undefined) update.lon      = parseFloat(lon);
     if (imageUrl !== undefined) update.imageUrl = imageUrl;
     const node = await SikeNode.findOneAndUpdate({ nodeId: req.params.nodeId }, update, { new: true });
     if (!node) return res.status(404).json({ error: 'Node not found.' });
@@ -438,7 +465,7 @@ app.delete('/api/bluesike/nodes/:nodeId', requireAuth, async (req, res) => {
 });
 
 // ── Auth: Register ──────────────────────────────────────────────────────────
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', registerLimiter, async (req, res) => {
   const { name, email, username, phone, password, service } = req.body;
   if (!name || !email || !username || !password) {
     return res.status(400).json({ error: 'Name, email, username, and password are required.' });
@@ -502,7 +529,12 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     if (!user) return res.status(401).json({ error: 'Invalid credentials.' });
 
     const hash = hashPassword(password, user.salt);
-    if (hash !== user.passwordHash) return res.status(401).json({ error: 'Invalid credentials.' });
+    if (hash !== user.passwordHash) {
+      const failIp = req.headers['x-forwarded-for'] || req.ip;
+      console.warn(`[auth] Failed login attempt for "${identifier}" from ${failIp}`);
+      ActivityLog.create({ ip: failIp, action: 'login_failed', message: `Failed login: ${identifier}`, userType: 'unknown', sessionId: 'none' }).catch(() => {});
+      return res.status(401).json({ error: 'Invalid credentials.' });
+    }
 
     // Enforce service separation
     if (service && user.service !== service) {
@@ -1079,6 +1111,97 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+const httpServer = createServer(app);
+
+// ── WebSocket OBD-II TCP proxy ────────────────────────────────────────────────
+// Browser connects to ws://localhost:3000/ws/obd
+// Sends JSON: { connect: "192.168.0.10", port: 35000 }
+// Then sends/receives raw ELM327 strings
+const wss = new WebSocketServer({ server: httpServer, path: '/ws/obd' });
+
+// Allowed OBD-II adapter ports only — prevents internal network port scanning
+const ALLOWED_OBD_PORTS = new Set([23, 35000, 3000, 8080, 1235]);
+
+// Per-IP connection tracking (max 2 concurrent WS connections per IP)
+const wsConnsByIp = new Map();
+
+wss.on('connection', (ws, req) => {
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress;
+
+  // Enforce per-IP connection limit
+  const current = wsConnsByIp.get(clientIp) || 0;
+  if (current >= 2) {
+    ws.close(1008, 'Too many connections');
+    return;
+  }
+  wsConnsByIp.set(clientIp, current + 1);
+
+  let tcp = null;
+  let ready = false;
+  let msgCount = 0;
+
+  const send = (msg) => { if (ws.readyState === ws.OPEN) ws.send(msg); };
+
+  ws.on('message', (raw) => {
+    // Limit message rate — OBD polling doesn't need more than 100/s
+    if (++msgCount > 500) { ws.close(1008, 'Rate limit'); return; }
+    setTimeout(() => msgCount = Math.max(0, msgCount - 1), 1000);
+
+    const msg = raw.toString().slice(0, 256); // cap message length
+
+    // First message must be the connection config JSON
+    if (!ready) {
+      try {
+        const { connect: host, port } = JSON.parse(msg);
+        if (!host || !port) return send(JSON.stringify({ error: 'Missing host or port' }));
+
+        // Validate: only allow private/local IPs (no public internet, no link-local)
+        const privateRe = /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.)/;
+        if (!privateRe.test(host)) {
+          return send(JSON.stringify({ error: 'Only private/local IP addresses allowed' }));
+        }
+
+        // Restrict to known OBD adapter ports only
+        const portNum = parseInt(port, 10);
+        if (!ALLOWED_OBD_PORTS.has(portNum)) {
+          return send(JSON.stringify({ error: `Port ${portNum} not allowed. Use: ${[...ALLOWED_OBD_PORTS].join(', ')}` }));
+        }
+
+        tcp = new net.Socket();
+        tcp.setEncoding('utf8');
+        tcp.setTimeout(10000);
+
+        tcp.connect(portNum, host, () => {
+          ready = true;
+          send(JSON.stringify({ connected: true, host, port: portNum }));
+        });
+
+        tcp.on('data', (data) => send(data.slice(0, 4096))); // cap response size
+        tcp.on('error', (err) => send(JSON.stringify({ error: err.message })));
+        tcp.on('timeout', () => { send(JSON.stringify({ error: 'TCP timeout' })); tcp.destroy(); });
+        tcp.on('close', () => send(JSON.stringify({ disconnected: true })));
+
+      } catch {
+        send(JSON.stringify({ error: 'Invalid connect message' }));
+      }
+      return;
+    }
+
+    // Forward raw string to ELM327 TCP socket — strip control chars except \r
+    const safe = msg.replace(/[^\x20-\x7E\r]/g, '');
+    if (tcp && !tcp.destroyed) tcp.write(safe);
+  });
+
+  const cleanup = () => {
+    if (tcp) tcp.destroy();
+    const n = wsConnsByIp.get(clientIp) || 1;
+    if (n <= 1) wsConnsByIp.delete(clientIp);
+    else wsConnsByIp.set(clientIp, n - 1);
+  };
+  ws.on('close', cleanup);
+  ws.on('error', cleanup);
+});
+
+httpServer.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

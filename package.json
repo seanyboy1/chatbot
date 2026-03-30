@@ -24,7 +24,8 @@
     "mongodb": "^7.1.0",
     "mongoose": "^9.2.0",
     "multer": "^2.1.1",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "ws": "^8.20.0"
   },
   "devDependencies": {
     "electron": "^41.1.0",
@@ -53,7 +54,14 @@
     "mac": {
       "category": "public.app-category.utilities",
       "icon": "build/icon.icns",
-      "target": [{"target": "dir", "arch": ["arm64"]}],
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
       "identity": null
     },
     "win": {
