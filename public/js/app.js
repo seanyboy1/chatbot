@@ -310,7 +310,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const profileCard = document.querySelector('.profile-card');
   const customersCard = document.querySelector('.customers-card');
   const requestsCard = document.querySelector('.requests-card');
-
   const dashMain = document.querySelector('.dashboard-main');
   const allCards = [systemChooserCard, systemCard, statsCard, actionsCard, activityCard, profileCard, customersCard, requestsCard];
 
@@ -365,6 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('chooser-mesh')?.addEventListener('click', () => {
     window.location.href = '/mesh';
   });
+
 
   // ── Admin Profile Form ──────────────────────────────────────────────────
   const apSubmit = document.getElementById('ap-submit');

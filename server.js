@@ -404,6 +404,10 @@ app.get('/can-reader', requireAdminPage, (req, res) => {
   res.sendFile(join(__dirname, 'public', 'can-reader.html'));
 });
 
+app.get('/tdisplay', requireAdminPage, (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'tdisplay.html'));
+});
+
 // ── Blue-SIKE Nodes ──────────────────────────────────────────────────────────
 app.get('/api/bluesike/nodes', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
@@ -462,6 +466,27 @@ app.delete('/api/bluesike/nodes/:nodeId', requireAuth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete node.' });
   }
+});
+
+// ── T-Display P4 heartbeat ────────────────────────────────────────────────────
+// Firmware POSTs here periodically; dashboard GETs the latest snapshot.
+let tdisplayStatus = null; // in-memory; resets on server restart
+
+app.post('/api/tdisplay/heartbeat', (req, res) => {
+  const { ip, eth_link, link_speed, link_duplex, uptime_s } = req.body || {};
+  tdisplayStatus = {
+    ip:          ip         ? String(ip).slice(0, 40)         : null,
+    eth_link:    !!eth_link,
+    link_speed:  typeof link_speed === 'number' ? Math.trunc(link_speed) : null,
+    link_duplex: link_duplex === 'full' || link_duplex === 'half' ? link_duplex : null,
+    uptime_s:    typeof uptime_s === 'number' ? Math.trunc(uptime_s) : null,
+    last_seen:   new Date().toISOString(),
+  };
+  res.json({ ok: true });
+});
+
+app.get('/api/tdisplay/status', requireAuth, (req, res) => {
+  res.json(tdisplayStatus || { offline: true });
 });
 
 // ── Auth: Register ──────────────────────────────────────────────────────────

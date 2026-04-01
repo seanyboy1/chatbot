@@ -1,0 +1,53 @@
+# ── Target ─────────────────────────────────────────────────────────────────────
+CONFIG_IDF_TARGET="esp32p4"
+
+# ── FreeRTOS ───────────────────────────────────────────────────────────────────
+CONFIG_FREERTOS_HZ=1000
+CONFIG_FREERTOS_UNICORE=n
+
+# ── Flash ──────────────────────────────────────────────────────────────────────
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="16MB"
+CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
+
+# ── PSRAM (ESP32-P4 has built-in 32 MB) ───────────────────────────────────────
+CONFIG_ESP_PSRAM_SUPPORT=y
+CONFIG_SPIRAM_USE_MALLOC=y
+
+# ── WiFi ───────────────────────────────────────────────────────────────────────
+CONFIG_ESP_WIFI_ENABLED=y
+CONFIG_ESP_WIFI_AUTH_WPA2_PSK=y
+
+# ── Ethernet ───────────────────────────────────────────────────────────────────
+CONFIG_ETH_ENABLED=y
+CONFIG_ETH_USE_ESP32_EMAC=y
+CONFIG_ETH_PHY_LAN8720=y
+CONFIG_ETH_PHY_NEGOTIATION_TIMEOUT_MS=4000
+
+# ── LCD RGB (ESP32-P4 built-in controller) ─────────────────────────────────────
+CONFIG_LCD_RGB_ISR_IRAM_SAFE=y
+
+# ── LVGL 9 ─────────────────────────────────────────────────────────────────────
+CONFIG_LV_MEM_SIZE_KILOBYTES=512
+CONFIG_LV_COLOR_DEPTH_16=y
+CONFIG_LV_USE_LABEL=y
+CONFIG_LV_USE_OBJ=y
+CONFIG_LV_USE_ARC=y
+CONFIG_LV_USE_BAR=y
+CONFIG_LV_USE_LINE=y
+CONFIG_LV_USE_ANIM=y
+# Fonts — enable all sizes used in ui.c
+CONFIG_LV_FONT_MONTSERRAT_12=y
+CONFIG_LV_FONT_MONTSERRAT_14=y
+CONFIG_LV_FONT_MONTSERRAT_16=y
+CONFIG_LV_FONT_MONTSERRAT_20=y
+CONFIG_LV_FONT_MONTSERRAT_24=y
+CONFIG_LV_FONT_MONTSERRAT_28=y
+CONFIG_LV_FONT_MONTSERRAT_48=y
+
+# ── Stack ──────────────────────────────────────────────────────────────────────
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# ── Logging ────────────────────────────────────────────────────────────────────
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+CONFIG_LOG_MAXIMUM_LEVEL_DEBUG=y

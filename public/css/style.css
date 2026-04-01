@@ -1025,12 +1025,13 @@ body {
 }
 
 .system-chooser-options {
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
 
 .system-chooser-btn {
-  flex: 1;
+  position: relative;
   position: relative;
   z-index: 1;
   background: rgba(93,173,226,0.04);

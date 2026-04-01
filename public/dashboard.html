@@ -47,21 +47,25 @@
       z-index: 1;
     }
 
-    /* Cross/plus layout — 3×3 grid, corners empty */
+    /* 2-row, 3-column grid */
     .dash-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(3, auto);
+      grid-template-rows: repeat(2, auto);
       gap: 18px;
       max-width: 740px;
       width: 100%;
     }
 
-    .dash-card-mesh   { grid-column: 2; grid-row: 1; }  /* top center    */
-    .dash-card-net    { grid-column: 1; grid-row: 2; }  /* middle left   */
-    .dash-card-center { grid-column: 2; grid-row: 2; }  /* center hub    */
-    .dash-card-sike   { grid-column: 3; grid-row: 2; }  /* middle right  */
-    .dash-card-tip    { grid-column: 2; grid-row: 3; }  /* bottom center */
+    /* Row 1: tools */
+    .dash-card-sike     { grid-column: 1; grid-row: 1; }
+    .dash-card-tdisplay { grid-column: 2; grid-row: 1; }
+    .dash-card-center   { grid-column: 3; grid-row: 1; }  /* CAN Reader */
+
+    /* Row 2: services */
+    .dash-card-mesh     { grid-column: 1; grid-row: 2; }
+    .dash-card-net      { grid-column: 2; grid-row: 2; }
+    .dash-card-tip      { grid-column: 3; grid-row: 2; }
 
     .dash-center {
       grid-column: 2;
@@ -129,6 +133,7 @@
       .dash-card-net,
       .dash-card-sike,
       .dash-card-tip,
+      .dash-card-tdisplay,
       .dash-card-can { grid-column: 1; grid-row: auto; }
     }
 
@@ -429,6 +434,61 @@
           </div>
           <div class="dash-card-name">CAN READER</div>
           <div class="dash-card-desc">ECU / MODULE FILES<br>BIN VIEWER & EDITOR</div>
+          <div class="dash-card-arrow">ENTER →</div>
+        </a>
+
+        <!-- T-Display P4 — row 1 center -->
+        <a href="/tdisplay" class="dash-card dash-card-tdisplay">
+          <div class="dash-card-icon">
+            <svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" style="color:#FF4500;">
+              <!-- Cable body left -->
+              <line x1="2" y1="15" x2="16" y2="15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+              <!-- Left RJ45 plug head -->
+              <rect x="16" y="10" width="10" height="10" rx="1.2" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.3"/>
+              <!-- Left plug pins -->
+              <line x1="18.5" y1="10" x2="18.5" y2="14" stroke="#27c93f" stroke-width="0.9"/>
+              <line x1="21"   y1="10" x2="21"   y2="14" stroke="#27c93f" stroke-width="0.9"/>
+              <line x1="23.5" y1="10" x2="23.5" y2="14" stroke="#27c93f" stroke-width="0.9"/>
+              <!-- Left plug latch -->
+              <rect x="18" y="19" width="6" height="2" rx="0.5" fill="currentColor" fill-opacity="0.4"/>
+              <!-- Gap / test zone -->
+              <line x1="26" y1="15" x2="34" y2="15" stroke="#27c93f" stroke-width="1" stroke-dasharray="2 2" opacity="0.7"/>
+              <circle cx="30" cy="15" r="2.5" fill="none" stroke="#27c93f" stroke-width="0.8" opacity="0.5"/>
+              <circle cx="30" cy="15" r="1" fill="#27c93f" opacity="0.9">
+                <animate attributeName="opacity" values="0.9;0.2;0.9" dur="1.4s" repeatCount="indefinite"/>
+              </circle>
+              <!-- Right RJ45 plug head -->
+              <rect x="34" y="10" width="10" height="10" rx="1.2" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.3"/>
+              <!-- Right plug pins -->
+              <line x1="36.5" y1="10" x2="36.5" y2="14" stroke="#27c93f" stroke-width="0.9"/>
+              <line x1="39"   y1="10" x2="39"   y2="14" stroke="#27c93f" stroke-width="0.9"/>
+              <line x1="41.5" y1="10" x2="41.5" y2="14" stroke="#27c93f" stroke-width="0.9"/>
+              <!-- Right plug latch -->
+              <rect x="36" y="19" width="6" height="2" rx="0.5" fill="currentColor" fill-opacity="0.4"/>
+              <!-- Cable body right -->
+              <line x1="44" y1="15" x2="58" y2="15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+              <!-- Data packets L→R -->
+              <rect width="4" height="2" rx="1" fill="#27c93f" opacity="0.95">
+                <animateMotion dur="1.6s" repeatCount="indefinite" begin="0s"
+                  path="M2,15 L16,15 L21,15 L26,15 L34,15 L39,15 L44,15 L58,15"/>
+              </rect>
+              <rect width="4" height="2" rx="1" fill="#27c93f" opacity="0.95">
+                <animateMotion dur="1.6s" repeatCount="indefinite" begin="0.55s"
+                  path="M2,15 L16,15 L21,15 L26,15 L34,15 L39,15 L44,15 L58,15"/>
+              </rect>
+              <!-- Data packets R→L -->
+              <rect width="4" height="2" rx="1" fill="#FF4500" opacity="0.85">
+                <animateMotion dur="1.9s" repeatCount="indefinite" begin="0.3s"
+                  path="M58,15 L44,15 L39,15 L34,15 L26,15 L21,15 L16,15 L2,15"/>
+              </rect>
+              <rect width="4" height="2" rx="1" fill="#FF4500" opacity="0.85">
+                <animateMotion dur="1.9s" repeatCount="indefinite" begin="1.2s"
+                  path="M58,15 L44,15 L39,15 L34,15 L26,15 L21,15 L16,15 L2,15"/>
+              </rect>
+            </svg>
+          </div>
+          <div class="dash-card-name">T-DISPLAY P4</div>
+          <div class="dash-card-desc">ETH CABLE TESTER<br>LINK DIAGNOSTICS</div>
           <div class="dash-card-arrow">ENTER →</div>
         </a>
 
