@@ -6,13 +6,18 @@ idf_component_register(
         "."
     REQUIRES
         freertos
-        esp_wifi
-        esp_eth
-        esp_event
-        esp_netif
-        nvs_flash
-        esp_http_client
         driver
         esp_lcd
-        lvgl
+        rm69a10
+        esp_hw_support
+        esp_timer
+        esp_eth
+        esp_netif
+        esp_event
+        esp_http_client
+        nvs_flash
+        newlib
+        lwip
+        esp_adc
+        lvgl__lvgl
 )
