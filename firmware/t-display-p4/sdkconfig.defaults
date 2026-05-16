@@ -28,10 +28,21 @@ CONFIG_SPIRAM_USE_MALLOC=y
 CONFIG_CACHE_L2_CACHE_256KB=y
 CONFIG_CACHE_L2_CACHE_LINE_128B=y
 
-# ── WiFi — disabled until C6 has compatible esp_hosted slave firmware ──────────
-# The C6 factory firmware is incompatible with esp_hosted SDIO — causes SDIO storm.
-# Flash C6 via PROG_C6 header with ~/esp_hosted_slave/build/network_adapter.bin,
-# then add espressif/esp_hosted + esp_wifi_remote to main/idf_component.yml.
+# ── WiFi — ESP32-C6 via esp_hosted SDIO (slot 1, 40 MHz, 4-bit) ───────────────
+CONFIG_ESP_WIFI_REMOTE_LIBRARY_HOSTED=y
+CONFIG_ESP_HOSTED_SDIO_HOST_INTERFACE=y
+CONFIG_ESP_HOSTED_CP_TARGET_ESP32C6=y
+CONFIG_ESP_HOSTED_SDIO_SLOT_1=y
+CONFIG_ESP_HOSTED_SDIO_4_BIT_BUS=y
+CONFIG_ESP_HOSTED_SDIO_CLOCK_FREQ_KHZ=40000
+CONFIG_ESP_HOSTED_SDIO_PIN_CLK=18
+CONFIG_ESP_HOSTED_SDIO_PIN_CMD=19
+CONFIG_ESP_HOSTED_SDIO_PIN_D0=14
+CONFIG_ESP_HOSTED_SDIO_PIN_D1=15
+CONFIG_ESP_HOSTED_SDIO_PIN_D2=16
+CONFIG_ESP_HOSTED_SDIO_PIN_D3=17
+# GPIO 54 unconnected — C6 EN managed by XL9535 instead
+CONFIG_ESP_HOSTED_SDIO_GPIO_RESET_SLAVE=54
 
 # ── Ethernet ───────────────────────────────────────────────────────────────────
 CONFIG_ETH_ENABLED=y
@@ -75,6 +86,10 @@ CONFIG_ESP_TASK_WDT_TIMEOUT_S=30
 # ── LVGL snapshot (screenshot) ─────────────────────────────────────────────────
 CONFIG_LV_USE_SNAPSHOT=y
 
+# ── TLS certificate bundle (needed for HTTPS weather/alerts APIs) ──────────────
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_CMN=y
+
 # ── FatFS / SDMMC — keep sector buffers in internal SRAM (IDMAC DMA requirement) ─
 # PSRAM DMA causes CMD17 DRTO+FRUN on ESP32-P4 despite SOC_SDMMC_PSRAM_DMA_CAPABLE=1
 CONFIG_FATFS_ALLOC_PREFER_EXTRAM=n
@@ -82,3 +97,5 @@ CONFIG_FATFS_ALLOC_PREFER_EXTRAM=n
 CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=1024
 # SD cards use 512-byte sectors; fixed-size avoids 4 KB window in internal SRAM
 CONFIG_FATFS_SECTOR_512=y
+
+# ── ESP-HOSTED SDIO — no GPIO reset (C6 reset managed by XL9535 not a direct GPIO) ──

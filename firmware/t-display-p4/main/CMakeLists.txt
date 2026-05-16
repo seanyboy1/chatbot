@@ -7,6 +7,7 @@ idf_component_register(
     REQUIRES
         freertos
         driver
+        esp_wifi
         esp_lcd
         rm69a10
         esp_hw_support
@@ -25,5 +26,6 @@ idf_component_register(
         vfs
         lvgl__lvgl
         esp_system
-        espressif__esp_serial_slave_link
+        esp_driver_i2s
+        mbedtls
 )

@@ -7,8 +7,7 @@ dependencies:
     rules:
       - if: "target == esp32p4"
 
-  # WiFi via ESP32-C6 coprocessor — must match C6 factory slave firmware version
-  espressif/esp_hosted:
-    version: "2.0.17"
+  # WiFi remote — routes esp_wifi API to ESP32-C6 via SDIO (esp_hosted, slot 1)
   espressif/esp_wifi_remote:
-    version: "^1.1"
+    version: "^1.5.2"
+
