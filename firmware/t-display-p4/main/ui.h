@@ -87,5 +87,9 @@ void ui_set_cable_test_cb(ui_cable_test_cb_t cb);
 void ui_cable_set_pair(int pair, const char *status, int len_m, bool ok);
 void ui_cable_set_summary(bool pass, const char *mdi_str);
 
+typedef void (*ui_speed_test_cb_t)(void);
+void ui_set_speed_test_cb(ui_speed_test_cb_t cb);
+void ui_speed_set_result(const char *result);
+
 typedef void (*ui_locate_cb_t)(bool start);
 void ui_set_locate_cb(ui_locate_cb_t cb);

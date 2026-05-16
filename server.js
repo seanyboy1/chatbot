@@ -3,6 +3,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import net from 'net';
+import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { connectDB, ActivityLog, Session, User, ChatSession, ServiceRequest, MeshNode, SikeNode, AdminSession } from './db.js';
@@ -154,7 +155,7 @@ const ADMIN_SESSION_TTL = 12 * 60 * 60 * 1000; // 12 hours
 async function requireAdminPage(req, res, next) {
   const cookies = parseCookies(req.headers.cookie);
   const token = cookies.admin_session;
-  if (!token) return res.redirect('/');
+  if (!token) return res.redirect(`/login?next=${encodeURIComponent(req.path)}`);
 
   // Check in-memory first (fast path)
   const expiry = adminSessions.get(token);
@@ -260,7 +261,7 @@ app.use(async (req, res, next) => {
 
 // Page routes (before static middleware)
 app.get('/', (req, res) => {
-  res.sendFile(join(__dirname, 'public', 'restricted.html'));
+  res.redirect('/login?next=/dashboard');
 });
 
 app.get('/dashboard', requireAdminPage, (req, res) => {
@@ -408,6 +409,10 @@ app.get('/tdisplay', requireAdminPage, (req, res) => {
   res.sendFile(join(__dirname, 'public', 'tdisplay.html'));
 });
 
+app.get('/bluetracer', requireAdminPage, (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'bluetracer.html'));
+});
+
 // ── Blue-SIKE Nodes ──────────────────────────────────────────────────────────
 app.get('/api/bluesike/nodes', requireAuth, async (req, res) => {
   if (!req.isAdmin) return res.status(403).json({ error: 'Admin only.' });
@@ -472,6 +477,31 @@ app.delete('/api/bluesike/nodes/:nodeId', requireAuth, async (req, res) => {
 // Firmware POSTs here periodically; dashboard GETs the latest snapshot.
 let tdisplayStatus = null; // in-memory; resets on server restart
 
+app.get('/api/speedtest/download', (req, res) => {
+  const MAX = 2 * 1024 * 1024;
+  const size = Math.min(Math.max(parseInt(req.query.size) || (512 * 1024), 1), MAX);
+  res.setHeader('Content-Type', 'application/octet-stream');
+  res.setHeader('Content-Length', size);
+  const chunk = Buffer.alloc(65536, 0x55);
+  let sent = 0;
+  function send() {
+    while (sent < size) {
+      const n = Math.min(chunk.length, size - sent);
+      const ok = res.write(n === chunk.length ? chunk : chunk.slice(0, n));
+      sent += n;
+      if (!ok) { res.once('drain', send); return; }
+    }
+    res.end();
+  }
+  send();
+});
+
+app.post('/api/speedtest/upload', (req, res) => {
+  let bytes = 0;
+  req.on('data', c => { bytes += c.length; });
+  req.on('end', () => res.json({ bytes }));
+});
+
 app.post('/api/tdisplay/heartbeat', (req, res) => {
   const { ip, eth_link, link_speed, link_duplex, uptime_s } = req.body || {};
   tdisplayStatus = {
@@ -487,6 +517,223 @@ app.post('/api/tdisplay/heartbeat', (req, res) => {
 
 app.get('/api/tdisplay/status', requireAuth, (req, res) => {
   res.json(tdisplayStatus || { offline: true });
+});
+
+app.get('/api/tdisplay/stats', async (req, res) => {
+  try {
+    await connectDB();
+    const [customers, requestsPending, requestsTotal, messages] = await Promise.all([
+      User.countDocuments(),
+      ServiceRequest.countDocuments({ status: 'pending' }),
+      ServiceRequest.countDocuments(),
+      ChatSession.countDocuments(),
+    ]);
+    res.json({
+      customers,
+      requests_pending: requestsPending,
+      requests_total:   requestsTotal,
+      messages,
+      uptime_s:         Math.floor(process.uptime()),
+      webhook_ok:       !!process.env.N8N_WEBHOOK_URL,
+      mongo_ok:         true,
+    });
+  } catch (err) {
+    res.json({
+      customers: 0, requests_pending: 0, requests_total: 0, messages: 0,
+      uptime_s: Math.floor(process.uptime()),
+      webhook_ok: !!process.env.N8N_WEBHOOK_URL,
+      mongo_ok: false,
+    });
+  }
+});
+
+// ── T-Display combined list endpoint (all 3 in one TCP connection) ────────────
+app.get('/api/tdisplay/lists', async (req, res) => {
+  try {
+    await connectDB();
+    const [users, reqs, sessions] = await Promise.all([
+      User.find({}, 'name service').sort({ createdAt: -1 }).limit(12).lean(),
+      ServiceRequest.find({}, 'name type status').sort({ createdAt: -1 }).limit(12).lean(),
+      ChatSession.find({}, 'title messages startedAt').sort({ startedAt: -1 }).limit(12).lean(),
+    ]);
+    res.json({
+      customers: users.map(u => u.name + (u.service ? ' - ' + u.service : '')),
+      requests:  reqs.map(r => (r.name || '?') + ' - ' + (r.type || '?') + ' [' + (r.status || '?') + ']'),
+      messages:  sessions.map(s => (s.title || 'Untitled') + ' (' + (s.messages ? s.messages.length : 0) + ' msgs)'),
+    });
+  } catch { res.json({ customers: [], requests: [], messages: [] }); }
+});
+
+// ── Music / Last.fm Integration ───────────────────────────────────────────────
+// No developer app needed — just a free API key from last.fm/api/account/create
+// Set in .env:  LASTFM_API_KEY=your_key   LASTFM_USERNAME=your_username
+// Scrobble from Spotify/Apple Music → Last.fm using the official Last.fm app or Scrobbler.
+//
+// Controls (play/pause/next/prev) go nowhere without a music API, so they are
+// forwarded to an optional webhook: MUSIC_CONTROL_WEBHOOK=http://...
+// (e.g. point at a Home Assistant, mpd-http, or any webhook that can control your player)
+
+let lastfmCache = { data: null, fetchedAt: 0 };
+
+// Now-playing — polled by T-Display every 5s
+app.get('/api/spotify/now-playing', async (req, res) => {
+  const key      = process.env.LASTFM_API_KEY;
+  const username = process.env.LASTFM_USERNAME;
+  const empty    = { connected: false, playing: false, progress_pct: 0, elapsed_s: 0, total_s: 0, title: '', artist: '', album: '' };
+
+  if (!key || !username) return res.json(empty);
+
+  // Cache for 4s to avoid hammering Last.fm
+  if (Date.now() - lastfmCache.fetchedAt < 4000 && lastfmCache.data) {
+    return res.json(lastfmCache.data);
+  }
+
+  try {
+    const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${encodeURIComponent(username)}&api_key=${key}&format=json&limit=1`;
+    const r   = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!r.ok) return res.json(empty);
+    const body  = await r.json();
+    const track = body?.recenttracks?.track?.[0];
+    if (!track) return res.json({ ...empty, connected: true });
+
+    const nowPlaying = track['@attr']?.nowplaying === 'true';
+    const result = {
+      connected:    true,
+      playing:      nowPlaying,
+      progress_pct: 0,   // Last.fm doesn't expose position
+      elapsed_s:    0,
+      total_s:      0,
+      title:        track.name        || '',
+      artist:       track.artist?.['#text'] || '',
+      album:        track.album?.['#text']  || '',
+    };
+    lastfmCache = { data: result, fetchedAt: Date.now() };
+    res.json(result);
+  } catch {
+    res.json(empty);
+  }
+});
+
+// Playback control — forwarded to optional MUSIC_CONTROL_WEBHOOK
+app.post('/api/spotify/control', async (req, res) => {
+  const { action } = req.body || {};
+  if (!['play','pause','next','prev'].includes(action)) return res.status(400).json({ error: 'invalid action' });
+  const webhook = process.env.MUSIC_CONTROL_WEBHOOK;
+  if (!webhook) return res.json({ ok: false, reason: 'MUSIC_CONTROL_WEBHOOK not set' });
+  try {
+    const r = await fetch(webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action }),
+      signal: AbortSignal.timeout(3000),
+    });
+    res.json({ ok: r.ok });
+  } catch {
+    res.json({ ok: false });
+  }
+});
+
+// ── NOAA Weather Radio audio stream ─────────────────────────────────────────
+// Transcodes any internet radio URL to raw signed 16-bit 44100 Hz stereo PCM
+// via ffmpeg, which the T-Display writes directly to its I2S/ES8311 codec.
+// Requires: ffmpeg installed on the server machine (brew install ffmpeg / apt install ffmpeg).
+// Set WEATHER_RADIO_URL in .env to your NOAA stream URL.
+// Find NOAA streams: broadcastify.com, radioreference.com, or search for your state WX station.
+
+app.get('/api/weather-radio/stream', (req, res) => {
+  console.log('[radio] request from', req.ip, '| agent:', req.headers['user-agent'] || '-', '| http:', req.httpVersion);
+  const url = process.env.WEATHER_RADIO_URL;
+  if (!url) {
+    return res.status(503).json({ error: 'WEATHER_RADIO_URL not configured in .env' });
+  }
+
+  // Disable Nagle on this socket so flushHeaders() actually sends the headers
+  // immediately — without this, TCP may buffer the small headers packet until
+  // ffmpeg starts writing PCM data (2-5 s later), causing firmware to stall.
+  if (req.socket) req.socket.setNoDelay(true);
+  res.setHeader('Content-Type', 'application/octet-stream');
+  res.setHeader('Transfer-Encoding', 'identity');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.flushHeaders();
+
+  const ff = spawn('ffmpeg', [
+    '-reconnect', '1',
+    '-reconnect_streamed', '1',
+    '-reconnect_delay_max', '5',
+    '-user_agent', 'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; Trident/6.0)',
+    '-headers', 'Icy-MetaData: 1\r\n',
+    '-i', url,
+    '-ar', '44100',
+    '-ac', '2',
+    '-f', 's16le',
+    'pipe:1',
+  ], { stdio: ['ignore', 'pipe', 'pipe'] });
+
+  ff.stdout.pipe(res);
+
+  ff.stderr.on('data', (d) => {
+    const msg = d.toString();
+    if (msg.includes('Error') || msg.includes('error')) console.error('[ffmpeg]', msg.trim());
+  });
+
+  req.on('close', () => ff.kill('SIGTERM'));
+  ff.on('exit', () => { if (!res.writableEnded) res.end(); });
+});
+
+// ── Weather — polled by T-Display weather radio tab every 10 min ─────────────
+// Uses Open-Meteo (free, no API key).
+// Set WEATHER_LAT / WEATHER_LON in .env for your location.
+let weatherCache = { data: null, fetchedAt: 0 };
+
+const wmoDesc = (code) => {
+  if (code === 0)              return 'CLEAR SKY';
+  if (code === 1)              return 'MAINLY CLEAR';
+  if (code === 2)              return 'PARTLY CLOUDY';
+  if (code === 3)              return 'OVERCAST';
+  if (code <= 48)              return 'FOG';
+  if (code <= 55)              return 'DRIZZLE';
+  if (code <= 65)              return 'RAIN';
+  if (code <= 77)              return 'SNOW';
+  if (code <= 82)              return 'RAIN SHOWERS';
+  if (code <= 86)              return 'SNOW SHOWERS';
+  if (code <= 99)              return 'THUNDERSTORM';
+  return 'UNKNOWN';
+};
+
+app.get('/api/weather', async (req, res) => {
+  const lat = parseFloat(req.query.lat) || parseFloat(process.env.WEATHER_LAT) || 45.63;
+  const lon = parseFloat(req.query.lon) || parseFloat(process.env.WEATHER_LON) || -122.49;
+  const empty = { temp_f: 0, feels_f: 0, desc: 'UNAVAILABLE', wind_mph: 0, humidity: 0, code: -1, updated: '--:--' };
+
+  // Cache 10 minutes
+  if (Date.now() - weatherCache.fetchedAt < 600000 && weatherCache.data) {
+    return res.json(weatherCache.data);
+  }
+
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+      `&current=temperature_2m,apparent_temperature,weathercode,windspeed_10m,relativehumidity_2m` +
+      `&temperature_unit=fahrenheit&windspeed_unit=mph&forecast_days=1`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error('open-meteo error');
+    const body = await r.json();
+    const cur  = body.current || {};
+    const time = (cur.time || '').substring(11, 16) || '--:--';
+    const result = {
+      temp_f:   Math.round(cur.temperature_2m        ?? 0),
+      feels_f:  Math.round(cur.apparent_temperature  ?? 0),
+      desc:     wmoDesc(cur.weathercode ?? -1),
+      wind_mph: Math.round(cur.windspeed_10m          ?? 0),
+      humidity: Math.round(cur.relativehumidity_2m    ?? 0),
+      code:     cur.weathercode ?? -1,
+      updated:  time,
+    };
+    weatherCache = { data: result, fetchedAt: Date.now() };
+    res.json(result);
+  } catch {
+    res.json(empty);
+  }
 });
 
 // ── Auth: Register ──────────────────────────────────────────────────────────

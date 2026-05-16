@@ -99,6 +99,9 @@ static lv_obj_t *s_cdt_len_lbl[4];
 static lv_obj_t *s_cdt_dot[4];
 static lv_obj_t *s_cdt_result_lbl;
 static lv_obj_t *s_cdt_mdi_lbl;
+static lv_obj_t *s_speed_result_lbl;
+
+static ui_speed_test_cb_t s_cb_speed_test = NULL;
 
 /* ── Terminal screen ─────────────────────────────────────────────────────── */
 static lv_obj_t *s_term_log_lbl;
@@ -188,8 +191,9 @@ void ui_set_weather_radio_cb(ui_weather_radio_cb_t cb) { s_cb_wx         = cb; }
 void ui_set_flap_cb(ui_flap_cb_t cb)                   { s_cb_flap       = cb; }
 void ui_set_screenshot_cb(ui_screenshot_cb_t cb)       { s_cb_ss         = cb; }
 void ui_set_lora_send_cb(ui_lora_send_cb_t cb)         { s_cb_lora_send  = cb; }
-void ui_set_cable_test_cb(ui_cable_test_cb_t cb)       { s_cb_cable_test = cb; }
-void ui_set_locate_cb(ui_locate_cb_t cb)               { s_cb_locate     = cb; }
+void ui_set_cable_test_cb(ui_cable_test_cb_t cb)       { s_cb_cable_test  = cb; }
+void ui_set_speed_test_cb(ui_speed_test_cb_t cb)       { s_cb_speed_test  = cb; }
+void ui_set_locate_cb(ui_locate_cb_t cb)               { s_cb_locate      = cb; }
 
 /* ═════════════════════════════════════════════════════════════════════════════
  *  Low-level helpers
@@ -534,6 +538,7 @@ static void build_home(void) {
  * ═══════════════════════════════════════════════════════════════════════════ */
 static void screenshot_btn_cb(lv_event_t *e) { (void)e; if (s_cb_ss) s_cb_ss(); }
 static void cable_test_btn_cb(lv_event_t *e) { (void)e; if (s_cb_cable_test) s_cb_cable_test(); }
+static void speed_test_btn_cb(lv_event_t *e) { (void)e; if (s_cb_speed_test) s_cb_speed_test(); }
 
 static lv_obj_t *s_eth_flap_spd_btns[3];
 
@@ -610,7 +615,7 @@ static void build_eth(void) {
     lv_obj_align(s_eth_shot_lbl, LV_ALIGN_BOTTOM_MID, 0, -8);
 
     /* ── Cable test card — same style as flap card ── */
-    lv_obj_t *ctc = make_card(s_scr_eth, 8, HDR + 818, W - 16, 280);
+    lv_obj_t *ctc = make_card(s_scr_eth, 8, HDR + 818, W - 16, 420);
     make_label(ctc, "CABLE TEST", &lv_font_montserrat_12, C_DIM);
     lv_obj_align(lv_obj_get_child(ctc, 0), LV_ALIGN_TOP_LEFT, 10, 8);
 
@@ -643,14 +648,30 @@ static void build_eth(void) {
     s_cdt_mdi_lbl = make_label(ctc, "---", &lv_font_montserrat_14, C_DIM);
     lv_obj_align(s_cdt_mdi_lbl, LV_ALIGN_TOP_RIGHT, -10, 150);
 
-    /* RUN TEST button — full width, same size as START FLAPPING */
+    /* Speed result row: "DL / UL Mbps" */
+    make_label(ctc, "SPEED TEST", &lv_font_montserrat_12, C_DIM);
+    lv_obj_set_pos(lv_obj_get_child(ctc, lv_obj_get_child_cnt(ctc) - 1), 10, 192);
+
+    s_speed_result_lbl = make_label(ctc, "-- / --", &lv_font_montserrat_20, C_WHITE);
+    lv_obj_set_pos(s_speed_result_lbl, 10, 216);
+
+    /* RUN CABLE TEST button */
     lv_obj_t *test_btn = make_btn(ctc, LV_SYMBOL_REFRESH "  RUN CABLE TEST",
                                   C_DIMMER, cable_test_btn_cb, NULL);
     lv_obj_set_style_border_color(test_btn, C_GREEN, 0);
     lv_obj_set_style_border_width(test_btn, 2, 0);
     lv_obj_set_style_text_color(lv_obj_get_child(test_btn, 0), C_GREEN, 0);
-    lv_obj_set_size(test_btn, W - 40, 68);
-    lv_obj_align(test_btn, LV_ALIGN_BOTTOM_MID, 0, -8);
+    lv_obj_set_size(test_btn, W - 40, 60);
+    lv_obj_set_pos(test_btn, 8, 268);
+
+    /* RUN SPEED TEST button */
+    lv_obj_t *spd_btn = make_btn(ctc, LV_SYMBOL_CHARGE "  RUN SPEED TEST",
+                                 C_DIMMER, speed_test_btn_cb, NULL);
+    lv_obj_set_style_border_color(spd_btn, C_GREEN, 0);
+    lv_obj_set_style_border_width(spd_btn, 2, 0);
+    lv_obj_set_style_text_color(lv_obj_get_child(spd_btn, 0), C_GREEN, 0);
+    lv_obj_set_size(spd_btn, W - 40, 60);
+    lv_obj_set_pos(spd_btn, 8, 340);
 
     /* ── Three info cards ── */
     int cy = HDR + 8;
@@ -734,7 +755,7 @@ static void build_eth(void) {
     lv_label_set_long_mode(s_eth_conn_log, LV_LABEL_LONG_WRAP);
 
     /* ── Flap section ── */
-    lv_obj_t *fc = make_card(s_scr_eth, 8, HDR + 1106, W - 16, 252);
+    lv_obj_t *fc = make_card(s_scr_eth, 8, HDR + 1246, W - 16, 252);
 
     /* Speed selector row */
     make_label(fc, "FLAP SPEED", &lv_font_montserrat_12, C_DIM);
@@ -1552,6 +1573,11 @@ void ui_cable_set_summary(bool pass, const char *mdi_str) {
     }
     if (s_cdt_mdi_lbl)
         lv_label_set_text(s_cdt_mdi_lbl, mdi_str);
+}
+
+void ui_speed_set_result(const char *result) {
+    if (s_speed_result_lbl)
+        lv_label_set_text(s_speed_result_lbl, result);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════

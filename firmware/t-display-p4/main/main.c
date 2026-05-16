@@ -111,6 +111,9 @@ static volatile bool   s_eth_ip_ready  = false;
 static volatile bool   s_wifi_up    = false;
 static volatile bool   s_wifi_status_dirty = false;
 
+// ── Cable / speed test ────────────────────────────────────────────────────────
+static volatile bool   s_speed_test_running = false;
+
 // ── Flap / port locator ───────────────────────────────────────────────────────
 static volatile bool   s_flap_active      = false;
 static volatile int    s_flap_interval_ms = 1000;
@@ -668,6 +671,111 @@ static void cable_test_task(void *arg) {
 static void cable_test_start_cb(void) {
     if (!s_cable_test_running)
         xTaskCreate(cable_test_task, "cdt", 12288, NULL, 3, NULL);
+}
+
+// ── Speed test ───────────────────────────────────────────────────────────────
+#define STRINGIFY2(x) #x
+#define STRINGIFY(x)  STRINGIFY2(x)
+#define SPEEDTEST_DL_SIZE  524288   /* 512 KB */
+#define SPEEDTEST_UL_SIZE  262144   /* 256 KB */
+
+static esp_err_t speedtest_http_evt(esp_http_client_event_t *evt) {
+    size_t *count = (size_t *)evt->user_data;
+    if (evt->event_id == HTTP_EVENT_ON_DATA && count)
+        *count += evt->data_len;
+    return ESP_OK;
+}
+
+static void speed_test_task(void *arg) {
+    s_speed_test_running = true;
+
+    if (lvgl_lock(200)) {
+        ui_speed_set_result("-- / --");
+        ui_eth_log_append("[SPEED] starting...");
+        lvgl_unlock();
+    }
+
+    /* Wait for IP */
+    for (int i = 0; i < 50 && !s_eth_ip_ready; i++)
+        vTaskDelay(pdMS_TO_TICKS(100));
+    if (!s_eth_ip_ready) {
+        if (lvgl_lock(200)) { ui_speed_set_result("NO ETH"); ui_eth_log_append("[SPEED] no IP"); lvgl_unlock(); }
+        s_speed_test_running = false;
+        vTaskDelete(NULL);
+        return;
+    }
+
+    float dl_mbps = -1.0f, ul_mbps = -1.0f;
+
+    /* ── Download test ── */
+    {
+        size_t rx = 0;
+        esp_http_client_config_t hc = {
+            .url            = CONFIG_BLUENET_SERVER "/api/speedtest/download?size=" STRINGIFY(SPEEDTEST_DL_SIZE),
+            .timeout_ms     = 15000,
+            .event_handler  = speedtest_http_evt,
+            .user_data      = &rx,
+        };
+        esp_http_client_handle_t cl = esp_http_client_init(&hc);
+        int64_t t0 = esp_timer_get_time();
+        esp_err_t err = esp_http_client_perform(cl);
+        int64_t dt_us = esp_timer_get_time() - t0;
+        esp_http_client_cleanup(cl);
+        if (err == ESP_OK && rx > 0 && dt_us > 0)
+            dl_mbps = (float)rx * 8.0f / ((float)dt_us / 1e6f) / 1e6f;
+        ESP_LOGI(TAG, "Speed DL: %.1f Mbps (%zu B in %lld ms)", dl_mbps, rx, dt_us / 1000);
+    }
+
+    /* ── Upload test ── */
+    {
+        uint8_t *ul_buf = heap_caps_malloc(SPEEDTEST_UL_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+        if (ul_buf) {
+            memset(ul_buf, 0x55, SPEEDTEST_UL_SIZE);
+            esp_http_client_config_t hc = {
+                .url        = CONFIG_BLUENET_SERVER "/api/speedtest/upload",
+                .method     = HTTP_METHOD_POST,
+                .timeout_ms = 15000,
+            };
+            esp_http_client_handle_t cl = esp_http_client_init(&hc);
+            esp_http_client_set_header(cl, "Content-Type", "application/octet-stream");
+            esp_http_client_set_post_field(cl, (const char *)ul_buf, SPEEDTEST_UL_SIZE);
+            int64_t t0 = esp_timer_get_time();
+            esp_err_t err = esp_http_client_perform(cl);
+            int64_t dt_us = esp_timer_get_time() - t0;
+            esp_http_client_cleanup(cl);
+            free(ul_buf);
+            if (err == ESP_OK && dt_us > 0)
+                ul_mbps = (float)SPEEDTEST_UL_SIZE * 8.0f / ((float)dt_us / 1e6f) / 1e6f;
+            ESP_LOGI(TAG, "Speed UL: %.1f Mbps in %lld ms", ul_mbps, dt_us / 1000);
+        }
+    }
+
+    /* Update UI and log */
+    if (lvgl_lock(300)) {
+        char res[32];
+        if (dl_mbps > 0 && ul_mbps > 0)
+            snprintf(res, sizeof(res), "%.0f / %.0f Mbps", dl_mbps, ul_mbps);
+        else if (dl_mbps > 0)
+            snprintf(res, sizeof(res), "DL %.0f Mbps", dl_mbps);
+        else
+            snprintf(res, sizeof(res), "FAILED");
+        ui_speed_set_result(res);
+
+        char log_buf[48];
+        snprintf(log_buf, sizeof(log_buf), "[SPEED] DL %.0f UL %.0f Mbps",
+                 dl_mbps > 0 ? dl_mbps : 0.0f,
+                 ul_mbps > 0 ? ul_mbps : 0.0f);
+        ui_eth_log_append(log_buf);
+        lvgl_unlock();
+    }
+
+    s_speed_test_running = false;
+    vTaskDelete(NULL);
+}
+
+static void speed_test_start_cb(void) {
+    if (!s_speed_test_running && s_eth_ip_ready)
+        xTaskCreate(speed_test_task, "spd", 20480, NULL, 3, NULL);
 }
 
 static void eth_event_handler(void *arg, esp_event_base_t base,
@@ -1282,6 +1390,7 @@ static void lvgl_init_task(void *arg) {
     ui_set_flap_cb(flap_cb);
     ui_set_screenshot_cb(screenshot_cb);
     ui_set_cable_test_cb(cable_test_start_cb);
+    ui_set_speed_test_cb(speed_test_start_cb);
     ui_set_locate_cb(locate_start_cb);
     ui_init();
 
