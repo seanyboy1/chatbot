@@ -28,8 +28,10 @@ CONFIG_SPIRAM_USE_MALLOC=y
 CONFIG_CACHE_L2_CACHE_256KB=y
 CONFIG_CACHE_L2_CACHE_LINE_128B=y
 
-# WiFi removed — ESP32-P4 needs C6 coprocessor (esp_hosted slave firmware).
-# Re-add espressif/esp_wifi_remote to idf_component.yml to restore WiFi.
+# ── WiFi — disabled until C6 has compatible esp_hosted slave firmware ──────────
+# The C6 factory firmware is incompatible with esp_hosted SDIO — causes SDIO storm.
+# Flash C6 via PROG_C6 header with ~/esp_hosted_slave/build/network_adapter.bin,
+# then add espressif/esp_hosted + esp_wifi_remote to main/idf_component.yml.
 
 # ── Ethernet ───────────────────────────────────────────────────────────────────
 CONFIG_ETH_ENABLED=y
@@ -66,3 +68,17 @@ CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
 # ── Logging ────────────────────────────────────────────────────────────────────
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y
 CONFIG_LOG_MAXIMUM_LEVEL_DEBUG=y
+
+# ── Watchdog — allow extra time for screenshot render on 568×1232 screen ───────
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=30
+
+# ── LVGL snapshot (screenshot) ─────────────────────────────────────────────────
+CONFIG_LV_USE_SNAPSHOT=y
+
+# ── FatFS / SDMMC — keep sector buffers in internal SRAM (IDMAC DMA requirement) ─
+# PSRAM DMA causes CMD17 DRTO+FRUN on ESP32-P4 despite SOC_SDMMC_PSRAM_DMA_CAPABLE=1
+CONFIG_FATFS_ALLOC_PREFER_EXTRAM=n
+# Allocations < 1024 B always land in internal SRAM — FatFS win[] / sector buf
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=1024
+# SD cards use 512-byte sectors; fixed-size avoids 4 KB window in internal SRAM
+CONFIG_FATFS_SECTOR_512=y

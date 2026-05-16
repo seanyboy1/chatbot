@@ -65,6 +65,16 @@ dependencies:
       registry_url: https://components.espressif.com
       type: service
     version: 0.0.8
+  espressif/esp_serial_slave_link:
+    component_hash: ac1776806de0a6e371c84e87898bb983e19ce62aa7f1e2e5c4a3b0234a575d2c
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.1.2
   idf:
     source:
       type: idf
@@ -81,8 +91,9 @@ direct_dependencies:
 - espressif/esp_cam_sensor
 - espressif/esp_h264
 - espressif/esp_ipa
+- espressif/esp_serial_slave_link
 - idf
 - lvgl/lvgl
-manifest_hash: 5b882e70d3a5fc98a5608f6d567e36610f990570afc16067cc1c48c208af8fbf
+manifest_hash: 0b982b08190a4e01b1ae17a95436fd812a32cb2812845d929236ebc0a89898d0
 target: esp32p4
 version: 2.0.0

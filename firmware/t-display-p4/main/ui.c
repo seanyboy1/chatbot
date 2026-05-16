@@ -41,6 +41,8 @@ static ui_weather_radio_cb_t s_cb_wx;
 static ui_flap_cb_t          s_cb_flap;
 static ui_screenshot_cb_t    s_cb_ss;
 static ui_lora_send_cb_t     s_cb_lora_send;
+static ui_cable_test_cb_t    s_cb_cable_test;
+static ui_locate_cb_t        s_cb_locate;
 
 /* ── Screens ─────────────────────────────────────────────────────────────── */
 static lv_obj_t *s_scr_splash;
@@ -57,9 +59,14 @@ static lv_obj_t *s_scr_music;
 
 /* ── Home status bar ─────────────────────────────────────────────────────── */
 static lv_obj_t *s_home_ip_lbl;
-static lv_obj_t *s_home_time_lbl;
-static lv_obj_t *s_home_batt_lbl;
 static lv_obj_t *s_home_status_lbl;
+
+/* Global header label registry — updated by ui_set_time / ui_set_battery */
+#define MAX_HDR_LBLS 14
+static lv_obj_t *s_all_time_lbls[MAX_HDR_LBLS];
+static lv_obj_t *s_all_date_lbls[MAX_HDR_LBLS];
+static lv_obj_t *s_all_batt_lbls[MAX_HDR_LBLS];
+static int       s_hdr_lbl_cnt = 0;
 
 /* ── Splash ──────────────────────────────────────────────────────────────── */
 static lv_obj_t *s_splash_status_lbl;
@@ -72,7 +79,6 @@ static lv_obj_t *s_eth_speed_lbl;
 static lv_obj_t *s_eth_duplex_lbl;
 static lv_obj_t *s_eth_link_dot;
 static lv_obj_t *s_eth_energy_lbl;
-static lv_obj_t *s_eth_phy_lbl;
 static lv_obj_t *s_eth_dhcp_lbl;
 static lv_obj_t *s_eth_mac_lbl;
 static lv_obj_t *s_eth_subnet_lbl;
@@ -82,8 +88,17 @@ static lv_obj_t *s_eth_vlan_lbl;
 static lv_obj_t *s_eth_conn_log;
 static lv_obj_t *s_eth_conn_log_cont;
 static lv_obj_t *s_eth_flap_btn_lbl;
+static lv_obj_t *s_eth_locate_btn_lbl;
+static lv_obj_t *s_eth_shot_lbl;
 static int       s_flap_interval_ms = 1000;
-static bool      s_flapping = false;
+static bool      s_flapping  = false;
+static bool      s_locating  = false;
+
+static lv_obj_t *s_cdt_pair_lbl[4];
+static lv_obj_t *s_cdt_len_lbl[4];
+static lv_obj_t *s_cdt_dot[4];
+static lv_obj_t *s_cdt_result_lbl;
+static lv_obj_t *s_cdt_mdi_lbl;
 
 /* ── Terminal screen ─────────────────────────────────────────────────────── */
 static lv_obj_t *s_term_log_lbl;
@@ -173,6 +188,8 @@ void ui_set_weather_radio_cb(ui_weather_radio_cb_t cb) { s_cb_wx         = cb; }
 void ui_set_flap_cb(ui_flap_cb_t cb)                   { s_cb_flap       = cb; }
 void ui_set_screenshot_cb(ui_screenshot_cb_t cb)       { s_cb_ss         = cb; }
 void ui_set_lora_send_cb(ui_lora_send_cb_t cb)         { s_cb_lora_send  = cb; }
+void ui_set_cable_test_cb(ui_cable_test_cb_t cb)       { s_cb_cable_test = cb; }
+void ui_set_locate_cb(ui_locate_cb_t cb)               { s_cb_locate     = cb; }
 
 /* ═════════════════════════════════════════════════════════════════════════════
  *  Low-level helpers
@@ -292,10 +309,46 @@ static lv_obj_t *make_hdr(lv_obj_t *scr, const char *title, bool with_back) {
     lv_obj_set_style_pad_all(hdr, 0, 0);
     lv_obj_clear_flag(hdr, LV_OBJ_FLAG_SCROLLABLE);
 
+    /* ── Time (top-left, 2 lines) ── */
+    lv_obj_t *tl = lv_label_create(hdr);
+    lv_label_set_text(tl, "--:--");
+    lv_obj_set_style_text_color(tl, C_WHITE, 0);
+    lv_obj_set_style_text_font(tl, &lv_font_montserrat_20, 0);
+    lv_obj_align(tl, LV_ALIGN_TOP_LEFT, 70, 4);
+
+    lv_obj_t *dl = lv_label_create(hdr);
+    lv_label_set_text(dl, "NO SYNC");
+    lv_obj_set_style_text_color(dl, C_BLUE, 0);
+    lv_obj_set_style_text_font(dl, &lv_font_montserrat_12, 0);
+    lv_obj_align(dl, LV_ALIGN_TOP_LEFT, 70, 30);
+
+    /* ── Battery (top-right) ── */
+    lv_obj_t *bl = lv_label_create(hdr);
+    lv_label_set_text(bl, LV_SYMBOL_BATTERY_FULL " ?%");
+    lv_obj_set_style_text_color(bl, C_YELLOW, 0);
+    lv_obj_set_style_text_font(bl, &lv_font_montserrat_14, 0);
+    lv_obj_align(bl, LV_ALIGN_TOP_RIGHT, -70, 6);
+
+    /* Register in global arrays */
+    if (s_hdr_lbl_cnt < MAX_HDR_LBLS) {
+        s_all_time_lbls[s_hdr_lbl_cnt] = tl;
+        s_all_date_lbls[s_hdr_lbl_cnt] = dl;
+        s_all_batt_lbls[s_hdr_lbl_cnt] = bl;
+        s_hdr_lbl_cnt++;
+    }
+
     if (with_back) {
+        /* Title centered */
+        lv_obj_t *ttl = lv_label_create(hdr);
+        lv_label_set_text(ttl, title);
+        lv_obj_set_style_text_color(ttl, C_ORANGE, 0);
+        lv_obj_set_style_text_font(ttl, &lv_font_montserrat_14, 0);
+        lv_obj_align(ttl, LV_ALIGN_TOP_MID, 0, 8);
+
+        /* Back button — bottom-left */
         lv_obj_t *btn = lv_btn_create(hdr);
-        lv_obj_set_size(btn, 52, 30);
-        lv_obj_align(btn, LV_ALIGN_LEFT_MID, 8, 0);
+        lv_obj_set_size(btn, 70, 28);
+        lv_obj_align(btn, LV_ALIGN_BOTTOM_LEFT, 8, -6);
         lv_obj_set_style_bg_color(btn, C_DIMMER, 0);
         lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, 0);
         lv_obj_set_style_border_color(btn, C_BORDER, 0);
@@ -303,23 +356,18 @@ static lv_obj_t *make_hdr(lv_obj_t *scr, const char *title, bool with_back) {
         lv_obj_set_style_radius(btn, 4, 0);
         lv_obj_set_style_shadow_width(btn, 0, 0);
         lv_obj_add_event_cb(btn, back_cb, LV_EVENT_CLICKED, NULL);
-        lv_obj_t *bl = lv_label_create(btn);
-        lv_label_set_text(bl, LV_SYMBOL_LEFT " HOME");
-        lv_obj_set_style_text_color(bl, C_WHITE, 0);
-        lv_obj_set_style_text_font(bl, &lv_font_montserrat_12, 0);
-        lv_obj_center(bl);
-
-        lv_obj_t *ttl = lv_label_create(hdr);
-        lv_label_set_text(ttl, title);
-        lv_obj_set_style_text_color(ttl, C_ORANGE, 0);
-        lv_obj_set_style_text_font(ttl, &lv_font_montserrat_14, 0);
-        lv_obj_align(ttl, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_t *bbl = lv_label_create(btn);
+        lv_label_set_text(bbl, LV_SYMBOL_LEFT " HOME");
+        lv_obj_set_style_text_color(bbl, C_WHITE, 0);
+        lv_obj_set_style_text_font(bbl, &lv_font_montserrat_12, 0);
+        lv_obj_center(bbl);
     } else {
+        /* Home screen: title centered */
         lv_obj_t *ttl = lv_label_create(hdr);
         lv_label_set_text(ttl, title);
         lv_obj_set_style_text_color(ttl, C_ORANGE, 0);
-        lv_obj_set_style_text_font(ttl, &lv_font_montserrat_14, 0);
-        lv_obj_align(ttl, LV_ALIGN_LEFT_MID, 12, 0);
+        lv_obj_set_style_text_font(ttl, &lv_font_montserrat_16, 0);
+        lv_obj_align(ttl, LV_ALIGN_TOP_MID, 0, 6);
     }
     return hdr;
 }
@@ -460,22 +508,15 @@ static void build_home(void) {
     s_scr_home = lv_obj_create(NULL);
     scr_bg(s_scr_home);
 
-    /* Header */
+    /* Header — time/date/batt registered in global arrays via make_hdr */
     lv_obj_t *hdr = make_hdr(s_scr_home, LV_SYMBOL_WIFI "  BLUE-NET OS", false);
-    (void)hdr;
 
-    /* Status bar right side */
-    s_home_ip_lbl = make_label(s_scr_home, "---", &lv_font_montserrat_12, C_DIM);
-    lv_obj_align(s_home_ip_lbl, LV_ALIGN_TOP_RIGHT, -8, 6);
+    /* Center of header: status + IP below the title */
+    s_home_status_lbl = make_label(hdr, "CONNECTING...", &lv_font_montserrat_12, C_DIM);
+    lv_obj_align(s_home_status_lbl, LV_ALIGN_TOP_MID, 0, 28);
 
-    s_home_time_lbl = make_label(s_scr_home, "--:--", &lv_font_montserrat_12, C_DIM);
-    lv_obj_align(s_home_time_lbl, LV_ALIGN_TOP_RIGHT, -8, 24);
-
-    s_home_batt_lbl = make_label(s_scr_home, "??%", &lv_font_montserrat_12, C_DIM);
-    lv_obj_align(s_home_batt_lbl, LV_ALIGN_TOP_RIGHT, -80, 6);
-
-    s_home_status_lbl = make_label(s_scr_home, "CONNECTING...", &lv_font_montserrat_12, C_DIM);
-    lv_obj_align(s_home_status_lbl, LV_ALIGN_TOP_RIGHT, -80, 24);
+    s_home_ip_lbl = make_label(hdr, "---", &lv_font_montserrat_12, C_DIM);
+    lv_obj_align(s_home_ip_lbl, LV_ALIGN_TOP_MID, 0, 46);
 
     /* 2×4 tiles */
     build_tile(s_scr_home, 0, 0, LV_SYMBOL_GPS,    "GPS / NAV",   "L76K NMEA",    C_ORANGE, s_scr_gps);
@@ -492,17 +533,34 @@ static void build_home(void) {
  *  ETH TESTER SCREEN
  * ═══════════════════════════════════════════════════════════════════════════ */
 static void screenshot_btn_cb(lv_event_t *e) { (void)e; if (s_cb_ss) s_cb_ss(); }
+static void cable_test_btn_cb(lv_event_t *e) { (void)e; if (s_cb_cable_test) s_cb_cable_test(); }
 
 static lv_obj_t *s_eth_flap_spd_btns[3];
 
 static void flap_toggle_cb(lv_event_t *e) {
     s_flapping = !s_flapping;
-    if (s_eth_flap_btn_lbl)
+    if (s_eth_flap_btn_lbl) {
         lv_label_set_text(s_eth_flap_btn_lbl,
             s_flapping ? LV_SYMBOL_STOP "  STOP FLAPPING" : LV_SYMBOL_PLAY "  START FLAPPING");
+        lv_obj_set_style_text_color(s_eth_flap_btn_lbl, s_flapping ? C_WHITE : C_GREEN, 0);
+    }
     lv_obj_t *btn = lv_event_get_target(e);
-    lv_obj_set_style_bg_color(btn, s_flapping ? C_FIRE : C_GREEN, 0);
+    lv_obj_set_style_bg_color(btn, s_flapping ? C_FIRE : C_DIMMER, 0);
+    lv_obj_set_style_border_color(btn, s_flapping ? C_FIRE : C_GREEN, 0);
     if (s_cb_flap) s_cb_flap(s_flapping, s_flap_interval_ms);
+}
+
+static void locate_toggle_cb(lv_event_t *e) {
+    s_locating = !s_locating;
+    if (s_eth_locate_btn_lbl) {
+        lv_label_set_text(s_eth_locate_btn_lbl,
+            s_locating ? LV_SYMBOL_STOP "  STOP LOCATE" : LV_SYMBOL_LOOP "  LOCATE PORT  (GREEN/AMBER)");
+        lv_obj_set_style_text_color(s_eth_locate_btn_lbl, s_locating ? C_WHITE : C_GREEN, 0);
+    }
+    lv_obj_t *btn = lv_event_get_target(e);
+    lv_obj_set_style_bg_color(btn, s_locating ? C_FIRE : C_DIMMER, 0);
+    lv_obj_set_style_border_color(btn, s_locating ? C_FIRE : C_GREEN, 0);
+    if (s_cb_locate) s_cb_locate(s_locating);
 }
 
 static void flap_spd_cb(lv_event_t *e) {
@@ -520,19 +578,82 @@ static void flap_spd_cb(lv_event_t *e) {
 static void build_eth(void) {
     s_scr_eth = lv_obj_create(NULL);
     scr_bg(s_scr_eth);
+    lv_obj_add_flag(s_scr_eth, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scroll_dir(s_scr_eth, LV_DIR_VER);
+    lv_obj_set_scrollbar_mode(s_scr_eth, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_pad_bottom(s_scr_eth, 20, 0);
     lv_obj_add_event_cb(s_scr_eth, swipe_back_cb, LV_EVENT_GESTURE, NULL);
-    make_hdr(s_scr_eth, LV_SYMBOL_USB "  ETH CABLE TESTER", true);
+    lv_obj_t *eth_hdr = make_hdr(s_scr_eth, LV_SYMBOL_USB "  ETH CABLE TESTER", true);
 
-    /* ── Result section ── */
-    s_eth_result_sub_lbl = make_label(s_scr_eth, "CABLE TEST RESULT",
-                                      &lv_font_montserrat_14, C_DIM);
-    lv_obj_align(s_eth_result_sub_lbl, LV_ALIGN_TOP_MID, 0, HDR + 20);
+    /* Screenshot button — bottom-right of header */
+    lv_obj_t *ss_btn = lv_btn_create(eth_hdr);
+    lv_obj_set_size(ss_btn, 80, 28);
+    lv_obj_align(ss_btn, LV_ALIGN_BOTTOM_RIGHT, -8, -6);
+    lv_obj_set_style_bg_color(ss_btn, C_DIMMER, 0);
+    lv_obj_set_style_bg_opa(ss_btn, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(ss_btn, C_BORDER, 0);
+    lv_obj_set_style_border_width(ss_btn, 1, 0);
+    lv_obj_set_style_radius(ss_btn, 4, 0);
+    lv_obj_set_style_shadow_width(ss_btn, 0, 0);
+    lv_obj_add_event_cb(ss_btn, screenshot_btn_cb, LV_EVENT_CLICKED, NULL);
+    lv_obj_t *ss_lbl = lv_label_create(ss_btn);
+    lv_label_set_text(ss_lbl, LV_SYMBOL_IMAGE " SAVE");
+    lv_obj_set_style_text_color(ss_lbl, C_WHITE, 0);
+    lv_obj_set_style_text_font(ss_lbl, &lv_font_montserrat_12, 0);
+    lv_obj_center(ss_lbl);
 
-    s_eth_result_lbl = make_label(s_scr_eth, "-- --", &lv_font_montserrat_48, C_DIM);
-    lv_obj_align(s_eth_result_lbl, LV_ALIGN_TOP_MID, 0, HDR + 52);
+    /* Screenshot status — bottom-center of header */
+    s_eth_shot_lbl = lv_label_create(eth_hdr);
+    lv_label_set_text(s_eth_shot_lbl, "");
+    lv_obj_set_style_text_color(s_eth_shot_lbl, C_DIM, 0);
+    lv_obj_set_style_text_font(s_eth_shot_lbl, &lv_font_montserrat_12, 0);
+    lv_obj_align(s_eth_shot_lbl, LV_ALIGN_BOTTOM_MID, 0, -8);
+
+    /* ── Cable test card — same style as flap card ── */
+    lv_obj_t *ctc = make_card(s_scr_eth, 8, HDR + 818, W - 16, 280);
+    make_label(ctc, "CABLE TEST", &lv_font_montserrat_12, C_DIM);
+    lv_obj_align(lv_obj_get_child(ctc, 0), LV_ALIGN_TOP_LEFT, 10, 8);
+
+    /* Four pair rows inside the card */
+    static const char *pair_names[] = {"PAIR 1,2", "PAIR 3,6", "PAIR 4,5", "PAIR 7,8"};
+    int pair_y[] = { 28, 56, 84, 112 };
+    for (int i = 0; i < 4; i++) {
+        s_cdt_dot[i] = lv_obj_create(ctc);
+        lv_obj_set_size(s_cdt_dot[i], 14, 14);
+        lv_obj_set_pos(s_cdt_dot[i], 10, pair_y[i] + 2);
+        lv_obj_set_style_bg_color(s_cdt_dot[i], C_DIM, 0);
+        lv_obj_set_style_bg_opa(s_cdt_dot[i], LV_OPA_COVER, 0);
+        lv_obj_set_style_radius(s_cdt_dot[i], LV_RADIUS_CIRCLE, 0);
+        lv_obj_set_style_border_width(s_cdt_dot[i], 0, 0);
+
+        lv_obj_t *pname = make_label(ctc, pair_names[i], &lv_font_montserrat_12, C_DIM);
+        lv_obj_set_pos(pname, 32, pair_y[i]);
+
+        s_cdt_pair_lbl[i] = make_label(ctc, "---", &lv_font_montserrat_12, C_WHITE);
+        lv_obj_set_pos(s_cdt_pair_lbl[i], 170, pair_y[i]);
+
+        s_cdt_len_lbl[i] = make_label(ctc, "", &lv_font_montserrat_12, C_DIM);
+        lv_obj_set_pos(s_cdt_len_lbl[i], 340, pair_y[i]);
+    }
+
+    /* Summary: PASS/FAIL left, MDI type right */
+    s_cdt_result_lbl = make_label(ctc, "---", &lv_font_montserrat_28, C_DIM);
+    lv_obj_set_pos(s_cdt_result_lbl, 10, 140);
+
+    s_cdt_mdi_lbl = make_label(ctc, "---", &lv_font_montserrat_14, C_DIM);
+    lv_obj_align(s_cdt_mdi_lbl, LV_ALIGN_TOP_RIGHT, -10, 150);
+
+    /* RUN TEST button — full width, same size as START FLAPPING */
+    lv_obj_t *test_btn = make_btn(ctc, LV_SYMBOL_REFRESH "  RUN CABLE TEST",
+                                  C_DIMMER, cable_test_btn_cb, NULL);
+    lv_obj_set_style_border_color(test_btn, C_GREEN, 0);
+    lv_obj_set_style_border_width(test_btn, 2, 0);
+    lv_obj_set_style_text_color(lv_obj_get_child(test_btn, 0), C_GREEN, 0);
+    lv_obj_set_size(test_btn, W - 40, 68);
+    lv_obj_align(test_btn, LV_ALIGN_BOTTOM_MID, 0, -8);
 
     /* ── Three info cards ── */
-    int cy = HDR + 200;
+    int cy = HDR + 8;
     int cw = 172, ch = 150;
 
     lv_obj_t *sc = make_card(s_scr_eth, 10, cy, cw, ch);
@@ -553,7 +674,7 @@ static void build_eth(void) {
     s_eth_link_dot = lv_obj_create(lc);
     lv_obj_set_size(s_eth_link_dot, 40, 40);
     lv_obj_align(s_eth_link_dot, LV_ALIGN_CENTER, 0, 10);
-    lv_obj_set_style_bg_color(s_eth_link_dot, C_DIM, 0);
+    lv_obj_set_style_bg_color(s_eth_link_dot, C_FIRE, 0);
     lv_obj_set_style_bg_opa(s_eth_link_dot, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(s_eth_link_dot, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_border_width(s_eth_link_dot, 0, 0);
@@ -561,17 +682,17 @@ static void build_eth(void) {
     /* ── Energy ── */
     s_eth_energy_lbl = make_label(s_scr_eth, "ENERGY: NONE",
                                   &lv_font_montserrat_12, C_DIM);
-    lv_obj_align(s_eth_energy_lbl, LV_ALIGN_TOP_LEFT, 14, HDR + 364);
+    lv_obj_align(s_eth_energy_lbl, LV_ALIGN_TOP_LEFT, 14, HDR + 164);
 
     /* ── PHY caps card ── */
-    lv_obj_t *pc = make_card(s_scr_eth, 8, HDR + 390, W - 16, 110);
+    lv_obj_t *pc = make_card(s_scr_eth, 8, HDR + 190, W - 16, 110);
     s_eth_status_lbl = make_label(pc,
         "CAPS: --\nPOLARITY: NORMAL",
         &lv_font_montserrat_12, C_DIM);
     lv_obj_align(s_eth_status_lbl, LV_ALIGN_TOP_LEFT, 10, 12);
 
     /* ── Network info card ── */
-    lv_obj_t *nc = make_card(s_scr_eth, 8, HDR + 510, W - 16, 310);
+    lv_obj_t *nc = make_card(s_scr_eth, 8, HDR + 310, W - 16, 310);
     make_label(nc, "NETWORK", &lv_font_montserrat_12, C_DIM);
     lv_obj_align(lv_obj_get_child(nc, 0), LV_ALIGN_TOP_LEFT, 10, 8);
 
@@ -591,7 +712,7 @@ static void build_eth(void) {
     #undef NET_ROW
 
     /* ── Connection log card ── */
-    lv_obj_t *logc = make_card(s_scr_eth, 8, HDR + 802, W - 16, 180);
+    lv_obj_t *logc = make_card(s_scr_eth, 8, HDR + 630, W - 16, 180);
     make_label(logc, "CONNECTION LOG", &lv_font_montserrat_12, C_DIM);
     lv_obj_align(lv_obj_get_child(logc, 0), LV_ALIGN_TOP_LEFT, 10, 8);
 
@@ -613,7 +734,7 @@ static void build_eth(void) {
     lv_label_set_long_mode(s_eth_conn_log, LV_LABEL_LONG_WRAP);
 
     /* ── Flap section ── */
-    lv_obj_t *fc = make_card(s_scr_eth, 8, HDR + 994, W - 16, 170);
+    lv_obj_t *fc = make_card(s_scr_eth, 8, HDR + 1106, W - 16, 252);
 
     /* Speed selector row */
     make_label(fc, "FLAP SPEED", &lv_font_montserrat_12, C_DIM);
@@ -631,10 +752,23 @@ static void build_eth(void) {
 
     /* Start/Stop flap button */
     lv_obj_t *fb = make_btn(fc, LV_SYMBOL_PLAY "  START FLAPPING",
-                            C_GREEN, flap_toggle_cb, NULL);
+                            C_DIMMER, flap_toggle_cb, NULL);
+    lv_obj_set_style_border_color(fb, C_GREEN, 0);
+    lv_obj_set_style_border_width(fb, 2, 0);
     lv_obj_set_size(fb, W - 40, 68);
-    lv_obj_align(fb, LV_ALIGN_BOTTOM_MID, 0, -8);
+    lv_obj_set_pos(fb, 8, 80);
     s_eth_flap_btn_lbl = lv_obj_get_child(fb, 0);
+    lv_obj_set_style_text_color(s_eth_flap_btn_lbl, C_GREEN, 0);
+
+    /* Locate port button */
+    lv_obj_t *lb = make_btn(fc, LV_SYMBOL_LOOP "  LOCATE PORT  (GREEN/AMBER)",
+                            C_DIMMER, locate_toggle_cb, NULL);
+    lv_obj_set_style_border_color(lb, C_GREEN, 0);
+    lv_obj_set_style_border_width(lb, 2, 0);
+    lv_obj_set_size(lb, W - 40, 68);
+    lv_obj_set_pos(lb, 8, 156);
+    s_eth_locate_btn_lbl = lv_obj_get_child(lb, 0);
+    lv_obj_set_style_text_color(s_eth_locate_btn_lbl, C_GREEN, 0);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
@@ -1261,16 +1395,33 @@ void ui_set_wifi_ip(const char *ip) {
 }
 
 void ui_set_time(const char *t) {
-    if (s_home_time_lbl) lv_label_set_text(s_home_time_lbl, t);
+    for (int i = 0; i < s_hdr_lbl_cnt; i++)
+        if (s_all_time_lbls[i]) lv_label_set_text(s_all_time_lbls[i], t);
+}
+
+void ui_set_time_date(const char *d) {
+    for (int i = 0; i < s_hdr_lbl_cnt; i++)
+        if (s_all_date_lbls[i]) lv_label_set_text(s_all_date_lbls[i], d);
 }
 
 void ui_set_battery(int pct, bool charging) {
-    if (!s_home_batt_lbl) return;
-    char buf[16];
-    snprintf(buf, sizeof(buf), charging ? "%d%% +" : "%d%%", pct);
-    lv_label_set_text(s_home_batt_lbl, buf);
+    char buf[24];
+    if (charging) {
+        snprintf(buf, sizeof(buf), LV_SYMBOL_CHARGE " %d%%", pct);
+    } else {
+        const char *sym = (pct > 75) ? LV_SYMBOL_BATTERY_FULL :
+                          (pct > 50) ? LV_SYMBOL_BATTERY_3 :
+                          (pct > 25) ? LV_SYMBOL_BATTERY_2 :
+                          (pct > 5)  ? LV_SYMBOL_BATTERY_1 : LV_SYMBOL_BATTERY_EMPTY;
+        snprintf(buf, sizeof(buf), "%s %d%%", sym, pct);
+    }
     lv_color_t c = (pct > 50) ? C_GREEN : (pct > 20) ? C_YELLOW : C_RED;
-    lv_obj_set_style_text_color(s_home_batt_lbl, c, 0);
+    for (int i = 0; i < s_hdr_lbl_cnt; i++) {
+        if (s_all_batt_lbls[i]) {
+            lv_label_set_text(s_all_batt_lbls[i], buf);
+            lv_obj_set_style_text_color(s_all_batt_lbls[i], c, 0);
+        }
+    }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
@@ -1282,7 +1433,17 @@ void ui_set_eth_status(const char *msg) {
 
 void ui_set_eth_link(bool up) {
     if (!s_eth_link_dot) return;
-    lv_obj_set_style_bg_color(s_eth_link_dot, up ? C_GREEN : C_DIM, 0);
+    lv_obj_set_style_bg_color(s_eth_link_dot, up ? C_GREEN : C_FIRE, 0);
+    if (!up) {
+        if (s_eth_speed_lbl) {
+            lv_label_set_text(s_eth_speed_lbl, "--");
+            lv_obj_set_style_text_color(s_eth_speed_lbl, C_DIM, 0);
+        }
+        if (s_eth_duplex_lbl) {
+            lv_label_set_text(s_eth_duplex_lbl, "--");
+            lv_obj_set_style_text_color(s_eth_duplex_lbl, C_DIM, 0);
+        }
+    }
     if (s_eth_result_lbl && !s_flapping) {
         lv_label_set_text(s_eth_result_lbl, up ? "PASS" : "FAIL");
         lv_obj_set_style_text_color(s_eth_result_lbl,
@@ -1352,6 +1513,45 @@ void ui_eth_log_append(const char *line) {
     lv_label_set_text(s_eth_conn_log, buf);
     if (s_eth_conn_log_cont)
         lv_obj_scroll_to_y(s_eth_conn_log_cont, LV_COORD_MAX, LV_ANIM_OFF);
+}
+
+/* state: 0=idle(dim), 1=busy(yellow), 2=ok(green), 3=fail(red) */
+void ui_eth_set_shot_status(const char *msg, bool ok) {
+    if (!s_eth_shot_lbl) return;
+    lv_label_set_text(s_eth_shot_lbl, msg);
+    /* SAVING... is passed with ok=true but has "..." — treat as yellow */
+    lv_color_t c;
+    if (!*msg)       c = C_DIM;
+    else if (!ok)    c = C_RED;
+    else if (msg[strlen(msg)-1] == '.') c = C_YELLOW;  /* ends in ... */
+    else             c = C_GREEN;
+    lv_obj_set_style_text_color(s_eth_shot_lbl, c, 0);
+}
+
+void ui_cable_set_pair(int pair, const char *status, int len_m, bool ok) {
+    if (pair < 0 || pair > 3) return;
+    lv_color_t col = ok ? C_GREEN : (strcmp(status, "TESTING") == 0 ? C_ORANGE : C_FIRE);
+    if (s_cdt_dot[pair])
+        lv_obj_set_style_bg_color(s_cdt_dot[pair], col, 0);
+    if (s_cdt_pair_lbl[pair])
+        lv_label_set_text(s_cdt_pair_lbl[pair], status);
+    if (s_cdt_len_lbl[pair]) {
+        if (len_m > 0) {
+            char buf[16]; snprintf(buf, sizeof(buf), "~%dm", len_m);
+            lv_label_set_text(s_cdt_len_lbl[pair], buf);
+        } else {
+            lv_label_set_text(s_cdt_len_lbl[pair], "");
+        }
+    }
+}
+
+void ui_cable_set_summary(bool pass, const char *mdi_str) {
+    if (s_cdt_result_lbl) {
+        lv_label_set_text(s_cdt_result_lbl, pass ? "PASS" : "FAIL");
+        lv_obj_set_style_text_color(s_cdt_result_lbl, pass ? C_GREEN : C_FIRE, 0);
+    }
+    if (s_cdt_mdi_lbl)
+        lv_label_set_text(s_cdt_mdi_lbl, mdi_str);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════

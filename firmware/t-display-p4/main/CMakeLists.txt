@@ -19,5 +19,11 @@ idf_component_register(
         newlib
         lwip
         esp_adc
+        sdmmc
+        esp_driver_sdmmc
+        fatfs
+        vfs
         lvgl__lvgl
+        esp_system
+        espressif__esp_serial_slave_link
 )

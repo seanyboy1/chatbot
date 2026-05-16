@@ -5,7 +5,7 @@
 
 #define LCD_H_RES  568
 #define LCD_V_RES  1232
-#define HDR_H      48
+#define HDR_H      70
 
 typedef void (*ui_brightness_cb_t)(int pct);
 typedef void (*ui_term_cmd_cb_t)(const char *cmd, char *out, size_t out_len);
@@ -43,6 +43,7 @@ void ui_splash_done(void);
 void ui_set_status(const char *msg);
 void ui_set_wifi_ip(const char *ip);
 void ui_set_time(const char *t);
+void ui_set_time_date(const char *d);
 void ui_set_battery(int pct, bool charging);
 
 void ui_set_eth_status(const char *msg);
@@ -52,6 +53,7 @@ void ui_set_eth_link(bool up);
 void ui_set_eth_dhcp(const char *ip_str);
 void ui_set_eth_net_info(const char *mac, const char *subnet, const char *gw, const char *ports, const char *vlan);
 void ui_eth_log_append(const char *line);
+void ui_eth_set_shot_status(const char *msg, bool ok);
 
 void ui_term_append(const char *line);
 
@@ -79,3 +81,11 @@ void ui_settings_set_ssid(const char *ssid);
 
 void ui_weather_radio_append(const char *line);
 void ui_weather_radio_set_status(const char *msg, bool active);
+
+typedef void (*ui_cable_test_cb_t)(void);
+void ui_set_cable_test_cb(ui_cable_test_cb_t cb);
+void ui_cable_set_pair(int pair, const char *status, int len_m, bool ok);
+void ui_cable_set_summary(bool pass, const char *mdi_str);
+
+typedef void (*ui_locate_cb_t)(bool start);
+void ui_set_locate_cb(ui_locate_cb_t cb);
