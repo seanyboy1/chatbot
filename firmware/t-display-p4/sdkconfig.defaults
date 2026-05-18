@@ -28,21 +28,9 @@ CONFIG_SPIRAM_USE_MALLOC=y
 CONFIG_CACHE_L2_CACHE_256KB=y
 CONFIG_CACHE_L2_CACHE_LINE_128B=y
 
-# ── WiFi — ESP32-C6 via esp_hosted SDIO (slot 1, 40 MHz, 4-bit) ───────────────
-CONFIG_ESP_WIFI_REMOTE_LIBRARY_HOSTED=y
-CONFIG_ESP_HOSTED_SDIO_HOST_INTERFACE=y
-CONFIG_ESP_HOSTED_CP_TARGET_ESP32C6=y
-CONFIG_ESP_HOSTED_SDIO_SLOT_1=y
-CONFIG_ESP_HOSTED_SDIO_4_BIT_BUS=y
-CONFIG_ESP_HOSTED_SDIO_CLOCK_FREQ_KHZ=40000
-CONFIG_ESP_HOSTED_SDIO_PIN_CLK=18
-CONFIG_ESP_HOSTED_SDIO_PIN_CMD=19
-CONFIG_ESP_HOSTED_SDIO_PIN_D0=14
-CONFIG_ESP_HOSTED_SDIO_PIN_D1=15
-CONFIG_ESP_HOSTED_SDIO_PIN_D2=16
-CONFIG_ESP_HOSTED_SDIO_PIN_D3=17
-# GPIO 54 unconnected — C6 EN managed by XL9535 instead
-CONFIG_ESP_HOSTED_SDIO_GPIO_RESET_SLAVE=54
+# ── WiFi — ESP32-C6 AT firmware via SDIO (slot 1, handled by cpp_bus_driver) ──
+# No esp_hosted / esp_wifi_remote config needed — wifi_at.cpp drives the C6
+# directly using AT commands over SDIO using the same slot-1 SDIO bus.
 
 # ── Ethernet ───────────────────────────────────────────────────────────────────
 CONFIG_ETH_ENABLED=y
@@ -98,4 +86,3 @@ CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=1024
 # SD cards use 512-byte sectors; fixed-size avoids 4 KB window in internal SRAM
 CONFIG_FATFS_SECTOR_512=y
 
-# ── ESP-HOSTED SDIO — no GPIO reset (C6 reset managed by XL9535 not a direct GPIO) ──

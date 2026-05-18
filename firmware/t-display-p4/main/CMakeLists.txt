@@ -2,12 +2,12 @@ idf_component_register(
     SRCS
         "main.c"
         "ui.c"
+        "wifi_at.cpp"
     INCLUDE_DIRS
         "."
     REQUIRES
         freertos
         driver
-        esp_wifi
         esp_lcd
         rm69a10
         esp_hw_support
@@ -28,4 +28,5 @@ idf_component_register(
         esp_system
         esp_driver_i2s
         mbedtls
+        cpp_bus_driver
 )

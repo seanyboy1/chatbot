@@ -30,7 +30,7 @@
 #include "esp_vfs_fat.h"
 #include "sd_pwr_ctrl_by_on_chip_ldo.h"
 #include <stdio.h>
-#include "esp_sntp.h"
+// esp_sntp.h removed — time is synced via wifi_at_get_epoch() using C6 AT firmware SNTP
 #include "esp_system.h"
 #include "esp_lcd_mipi_dsi.h"
 #include "esp_lcd_panel_ops.h"
@@ -43,15 +43,18 @@
 #include "driver/i2s_std.h"
 #include "esp_crt_bundle.h"
 #include "esp_check.h"
-#include "esp_wifi.h"
+#include "wifi_at.h"
+#include <math.h>
 
 #define MINIMP3_IMPLEMENTATION
 #define MINIMP3_NO_STDIO
 #include "minimp3.h"
 
 // ── User config ───────────────────────────────────────────────────────────────
-#define CONFIG_WIFI_SSID        "seanyboy"
-#define CONFIG_WIFI_PASSWORD    "Soscaredhere"
+#define CONFIG_WIFI_SSID        "your_wifi_ssid"
+#define CONFIG_WIFI_PASSWORD    "your_wifi_password"
+#define CONFIG_WIFI_SSID2       "your_fallback_ssid"
+#define CONFIG_WIFI_PASSWORD2   "your_fallback_password"
 #ifndef CONFIG_BLUENET_SERVER
 #define CONFIG_BLUENET_SERVER   "http://10.0.0.242:3000"
 #endif
@@ -65,9 +68,9 @@
 #define CONFIG_WEATHER_TZ       "America/Los_Angeles"
 // NOAA alert area code (2-letter US state, or "CAZ" zone prefix, etc.)
 #define CONFIG_NOAA_AREA        "CA"
-// San Diego NOAA weather radio KEC47 (162.450 MHz) — Broadcastify stream
-// Find your region: https://www.broadcastify.com/listen/feed/ → search "NOAA weather"
-#define CONFIG_NOAA_STREAM_URL  "https://broadcastify.cdnstream1.com/25105"
+// Richland WA WWF56 (162.450 MHz) — 64 kbps, live now, Pacific NW NOAA
+// Switch to http://radio.weatherusa.net/NWR/KIG98.mp3 when KIG98 feeder is back
+#define CONFIG_NOAA_STREAM_URL  "http://wxradio.org:8000/WA-Richland-WWF56"
 
 // ── Display — RM69A10 AMOLED 568×1232 ────────────────────────────────────────
 #define LCD_H_RES   568
@@ -350,115 +353,61 @@ static void lcd_init(void) {
     ESP_LOGI(TAG, "LCD init complete");
 }
 
-// ── WiFi via ESP32-C6 (esp_hosted SDIO transport, auto-configured by IDF) ────
-#define WIFI_CONNECTED_BIT  BIT0
-#define WIFI_FAIL_BIT       BIT1
-#define WIFI_MAX_RETRY      10
+// ── WiFi reconnect button callback ───────────────────────────────────────────
+static void wifi_reconnect_cb(void) {
+    if (lvgl_lock(200)) { ui_net_set_status("RECONNECTING..."); lvgl_unlock(); }
+    wifi_at_reconnect();
+}
 
-static EventGroupHandle_t s_wifi_eg;
-static int s_wifi_retry = 0;
-
-static void wifi_event_handler(void *arg, esp_event_base_t base,
-                                int32_t id, void *data) {
-    if (base == WIFI_EVENT && id == WIFI_EVENT_STA_START) {
-        esp_wifi_connect();
-    } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED) {
-        s_wifi_up = false;
-        if (s_wifi_retry < WIFI_MAX_RETRY) {
-            esp_wifi_connect();
-            s_wifi_retry++;
-            ESP_LOGW(TAG, "WiFi retry %d/%d", s_wifi_retry, WIFI_MAX_RETRY);
-        } else {
-            xEventGroupSetBits(s_wifi_eg, WIFI_FAIL_BIT);
-        }
-        if (lvgl_lock(100)) { ui_net_set_status("WIFI LOST"); lvgl_unlock(); }
-    } else if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
-        ip_event_got_ip_t *ev = (ip_event_got_ip_t *)data;
-        snprintf((char *)s_device_ip, sizeof(s_device_ip),
-                 IPSTR, IP2STR(&ev->ip_info.ip));
-        s_wifi_up    = true;
-        s_wifi_retry = 0;
-        ESP_LOGI(TAG, "WiFi IP: %s", (char *)s_device_ip);
-        xEventGroupSetBits(s_wifi_eg, WIFI_CONNECTED_BIT);
-        if (lvgl_lock(100)) {
-            ui_set_wifi_ip((char *)s_device_ip);
-            lvgl_unlock();
-        }
+// ── WiFi scan ─────────────────────────────────────────────────────────────────
+static void scan_result_cb(const char *ssid, int rssi) {
+    if (lvgl_lock(100)) {
+        ui_net_add_scan_result(ssid, rssi);
+        lvgl_unlock();
     }
 }
 
-static bool wifi_init_sta(void) {
-    s_wifi_eg = xEventGroupCreate();
-    esp_netif_create_default_wifi_sta();
-
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    esp_err_t err = esp_wifi_init(&cfg);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "esp_wifi_init failed: %s (C6 SDIO not ready?)", esp_err_to_name(err));
-        return false;
-    }
-
-    esp_event_handler_instance_t h_wifi, h_ip;
-    esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
-                                        wifi_event_handler, NULL, &h_wifi);
-    esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
-                                        wifi_event_handler, NULL, &h_ip);
-
-    wifi_config_t wcfg = {
-        .sta = {
-            .ssid               = CONFIG_WIFI_SSID,
-            .password           = CONFIG_WIFI_PASSWORD,
-            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
-        },
-    };
-    err = esp_wifi_set_mode(WIFI_MODE_STA);
-    if (err != ESP_OK) { ESP_LOGE(TAG, "wifi set_mode: %s", esp_err_to_name(err)); return false; }
-    err = esp_wifi_set_config(WIFI_IF_STA, &wcfg);
-    if (err != ESP_OK) { ESP_LOGE(TAG, "wifi set_config: %s", esp_err_to_name(err)); return false; }
-    err = esp_wifi_start();
-    if (err != ESP_OK) { ESP_LOGE(TAG, "wifi start: %s", esp_err_to_name(err)); return false; }
-
-    ESP_LOGI(TAG, "Connecting to WiFi '%s'...", CONFIG_WIFI_SSID);
-    EventBits_t bits = xEventGroupWaitBits(s_wifi_eg,
-        WIFI_CONNECTED_BIT | WIFI_FAIL_BIT, pdFALSE, pdFALSE,
-        pdMS_TO_TICKS(20000));
-
-    if (bits & WIFI_CONNECTED_BIT) {
-        ESP_LOGI(TAG, "WiFi connected — IP %s", (char *)s_device_ip);
-        return true;
-    }
-    ESP_LOGE(TAG, "WiFi connection failed");
-    return false;
+static void wifi_scan_task(void *arg) {
+    if (lvgl_lock(200)) { ui_net_set_status("SCANNING..."); ui_net_clear_scan(); lvgl_unlock(); }
+    wifi_at_scan(scan_result_cb);
+    if (lvgl_lock(200)) { ui_net_set_status("SCAN DONE"); lvgl_unlock(); }
+    vTaskDelete(NULL);
 }
 
 static void wifi_scan_cb(void) {
-    if (lvgl_lock(200)) { ui_net_set_status("SCANNING..."); lvgl_unlock(); }
+    xTaskCreate(wifi_scan_task, "wifi_scan", 4096, NULL, 3, NULL);
 }
-static void wifi_connect_cb(const char *ssid, const char *pass) {
-    (void)ssid; (void)pass;
+
+// ── WiFi connect to new network ───────────────────────────────────────────────
+typedef struct { char ssid[64]; char pass[64]; } wifi_con_args_t;
+
+static void wifi_connect_task(void *arg) {
+    wifi_con_args_t *a = (wifi_con_args_t *)arg;
     if (lvgl_lock(200)) { ui_net_set_status("CONNECTING..."); lvgl_unlock(); }
+    bool ok = wifi_at_connect(a->ssid, a->pass);
+    free(a);
+    if (ok) {
+        s_wifi_up = true;
+        char ip[40] = "";
+        wifi_at_get_ip(ip, sizeof(ip));
+        strlcpy((char *)s_device_ip, ip, sizeof(s_device_ip));
+        if (lvgl_lock(200)) {
+            ui_net_set_status("WIFI OK");
+            ui_set_wifi_ip(ip);
+            lvgl_unlock();
+        }
+    } else {
+        if (lvgl_lock(200)) { ui_net_set_status("CONNECT FAIL"); lvgl_unlock(); }
+    }
+    vTaskDelete(NULL);
 }
 
-// ── C6 bootloader mode (flash via C6 USB-Serial/JTAG) ────────────────────────
-// XL_C6_WAKE = IO13, wired to C6 GPIO9 (boot strapping pin).
-// GPIO9 LOW during EN pulse → C6 ROM bootloader (supports USB download).
-// C6 re-enumerates as USB serial — run esptool on that port.
-static void c6_flash_mode_cb(void) {
-    if (lvgl_lock(200)) {
-        ui_net_set_status("C6 BOOTLOADER — plug C6 USB, run esptool");
-        lvgl_unlock();
-    }
-    ESP_LOGI(TAG, "C6: entering bootloader mode via XL9535");
-
-    /* Power off C6, pull GPIO9 low (bootloader strapping), then power on */
-    xl9535_p1(XL_C6_EN,   false);
-    xl9535_p1(XL_C6_WAKE, false);   /* GPIO9 LOW = bootloader mode */
-    vTaskDelay(pdMS_TO_TICKS(300));
-    xl9535_p1(XL_C6_EN,   true);    /* EN high → C6 boots into ROM bootloader */
-    vTaskDelay(pdMS_TO_TICKS(500));
-
-    /* GPIO9 stays LOW — C6 USB-Serial/JTAG now enumerates on host PC */
-    ESP_LOGI(TAG, "C6: bootloader mode active — USB device should appear on host");
+static void wifi_connect_cb(const char *ssid, const char *pass) {
+    wifi_con_args_t *a = malloc(sizeof(wifi_con_args_t));
+    if (!a) return;
+    strlcpy(a->ssid, ssid, sizeof(a->ssid));
+    strlcpy(a->pass, pass ? pass : "", sizeof(a->pass));
+    xTaskCreate(wifi_connect_task, "wifi_con", 4096, a, 3, NULL);
 }
 
 // ── ES8311 audio codec + I2S ──────────────────────────────────────────────────
@@ -598,6 +547,31 @@ static bool json_str(const char *json, const char *key, char *out, size_t out_le
     }
 }
 
+/* Fetch url into a malloc'd buffer.  Uses WiFi AT if ETH not ready. Returns buf or NULL. */
+static char *do_http_get(const char *url) {
+    if (s_wifi_up && !s_eth_ip_ready) {
+        char *buf = NULL;
+        int len = wifi_at_http_get(url, &buf);
+        return (len > 0) ? buf : NULL;
+    }
+    /* ETH path — esp_http_client */
+    s_weather_buf_pos = 0;
+    memset(s_weather_buf, 0, WEATHER_BUF_SIZE);
+    esp_http_client_config_t hc = {
+        .url               = url,
+        .timeout_ms        = 10000,
+        .event_handler     = weather_http_evt,
+        .crt_bundle_attach = esp_crt_bundle_attach,
+    };
+    esp_http_client_handle_t cl = esp_http_client_init(&hc);
+    esp_err_t err = esp_http_client_perform(cl);
+    esp_http_client_cleanup(cl);
+    if (err != ESP_OK || s_weather_buf_pos == 0) return NULL;
+    char *copy = malloc(s_weather_buf_pos + 1);
+    if (copy) { memcpy(copy, s_weather_buf, s_weather_buf_pos); copy[s_weather_buf_pos] = '\0'; }
+    return copy;
+}
+
 static void weather_fetch_task(void *arg) {
     if (lvgl_lock(200)) { ui_weather_radio_set_status("FETCHING...", true); lvgl_unlock(); }
 
@@ -605,8 +579,6 @@ static void weather_fetch_task(void *arg) {
     if (!s_weather_buf) { goto done_no_buf; }
 
     /* ── Current weather via Open-Meteo ── */
-    s_weather_buf_pos = 0;
-    memset(s_weather_buf, 0, WEATHER_BUF_SIZE);
     {
         char url[256];
         snprintf(url, sizeof(url),
@@ -618,27 +590,37 @@ static void weather_fetch_task(void *arg) {
             "&temperature_unit=fahrenheit"
             "&timezone=" CONFIG_WEATHER_TZ
             "&forecast_days=1");
-        esp_http_client_config_t hc = {
-            .url             = url,
-            .timeout_ms      = 10000,
-            .event_handler   = weather_http_evt,
-            .crt_bundle_attach = esp_crt_bundle_attach,
-        };
-        esp_http_client_handle_t cl = esp_http_client_init(&hc);
-        esp_err_t err = esp_http_client_perform(cl);
-        esp_http_client_cleanup(cl);
-
-        if (err == ESP_OK && s_weather_buf_pos > 0) {
+        char *body = do_http_get(url);
+        if (body) {
             char temp[16]="--", wcode[8]="0", tmax[16]="--", tmin[16]="--";
-            json_str(s_weather_buf, "temperature", temp, sizeof(temp));
-            json_str(s_weather_buf, "weathercode", wcode, sizeof(wcode));
-            /* daily arrays: grab first value after key */
-            const char *p = strstr(s_weather_buf, "temperature_2m_max");
-            if (p) { p = strchr(p, '['); if (p) { p++; char *e = strchr(p,','); if(e){size_t n=e-p;if(n<15){memcpy(tmax,p,n);tmax[n]='\0';}}}}
-            p = strstr(s_weather_buf, "temperature_2m_min");
-            if (p) { p = strchr(p, '['); if (p) { p++; char *e = strchr(p,','); if(e){size_t n=e-p;if(n<15){memcpy(tmin,p,n);tmin[n]='\0';}}}}
 
-            /* Map WMO weather code to description */
+            /* Current temp lives inside "current_weather":{...} */
+            const char *cw = strstr(body, "\"current_weather\"");
+            if (cw) {
+                json_str(cw, "temperature", temp, sizeof(temp));
+                json_str(cw, "weathercode",  wcode, sizeof(wcode));
+            }
+
+            /* High/low: "daily":{"time":[...],"temperature_2m_max":[N],...}
+               Skip past "daily_units" to avoid hitting the string "°F" first. */
+            const char *daily = strstr(body, "\"daily\":{");
+            if (!daily) daily = strstr(body, "\"daily\": {");
+            if (daily) {
+                /* temperature_2m_max":[N] */
+                const char *mx = strstr(daily, "\"temperature_2m_max\":[");
+                if (mx) {
+                    mx += strlen("\"temperature_2m_max\":[");
+                    const char *e = mx; while (*e && *e != ',' && *e != ']') e++;
+                    size_t n = e - mx; if (n > 0 && n < 15) { memcpy(tmax, mx, n); tmax[n]='\0'; }
+                }
+                const char *mn = strstr(daily, "\"temperature_2m_min\":[");
+                if (mn) {
+                    mn += strlen("\"temperature_2m_min\":[");
+                    const char *e = mn; while (*e && *e != ',' && *e != ']') e++;
+                    size_t n = e - mn; if (n > 0 && n < 15) { memcpy(tmin, mn, n); tmin[n]='\0'; }
+                }
+            }
+
             int wc = atoi(wcode);
             const char *desc =
                 wc == 0 ? "Clear sky" : wc <= 3 ? "Partly cloudy" :
@@ -653,34 +635,23 @@ static void weather_fetch_task(void *arg) {
             if (lvgl_lock(200)) { ui_weather_radio_append(line); lvgl_unlock(); }
             snprintf(line, sizeof(line), "HIGH: %s°F  LOW: %s°F", tmax, tmin);
             if (lvgl_lock(200)) { ui_weather_radio_append(line); lvgl_unlock(); }
+            free(body);
         } else {
             if (lvgl_lock(200)) { ui_weather_radio_append("Weather fetch failed"); lvgl_unlock(); }
         }
     }
 
     /* ── Active NOAA alerts ── */
-    s_weather_buf_pos = 0;
-    memset(s_weather_buf, 0, WEATHER_BUF_SIZE);
     {
         char url[192];
         snprintf(url, sizeof(url),
             "https://api.weather.gov/alerts/active"
             "?area=" CONFIG_NOAA_AREA
             "&status=actual&message_type=alert&limit=3");
-        esp_http_client_config_t hc = {
-            .url               = url,
-            .timeout_ms        = 10000,
-            .event_handler     = weather_http_evt,
-            .crt_bundle_attach = esp_crt_bundle_attach,
-        };
-        esp_http_client_handle_t cl = esp_http_client_init(&hc);
-        esp_err_t err = esp_http_client_perform(cl);
-        esp_http_client_cleanup(cl);
-
-        if (err == ESP_OK && s_weather_buf_pos > 0) {
-            /* Parse alert headlines — look for "headline" key */
+        char *body = do_http_get(url);
+        if (body) {
             int count = 0;
-            const char *p = s_weather_buf;
+            const char *p = body;
             while ((p = strstr(p, "\"headline\"")) != NULL && count < 3) {
                 char headline[128] = {0};
                 if (json_str(p, "headline", headline, sizeof(headline))) {
@@ -697,6 +668,7 @@ static void weather_fetch_task(void *arg) {
             if (count == 0) {
                 if (lvgl_lock(200)) { ui_weather_radio_append("No active alerts"); lvgl_unlock(); }
             }
+            free(body);
         }
     }
 
@@ -707,8 +679,8 @@ done_no_buf:
     vTaskDelete(NULL);
 }
 
-static void weather_fetch_cb(bool start) {
-    if (start) xTaskCreate(weather_fetch_task, "wx_fetch", 8192, NULL, 3, NULL);
+static void weather_fetch_cb(void) {
+    xTaskCreate(weather_fetch_task, "wx_fetch", 8192, NULL, 3, NULL);
 }
 
 // ── NOAA radio audio streaming ────────────────────────────────────────────────
@@ -727,7 +699,7 @@ static void noaa_radio_task(void *arg) {
         return;
     }
 
-    if (!s_eth_ip_ready) {
+    if (!s_eth_ip_ready && !s_wifi_up) {
         ESP_LOGE(TAG, "No network — cannot stream");
         if (lvgl_lock(200)) { ui_weather_radio_set_status("NO NETWORK", false); lvgl_unlock(); }
         s_audio_playing = false;
@@ -749,6 +721,100 @@ static void noaa_radio_task(void *arg) {
 
     if (lvgl_lock(200)) { ui_weather_radio_set_status("CONNECTING...", true); lvgl_unlock(); }
 
+    /* ── WiFi AT streaming path ── */
+    if (s_wifi_up && !s_eth_ip_ready) {
+        // Status callback: called from wifi_at during CIPSTART so UI shows progress
+        void stream_status_update(const char *msg) {
+            if (lvgl_lock(100)) { ui_weather_radio_set_status(msg, true); lvgl_unlock(); }
+        }
+        wifi_at_stream_t stream = wifi_at_stream_open(CONFIG_NOAA_STREAM_URL, stream_status_update);
+        if (!stream) {
+            const char *err = wifi_at_stream_last_error();
+            char emsg[64];
+            if (err && err[0]) snprintf(emsg, sizeof(emsg), "AT:%s", err);
+            else snprintf(emsg, sizeof(emsg), "STREAM FAILED");
+            ESP_LOGE(TAG, "AT stream open failed: %s", emsg);
+            if (lvgl_lock(200)) { ui_weather_radio_set_status(emsg, false); lvgl_unlock(); }
+            free(stream_buf); free(pcm_buf); free(dec);
+            s_audio_playing = false;
+            vTaskDelete(NULL);
+            return;
+        }
+        if (lvgl_lock(200)) { ui_weather_radio_set_status("LIVE  NOAA RADIO", true); lvgl_unlock(); }
+
+        uint8_t *ring = malloc(AUDIO_STREAM_BUF * 4);
+        int ring_fill = 0;
+        int total_rx = 0, total_frames = 0;
+        int diag_tick = 0;
+
+        /* Pre-buffer 8 KB before starting playback to avoid initial stutter */
+        while (!s_audio_stop && ring_fill < AUDIO_STREAM_BUF * 2) {
+            int got = wifi_at_stream_read(stream, ring + ring_fill,
+                                         AUDIO_STREAM_BUF * 4 - ring_fill, 200);
+            if (got > 0) { ring_fill += got; total_rx += got; }
+            else if (got < 0) goto wifi_stream_done;
+        }
+
+        while (!s_audio_stop) {
+            /* Burst-fill: keep reading until ring has 12 KB or no more data.
+               Don't break on 0-return — keep trying so underruns are minimised.
+               Each read returns up to 480 bytes; 16 iterations × 40 ms = 640 ms max. */
+            for (int r = 0; r < 16 && ring_fill < AUDIO_STREAM_BUF * 3 && !s_audio_stop; r++) {
+                int got = wifi_at_stream_read(stream, ring + ring_fill,
+                                             AUDIO_STREAM_BUF * 4 - ring_fill, 40);
+                if (got > 0) { ring_fill += got; total_rx += got; r = 0; }
+                else if (got < 0) goto wifi_stream_done;
+                /* got==0: keep looping rather than breaking */
+            }
+
+            // Show diagnostics every 20 loops
+            if (++diag_tick % 20 == 0) {
+                char dstat[48];
+                if (total_frames > 0)
+                    snprintf(dstat, sizeof(dstat), "FRMS:%d RX:%d", total_frames, total_rx);
+                else
+                    snprintf(dstat, sizeof(dstat), "RX:%d NO FRMS", total_rx);
+                if (lvgl_lock(100)) { ui_weather_radio_set_status(dstat, true); lvgl_unlock(); }
+            }
+
+            if (ring_fill < 512) { vTaskDelay(pdMS_TO_TICKS(20)); continue; }
+            mp3dec_frame_info_t info;
+            int samples = mp3dec_decode_frame(dec, ring, ring_fill, pcm_buf, &info);
+            if (info.frame_bytes > 0) {
+                memmove(ring, ring + info.frame_bytes, ring_fill - info.frame_bytes);
+                ring_fill -= info.frame_bytes;
+            } else {
+                if (ring_fill > 0) { memmove(ring, ring + 1, --ring_fill); }
+                continue;
+            }
+            if (samples > 0) {
+                total_frames++;
+                /* minimp3 returns samples-per-channel; PCM buffer holds
+                   samples*channels interleaved int16 values. Mono needs
+                   in-place expansion to stereo before the I2S write. */
+                if (info.channels == 1) {
+                    for (int i = samples - 1; i >= 0; i--) {
+                        pcm_buf[i*2+1] = pcm_buf[i];
+                        pcm_buf[i*2]   = pcm_buf[i];
+                    }
+                }
+                size_t written;
+                i2s_channel_write(s_i2s_tx, pcm_buf,
+                                  (size_t)samples * 2 * sizeof(int16_t),
+                                  &written, pdMS_TO_TICKS(500));
+            }
+        }
+        wifi_stream_done:
+        free(ring);
+        wifi_at_stream_close(stream);
+        free(stream_buf); free(pcm_buf); free(dec);
+        if (lvgl_lock(200)) { ui_weather_radio_set_status("RADIO STOPPED", false); lvgl_unlock(); }
+        s_audio_playing = false;
+        vTaskDelete(NULL);
+        return;
+    }
+
+    /* ── Ethernet streaming path (esp_http_client) ── */
     esp_http_client_config_t hc = {
         .url        = CONFIG_NOAA_STREAM_URL,
         .timeout_ms = 10000,
@@ -793,17 +859,15 @@ static void noaa_radio_task(void *arg) {
         }
 
         if (samples > 0) {
-            /* If mono, duplicate to stereo */
-            size_t out_samples = samples;
             if (info.channels == 1) {
                 for (int i = samples - 1; i >= 0; i--) {
                     pcm_buf[i*2+1] = pcm_buf[i];
                     pcm_buf[i*2]   = pcm_buf[i];
                 }
-                out_samples = samples * 2;
             }
             size_t written;
-            i2s_channel_write(s_i2s_tx, pcm_buf, out_samples * sizeof(int16_t),
+            i2s_channel_write(s_i2s_tx, pcm_buf,
+                              (size_t)samples * 2 * sizeof(int16_t),
                               &written, pdMS_TO_TICKS(500));
         }
     }
@@ -827,6 +891,50 @@ static void weather_radio_cb(bool start) {
         }
     } else {
         s_audio_stop = true;
+    }
+}
+
+/* ── Terminal "beep" command — generates 1 kHz sine for 0.5 s ── */
+static void beep_task(void *arg) {
+    if (!s_i2s_tx) {
+        if (lvgl_lock(100)) { ui_term_append("Audio not ready"); lvgl_unlock(); }
+        vTaskDelete(NULL);
+        return;
+    }
+    const int sr = 44100;
+    const int dur_frames = sr / 2;          /* 0.5 s */
+    const int chunk = 441;                  /* 10 ms per write */
+    int16_t *buf = malloc(chunk * 2 * sizeof(int16_t));
+    if (!buf) { vTaskDelete(NULL); return; }
+
+    int written_frames = 0;
+    while (written_frames < dur_frames) {
+        int n = (dur_frames - written_frames < chunk) ? (dur_frames - written_frames) : chunk;
+        for (int i = 0; i < n; i++) {
+            float t = (float)(written_frames + i) / sr;
+            int16_t s = (int16_t)(28000.0f * sinf(2.0f * (float)M_PI * 1000.0f * t));
+            buf[i*2]   = s;
+            buf[i*2+1] = s;
+        }
+        size_t wr;
+        i2s_channel_write(s_i2s_tx, buf, n * 2 * sizeof(int16_t), &wr, pdMS_TO_TICKS(200));
+        written_frames += n;
+    }
+    free(buf);
+    if (lvgl_lock(100)) { ui_term_append("Beep done"); lvgl_unlock(); }
+    vTaskDelete(NULL);
+}
+
+static void term_cmd_cb(const char *cmd, char *out, size_t out_len) {
+    if (strcmp(cmd, "beep") == 0) {
+        xTaskCreate(beep_task, "beep", 4096, NULL, 5, NULL);
+    } else if (strcmp(cmd, "ip") == 0) {
+        char buf[64];
+        snprintf(buf, sizeof(buf), "WiFi IP: %s", (char *)s_device_ip);
+        if (lvgl_lock(100)) { ui_term_append(buf); lvgl_unlock(); }
+    } else {
+        snprintf(out, out_len, "Unknown: %s", cmd);
+        if (lvgl_lock(100)) { ui_term_append(out); lvgl_unlock(); }
     }
 }
 
@@ -1672,16 +1780,51 @@ static void time_tick_cb(void *arg) {
     }
 }
 
+/* Callback used by wifi_at_init to power-cycle C6 via XL9535 */
+static void c6_en_ctrl(bool high) {
+    xl9535_p1(XL_C6_EN, high);
+}
+
 static void c6_init_task(void *arg) {
-    /* C6 is already powered from xl9535_init (C6_EN HIGH from boot).
-       Wait 3s for C6 to fully boot esp_hosted slave before SDIO handshake. */
-    vTaskDelay(pdMS_TO_TICKS(3000));
-    if (lvgl_lock(200)) { ui_net_set_status("WIFI INIT..."); lvgl_unlock(); }
-    bool ok = wifi_init_sta();
+    /* C6 is already powered (C6_EN HIGH from xl9535_init).
+       wifi_at_init will reset and re-init C6 via SDIO-AT using its
+       factory AT firmware (v4.0.0.0) — no firmware flash required. */
+    vTaskDelay(pdMS_TO_TICKS(2000));   /* let C6 finish booting before SDIO probe */
+
+    if (lvgl_lock(200)) { ui_net_set_status("AT INIT..."); lvgl_unlock(); }
+
+    bool ok = wifi_at_init(c6_en_ctrl, CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD);
+    if (!ok) {
+        ESP_LOGW(TAG, "Primary WiFi failed, trying fallback '%s'", CONFIG_WIFI_SSID2);
+        if (lvgl_lock(200)) { ui_net_set_status("TRYING FALLBACK..."); lvgl_unlock(); }
+        ok = wifi_at_connect(CONFIG_WIFI_SSID2, CONFIG_WIFI_PASSWORD2);
+    }
+    if (!ok) {
+        ESP_LOGE(TAG, "All WiFi networks failed");
+        if (lvgl_lock(200)) { ui_net_set_status("WIFI FAIL"); lvgl_unlock(); }
+        vTaskDelete(NULL);
+        return;
+    }
+
+    /* Populate shared state so rest of code knows WiFi is up */
+    s_wifi_up = true;
+    wifi_at_get_ip((char *)s_device_ip, sizeof(s_device_ip));
+
     if (lvgl_lock(200)) {
-        ui_net_set_status(ok ? "WIFI OK" : "WIFI FAIL");
+        ui_net_set_status("WIFI OK");
+        ui_set_wifi_ip((char *)s_device_ip);
         lvgl_unlock();
     }
+    ESP_LOGI(TAG, "WiFi AT ready, IP: %s", (char *)s_device_ip);
+
+    /* Sync system clock from C6 SNTP (blocking up to ~12 s) */
+    time_t epoch = wifi_at_get_epoch();
+    if (epoch > 0) {
+        struct timeval tv = { .tv_sec = epoch, .tv_usec = 0 };
+        settimeofday(&tv, NULL);
+        ESP_LOGI(TAG, "System time synced via SNTP: %lld", (long long)epoch);
+    }
+
     vTaskDelete(NULL);
 }
 
@@ -1734,6 +1877,10 @@ static void lvgl_init_task(void *arg) {
     lv_display_set_buffers(disp, lvgl_buf, NULL, buf_size,
                            LV_DISPLAY_RENDER_MODE_PARTIAL);
 
+    /* Power the ES8311 analog supply before codec init */
+    xl9535_p1(XL_VCCA_EN, true);
+    vTaskDelay(pdMS_TO_TICKS(10));
+
     /* Audio codec init — non-fatal if hardware missing */
     if (audio_codec_init() != ESP_OK)
         ESP_LOGW(TAG, "Audio init failed — radio streaming unavailable");
@@ -1741,12 +1888,14 @@ static void lvgl_init_task(void *arg) {
     ui_set_flap_cb(flap_cb);
     ui_set_wifi_scan_cb(wifi_scan_cb);
     ui_set_wifi_connect_cb(wifi_connect_cb);
-    ui_set_c6_flash_cb(c6_flash_mode_cb);
+    ui_set_c6_flash_cb(wifi_reconnect_cb);
     ui_set_weather_radio_cb(weather_radio_cb);
+    ui_set_weather_fetch_cb(weather_fetch_cb);
     ui_set_screenshot_cb(screenshot_cb);
     ui_set_cable_test_cb(cable_test_start_cb);
     ui_set_speed_test_cb(speed_test_start_cb);
     ui_set_locate_cb(locate_start_cb);
+    ui_set_term_cmd_cb(term_cmd_cb);
     ui_init();
 
     /* 1-second clock timer — fires immediately then every second */

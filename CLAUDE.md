@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Matrix-themed terminal chatbot web app. Node.js + Express backend serving a static frontend.
+Matrix-themed Command Center web app. Node.js + Express backend serving a static frontend.
 
 ## Commands
 

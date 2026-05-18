@@ -1,0 +1,2211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLUE-TRACER</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange: #FF4500;
+      --orange-dim: rgba(255,69,0,0.5);
+      --orange-dark: rgba(255,69,0,0.2);
+      --orange-glow: rgba(255,69,0,0.4);
+      --green: #27c93f;
+      --green-dim: rgba(39,201,63,0.55);
+      --red: #ff4444;
+      --bg: #0a0a0a;
+      --bg-panel: rgba(13,13,13,0.97);
+      --bg-workspace: rgba(8,8,8,0.9);
+      --border-dim: rgba(255,69,0,0.2);
+      --border-hover: rgba(255,69,0,0.5);
+      --font: 'Share Tech Mono', monospace;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--orange);
+      font-family: var(--font);
+    }
+
+    #matrix-rain {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.08;
+    }
+
+    /* ── APP SHELL ── */
+    #app {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── NAV ── */
+    #nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      height: 48px;
+      background: rgba(10,10,10,0.97);
+      border-bottom: 1px solid var(--border-dim);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    #nav-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    #nav-title {
+      font-size: 14px;
+      letter-spacing: 3px;
+      color: var(--orange);
+      text-shadow: 0 0 18px var(--orange-glow), 0 0 36px rgba(255,69,0,0.15);
+    }
+
+    #nav-logo {
+      filter: drop-shadow(0 0 6px var(--orange-glow));
+    }
+
+    .back-btn {
+      font-family: var(--font);
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: rgba(255,69,0,0.6);
+      background: none;
+      border: 1px solid var(--border-dim);
+      padding: 5px 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .back-btn:hover {
+      color: var(--orange);
+      border-color: var(--border-hover);
+      box-shadow: 0 0 8px var(--orange-glow);
+    }
+
+    /* ── TOOLBAR ── */
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 14px;
+      height: 38px;
+      background: rgba(12,12,12,0.98);
+      border-bottom: 1px solid var(--border-dim);
+      flex-shrink: 0;
+    }
+
+    .tool-btn {
+      font-family: var(--font);
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: rgba(255,69,0,0.65);
+      background: none;
+      border: 1px solid transparent;
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .tool-btn:hover {
+      color: var(--orange);
+      border-color: var(--border-dim);
+      background: rgba(255,69,0,0.05);
+    }
+    .tool-btn.active {
+      color: var(--orange);
+      border-color: var(--orange);
+      background: rgba(255,69,0,0.1);
+      box-shadow: 0 0 6px rgba(255,69,0,0.3);
+    }
+    .tool-btn.green-btn {
+      color: var(--green);
+      border-color: transparent;
+    }
+    .tool-btn.green-btn:hover {
+      border-color: var(--green-dim);
+      background: rgba(39,201,63,0.07);
+    }
+    .tool-btn.green-btn.active {
+      color: var(--green);
+      border-color: var(--green);
+      background: rgba(39,201,63,0.1);
+      box-shadow: 0 0 6px rgba(39,201,63,0.35);
+    }
+
+    .tool-sep {
+      width: 1px;
+      height: 20px;
+      background: var(--border-dim);
+      margin: 0 4px;
+    }
+
+    #toolbar-status {
+      margin-left: auto;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      color: rgba(255,69,0,0.45);
+      white-space: nowrap;
+    }
+
+    /* ── MAIN AREA ── */
+    #main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ── PALETTE ── */
+    #palette {
+      width: 110px;
+      flex-shrink: 0;
+      background: rgba(11,11,11,0.98);
+      border-right: 1px solid var(--border-dim);
+      display: flex;
+      flex-direction: column;
+      padding: 10px 6px;
+      gap: 4px;
+      overflow-y: auto;
+    }
+
+    #palette-title {
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: rgba(255,69,0,0.4);
+      text-align: center;
+      padding: 0 0 8px 0;
+      border-bottom: 1px solid var(--border-dim);
+      margin-bottom: 6px;
+    }
+
+    .palette-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 4px;
+      border: 1px solid var(--border-dim);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: transparent;
+      user-select: none;
+    }
+    .palette-item:hover {
+      border-color: var(--border-hover);
+      background: rgba(255,69,0,0.05);
+      box-shadow: 0 0 6px rgba(255,69,0,0.15);
+    }
+    .palette-item.placing {
+      border-color: var(--orange);
+      background: rgba(255,69,0,0.12);
+      box-shadow: 0 0 10px rgba(255,69,0,0.4);
+    }
+
+    .palette-icon svg {
+      display: block;
+    }
+
+    .palette-label {
+      font-size: 8px;
+      letter-spacing: 1.5px;
+      color: rgba(255,69,0,0.7);
+    }
+
+    /* ── WORKSPACE ── */
+    #workspace-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-workspace);
+    }
+
+    #workspace {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,69,0,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,69,0,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      overflow: hidden;
+    }
+
+    #conn-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* ── DEVICE NODES ── */
+    .device-node {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: default;
+      z-index: 3;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .device-icon-wrap {
+      width: 54px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .device-node:hover .device-icon-wrap {
+      border-color: var(--border-hover);
+      background: rgba(255,69,0,0.04);
+    }
+
+    .device-node.selected .device-icon-wrap {
+      border-color: var(--orange);
+      background: rgba(255,69,0,0.08);
+      box-shadow: 0 0 10px rgba(255,69,0,0.45);
+    }
+
+    .device-node.connecting-source .device-icon-wrap {
+      border-color: var(--green);
+      background: rgba(39,201,63,0.08);
+      box-shadow: 0 0 12px rgba(39,201,63,0.5);
+    }
+
+    .device-node.sim-source .device-icon-wrap {
+      border-color: var(--green);
+      background: rgba(39,201,63,0.08);
+      box-shadow: 0 0 12px rgba(39,201,63,0.5);
+    }
+
+    .device-label {
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: rgba(255,69,0,0.85);
+      text-align: center;
+      white-space: nowrap;
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+    }
+
+    .device-ip-label {
+      font-size: 8px;
+      letter-spacing: 0.5px;
+      color: rgba(39,201,63,0.6);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* ── RIGHT PANEL ── */
+    #right-panel {
+      width: 190px;
+      flex-shrink: 0;
+      background: rgba(11,11,11,0.98);
+      border-left: 1px solid var(--border-dim);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .panel-section {
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--border-dim);
+    }
+
+    .panel-section-title {
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: rgba(255,69,0,0.4);
+      margin-bottom: 8px;
+    }
+
+    .prop-type-badge {
+      display: inline-block;
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: var(--bg);
+      background: var(--orange);
+      padding: 2px 7px;
+      border-radius: 2px;
+      margin-bottom: 10px;
+    }
+
+    .prop-field {
+      margin-bottom: 7px;
+    }
+
+    .prop-label {
+      font-size: 8px;
+      letter-spacing: 1px;
+      color: rgba(255,69,0,0.45);
+      margin-bottom: 3px;
+    }
+
+    .prop-input {
+      width: 100%;
+      font-family: var(--font);
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      color: var(--orange);
+      background: rgba(255,69,0,0.04);
+      border: 1px solid var(--border-dim);
+      border-radius: 3px;
+      padding: 4px 7px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .prop-input:focus {
+      border-color: var(--border-hover);
+      box-shadow: 0 0 6px rgba(255,69,0,0.2);
+    }
+
+    .delete-device-btn {
+      width: 100%;
+      font-family: var(--font);
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: var(--red);
+      background: rgba(255,68,68,0.06);
+      border: 1px solid rgba(255,68,68,0.3);
+      padding: 5px;
+      border-radius: 3px;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: all 0.15s;
+    }
+    .delete-device-btn:hover {
+      background: rgba(255,68,68,0.14);
+      border-color: var(--red);
+      box-shadow: 0 0 6px rgba(255,68,68,0.3);
+    }
+
+    .no-selection-msg {
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: rgba(255,69,0,0.3);
+      text-align: center;
+      padding: 16px 0;
+    }
+
+    /* Interfaces */
+    .iface-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .iface-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .iface-dot.up { background: var(--green); box-shadow: 0 0 4px rgba(39,201,63,0.7); }
+    .iface-dot.down { background: var(--red); }
+    .iface-name {
+      font-size: 8px;
+      letter-spacing: 0.5px;
+      color: rgba(255,69,0,0.6);
+    }
+
+    /* Stats */
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .stat-key {
+      font-size: 8px;
+      letter-spacing: 1px;
+      color: rgba(255,69,0,0.4);
+    }
+    .stat-val {
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: var(--orange);
+    }
+
+    /* ── CONSOLE BAR ── */
+    #console-bar {
+      height: 80px;
+      flex-shrink: 0;
+      background: rgba(8,8,8,0.99);
+      border-top: 1px solid var(--border-dim);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #console-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 12px;
+      border-bottom: 1px solid var(--border-dim);
+      flex-shrink: 0;
+    }
+
+    #console-prompt {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: rgba(255,69,0,0.5);
+    }
+
+    #console-output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .console-line {
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+    .console-line.info  { color: var(--orange); }
+    .console-line.success { color: var(--green); }
+    .console-line.error { color: var(--red); }
+    .console-line.hop   { color: rgba(93,173,226,0.75); padding-left: 10px; }
+
+    /* ── SIMULATION PACKET ── */
+    #sim-packet {
+      position: absolute;
+      pointer-events: none;
+      z-index: 10;
+      display: none;
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-dim); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+    /* ── TERMINAL MODAL ── */
+    #terminal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0,0,0,0.82);
+      align-items: center;
+      justify-content: center;
+    }
+    #terminal-overlay.open { display: flex; }
+
+    #terminal-window {
+      width: min(860px, 95vw);
+      height: min(540px, 82vh);
+      background: #060606;
+      border: 1px solid var(--orange);
+      border-radius: 6px;
+      box-shadow: 0 0 50px rgba(255,69,0,0.25), 0 0 100px rgba(255,69,0,0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #terminal-titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 14px;
+      background: rgba(255,69,0,0.07);
+      border-bottom: 1px solid var(--border-dim);
+      flex-shrink: 0;
+    }
+    #terminal-title {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--orange);
+    }
+    #terminal-close {
+      background: none;
+      border: 1px solid var(--border-dim);
+      color: rgba(255,69,0,0.5);
+      font-family: var(--font);
+      font-size: 10px;
+      letter-spacing: 1px;
+      padding: 3px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    #terminal-close:hover { color: var(--orange); border-color: var(--orange); }
+
+    #terminal-output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 16px;
+      font-size: 12px;
+      line-height: 1.75;
+      letter-spacing: 0.4px;
+    }
+    .term-line           { color: #27c93f; white-space: pre-wrap; word-break: break-all; }
+    .term-line.cmd       { color: #cccccc; }
+    .term-line.err       { color: #ff5555; }
+    .term-line.dim       { color: rgba(39,201,63,0.45); }
+    .term-line.orange    { color: var(--orange); }
+    .term-line.blank     { height: 6px; }
+
+    #terminal-input-row {
+      display: flex;
+      align-items: center;
+      padding: 8px 16px;
+      border-top: 1px solid rgba(255,69,0,0.15);
+      background: rgba(255,69,0,0.02);
+      flex-shrink: 0;
+      gap: 8px;
+    }
+    #terminal-prompt {
+      color: var(--orange);
+      font-size: 12px;
+      letter-spacing: 0.4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    #terminal-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #cccccc;
+      font-family: var(--font);
+      font-size: 12px;
+      letter-spacing: 0.4px;
+      caret-color: var(--orange);
+    }
+
+    .terminal-open-btn {
+      width: 100%;
+      font-family: var(--font);
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      color: var(--green);
+      background: rgba(39,201,63,0.05);
+      border: 1px solid rgba(39,201,63,0.3);
+      border-radius: 3px;
+      padding: 6px;
+      cursor: pointer;
+      margin-bottom: 6px;
+      transition: all 0.15s;
+    }
+    .terminal-open-btn:hover { background: rgba(39,201,63,0.12); border-color: var(--green); }
+
+  </style>
+</head>
+<body>
+
+<canvas id="matrix-rain"></canvas>
+
+<div id="app">
+
+  <!-- NAV -->
+  <nav id="nav">
+    <div id="nav-left">
+      <!-- Animated SVG logo -->
+      <svg id="nav-logo" viewBox="0 0 120 40" width="100" height="32" xmlns="http://www.w3.org/2000/svg">
+        <!-- Router left -->
+        <rect x="2" y="14" width="18" height="12" rx="2" fill="rgba(255,69,0,0.1)" stroke="#FF4500" stroke-width="1.2"/>
+        <circle cx="7"  cy="20" r="1.2" fill="#27c93f"/>
+        <circle cx="11" cy="20" r="1.2" fill="#27c93f"/>
+        <circle cx="15" cy="20" r="1.2" fill="#ffbd2e"/>
+        <!-- Router center-top -->
+        <rect x="51" y="3" width="18" height="12" rx="2" fill="rgba(255,69,0,0.1)" stroke="#FF4500" stroke-width="1.2"/>
+        <circle cx="56" cy="9" r="1.2" fill="#27c93f"/>
+        <circle cx="60" cy="9" r="1.2" fill="#27c93f"/>
+        <circle cx="64" cy="9" r="1.2" fill="#ffbd2e"/>
+        <!-- Router center-bottom -->
+        <rect x="51" y="25" width="18" height="12" rx="2" fill="rgba(255,69,0,0.1)" stroke="#FF4500" stroke-width="1.2"/>
+        <circle cx="56" cy="31" r="1.2" fill="#27c93f"/>
+        <circle cx="60" cy="31" r="1.2" fill="#27c93f"/>
+        <circle cx="64" cy="31" r="1.2" fill="#27c93f"/>
+        <!-- Router right -->
+        <rect x="100" y="14" width="18" height="12" rx="2" fill="rgba(255,69,0,0.1)" stroke="#FF4500" stroke-width="1.2"/>
+        <circle cx="105" cy="20" r="1.2" fill="#27c93f"/>
+        <circle cx="109" cy="20" r="1.2" fill="#ffbd2e"/>
+        <circle cx="113" cy="20" r="1.2" fill="#27c93f"/>
+        <!-- Links dim -->
+        <line x1="20" y1="20" x2="51" y2="9"  stroke="#FF4500" stroke-width="0.8" opacity="0.25"/>
+        <line x1="20" y1="20" x2="51" y2="31" stroke="#FF4500" stroke-width="0.8" opacity="0.25"/>
+        <line x1="69" y1="9"  x2="100" y2="20" stroke="#FF4500" stroke-width="0.8" opacity="0.25"/>
+        <line x1="69" y1="31" x2="100" y2="20" stroke="#FF4500" stroke-width="0.8" opacity="0.25"/>
+        <!-- Active path -->
+        <line x1="20" y1="20" x2="51" y2="9"  stroke="#27c93f" stroke-width="1.4" opacity="0.6"/>
+        <line x1="69" y1="9"  x2="100" y2="20" stroke="#27c93f" stroke-width="1.4" opacity="0.6"/>
+        <!-- Animated packet -->
+        <circle r="3" fill="#27c93f" opacity="0.95">
+          <animateMotion dur="2s" repeatCount="indefinite" begin="0s"
+            path="M11,20 L60,9 L109,20"/>
+        </circle>
+        <circle r="2" fill="#FF4500" opacity="0.8">
+          <animateMotion dur="2.4s" repeatCount="indefinite" begin="1s"
+            path="M109,20 L60,9 L11,20"/>
+        </circle>
+      </svg>
+      <span id="nav-title">BLUE-TRACER</span>
+    </div>
+    <a href="/dashboard" class="back-btn">← BACK</a>
+  </nav>
+
+  <!-- TOOLBAR -->
+  <div id="toolbar">
+    <button class="tool-btn active" id="btn-select"   data-tool="select">SELECT</button>
+    <button class="tool-btn"        id="btn-connect"  data-tool="connect">CONNECT</button>
+    <button class="tool-btn"        id="btn-delete"   data-tool="delete">DELETE</button>
+    <div class="tool-sep"></div>
+    <button class="tool-btn green-btn" id="btn-simulate" data-tool="simulate">SIMULATE</button>
+    <div class="tool-sep"></div>
+    <button class="tool-btn" id="btn-clear">CLEAR</button>
+    <button class="tool-btn" id="btn-save">SAVE</button>
+    <button class="tool-btn" id="btn-load-example">LOAD EXAMPLE</button>
+    <span id="toolbar-status">SELECT A DEVICE OR PALETTE ITEM</span>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- PALETTE -->
+    <div id="palette">
+      <div id="palette-title">DEVICES</div>
+      <div class="palette-item" data-type="router">
+        <div class="palette-icon">
+          <svg viewBox="0 0 40 32" width="40" height="32" xmlns="http://www.w3.org/2000/svg">
+            <!-- Router: circle with crosshair + arrow -->
+            <circle cx="20" cy="18" r="10" fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.5"/>
+            <line x1="20" y1="8"  x2="20" y2="28" stroke="#FF4500" stroke-width="1" opacity="0.6"/>
+            <line x1="10" y1="18" x2="30" y2="18" stroke="#FF4500" stroke-width="1" opacity="0.6"/>
+            <polyline points="17,6 20,2 23,6" fill="none" stroke="#FF4500" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="palette-label">ROUTER</span>
+      </div>
+      <div class="palette-item" data-type="switch">
+        <div class="palette-icon">
+          <svg viewBox="0 0 40 32" width="40" height="32" xmlns="http://www.w3.org/2000/svg">
+            <!-- Switch: rectangle with port dots -->
+            <rect x="3" y="11" width="34" height="14" rx="2" fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.5"/>
+            <circle cx="9"  cy="18" r="1.5" fill="#27c93f"/>
+            <circle cx="14" cy="18" r="1.5" fill="#27c93f"/>
+            <circle cx="19" cy="18" r="1.5" fill="#27c93f"/>
+            <circle cx="24" cy="18" r="1.5" fill="#ffbd2e"/>
+            <circle cx="29" cy="18" r="1.5" fill="#27c93f"/>
+            <circle cx="34" cy="18" r="1.5" fill="#27c93f"/>
+            <!-- Bidirectional arrows -->
+            <polyline points="13,7 16,4 19,7" fill="none" stroke="#FF4500" stroke-width="1.2"/>
+            <line x1="16" y1="4" x2="16" y2="11" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+            <polyline points="21,7 24,4 27,7" fill="none" stroke="#FF4500" stroke-width="1.2"/>
+            <line x1="24" y1="4" x2="24" y2="11" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+          </svg>
+        </div>
+        <span class="palette-label">SWITCH</span>
+      </div>
+      <div class="palette-item" data-type="pc">
+        <div class="palette-icon">
+          <svg viewBox="0 0 40 32" width="40" height="32" xmlns="http://www.w3.org/2000/svg">
+            <!-- PC: monitor -->
+            <rect x="4" y="3" width="28" height="20" rx="2" fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.5"/>
+            <rect x="8" y="6" width="20" height="13" rx="1" fill="rgba(255,69,0,0.05)" stroke="#FF4500" stroke-width="0.8" opacity="0.6"/>
+            <line x1="11" y1="9"  x2="25" y2="9"  stroke="#FF4500" stroke-width="0.8" opacity="0.4"/>
+            <line x1="11" y1="12" x2="22" y2="12" stroke="#FF4500" stroke-width="0.8" opacity="0.4"/>
+            <line x1="11" y1="15" x2="24" y2="15" stroke="#FF4500" stroke-width="0.8" opacity="0.4"/>
+            <!-- Stand -->
+            <line x1="18" y1="23" x2="18" y2="28" stroke="#FF4500" stroke-width="1.5"/>
+            <line x1="13" y1="28" x2="23" y2="28" stroke="#FF4500" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <span class="palette-label">PC</span>
+      </div>
+      <div class="palette-item" data-type="server">
+        <div class="palette-icon">
+          <svg viewBox="0 0 40 32" width="40" height="32" xmlns="http://www.w3.org/2000/svg">
+            <!-- Server: 3 rack units -->
+            <rect x="6" y="3"  width="28" height="7" rx="1" fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.2"/>
+            <circle cx="30" cy="6.5" r="1.2" fill="#27c93f"/>
+            <rect x="9" y="5" width="14" height="3" rx="0.5" fill="rgba(255,69,0,0.1)" stroke="#FF4500" stroke-width="0.6"/>
+            <rect x="6" y="12" width="28" height="7" rx="1" fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.2"/>
+            <circle cx="30" cy="15.5" r="1.2" fill="#27c93f"/>
+            <rect x="9" y="14" width="14" height="3" rx="0.5" fill="rgba(255,69,0,0.1)" stroke="#FF4500" stroke-width="0.6"/>
+            <rect x="6" y="21" width="28" height="7" rx="1" fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.2"/>
+            <circle cx="30" cy="24.5" r="1.2" fill="#ffbd2e"/>
+            <rect x="9" y="23" width="14" height="3" rx="0.5" fill="rgba(255,69,0,0.1)" stroke="#FF4500" stroke-width="0.6"/>
+          </svg>
+        </div>
+        <span class="palette-label">SERVER</span>
+      </div>
+      <div class="palette-item" data-type="hub">
+        <div class="palette-icon">
+          <svg viewBox="0 0 40 32" width="40" height="32" xmlns="http://www.w3.org/2000/svg">
+            <!-- Hub: horizontal bar with ports -->
+            <rect x="3" y="14" width="34" height="9" rx="2" fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.5"/>
+            <circle cx="9"  cy="18.5" r="1.3" fill="#27c93f"/>
+            <circle cx="15" cy="18.5" r="1.3" fill="#27c93f"/>
+            <circle cx="21" cy="18.5" r="1.3" fill="#ffbd2e"/>
+            <circle cx="27" cy="18.5" r="1.3" fill="#27c93f"/>
+            <circle cx="33" cy="18.5" r="1.3" fill="#27c93f"/>
+            <!-- Vertical lines up/down -->
+            <line x1="9"  y1="10" x2="9"  y2="14" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+            <line x1="15" y1="10" x2="15" y2="14" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+            <line x1="21" y1="10" x2="21" y2="14" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+            <line x1="27" y1="23" x2="27" y2="27" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+            <line x1="33" y1="23" x2="33" y2="27" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+          </svg>
+        </div>
+        <span class="palette-label">HUB</span>
+      </div>
+      <div class="palette-item" data-type="cloud">
+        <div class="palette-icon">
+          <svg viewBox="0 0 40 32" width="40" height="32" xmlns="http://www.w3.org/2000/svg">
+            <!-- Cloud outline -->
+            <path d="M8,22 Q4,22 4,17 Q4,12 9,12 Q10,7 16,7 Q21,7 22,12 Q27,11 28,16 Q32,16 32,20 Q32,24 28,24 L8,24 Q8,24 8,22 Z"
+              fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.5" stroke-linejoin="round"/>
+            <!-- Lines going down from cloud -->
+            <line x1="14" y1="24" x2="14" y2="29" stroke="#FF4500" stroke-width="1" opacity="0.6"/>
+            <line x1="20" y1="24" x2="20" y2="29" stroke="#FF4500" stroke-width="1" opacity="0.6"/>
+            <line x1="26" y1="24" x2="26" y2="29" stroke="#FF4500" stroke-width="1" opacity="0.6"/>
+          </svg>
+        </div>
+        <span class="palette-label">CLOUD</span>
+      </div>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div id="workspace-wrap">
+      <div id="workspace">
+        <svg id="conn-svg"></svg>
+        <svg id="sim-packet-svg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:10;"></svg>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div id="right-panel">
+      <div class="panel-section">
+        <div class="panel-section-title">PROPERTIES</div>
+        <div id="props-body">
+          <div class="no-selection-msg">NO DEVICE SELECTED</div>
+        </div>
+      </div>
+      <div class="panel-section">
+        <div class="panel-section-title">INTERFACES</div>
+        <div id="ifaces-body">
+          <div class="no-selection-msg">—</div>
+        </div>
+      </div>
+      <div class="panel-section" style="border-bottom:none;">
+        <div class="panel-section-title">TOPOLOGY</div>
+        <div class="stat-row">
+          <span class="stat-key">DEVICES</span>
+          <span class="stat-val" id="stat-devices">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-key">LINKS</span>
+          <span class="stat-val" id="stat-links">0</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- CONSOLE BAR -->
+  <div id="console-bar">
+    <div id="console-header">
+      <span id="console-prompt">BLUE-TRACER CONSOLE ></span>
+    </div>
+    <div id="console-output"></div>
+  </div>
+
+<!-- TERMINAL MODAL -->
+<div id="terminal-overlay">
+  <div id="terminal-window">
+    <div id="terminal-titlebar">
+      <span id="terminal-title">BLUE-TRACER — DEVICE TERMINAL</span>
+      <button id="terminal-close">✕ CLOSE</button>
+    </div>
+    <div id="terminal-output"></div>
+    <div id="terminal-input-row">
+      <span id="terminal-prompt">></span>
+      <input id="terminal-input" type="text" autocomplete="off" spellcheck="false" placeholder="type ? for help"/>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script type="module">
+import { initMatrixRain } from '/js/matrix-rain.js';
+import { getToken } from '/js/auth.js';
+
+// Auth guard
+if (!getToken()) { window.location.href = '/'; }
+
+initMatrixRain('matrix-rain');
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+const DEVICE_DEFAULTS = {
+  router: { interfaces: ['Gi0/0','Gi0/1','Gi0/2','Gi0/3'], ip: '192.168.1.1',  mask: '255.255.255.0' },
+  switch: { interfaces: ['Fa0/0','Fa0/1','Fa0/2','Fa0/3','Fa0/4','Fa0/5','Fa0/6','Fa0/7'], ip: '0.0.0.0', mask: '255.255.255.0' },
+  pc:     { interfaces: ['Eth0/0'], ip: '192.168.1.10', mask: '255.255.255.0' },
+  server: { interfaces: ['Eth0/0','Eth0/1'], ip: '10.0.0.1', mask: '255.255.0.0' },
+  hub:    { interfaces: ['Port0','Port1','Port2','Port3'], ip: '0.0.0.0', mask: '255.255.255.0' },
+  cloud:  { interfaces: ['WAN0'], ip: '203.0.113.1', mask: '255.255.255.0' },
+};
+
+let state = {
+  devices: [],
+  connections: [],
+  tool: 'select',
+  selected: null,
+  connecting: null,
+  placingType: null,
+  simSource: null,
+  counters: { router:0, switch:0, pc:0, server:0, hub:0, cloud:0 },
+};
+
+let simRunning = false;
+let _uid = Date.now();
+function uid() { return 'id' + (_uid++); }
+
+// ── Global drag state (single handler instead of one per device) ──
+let dragState = null; // { dev, el, offX, offY, moved }
+let rafPending = false;
+
+window.addEventListener('mousemove', (e) => {
+  if (!dragState) return;
+  const rect = workspace.getBoundingClientRect();
+  dragState.dev.x = Math.max(0, e.clientX - rect.left - dragState.offX);
+  dragState.dev.y = Math.max(0, e.clientY - rect.top  - dragState.offY);
+  dragState.el.style.left = dragState.dev.x + 'px';
+  dragState.el.style.top  = dragState.dev.y + 'px';
+  dragState.moved = true;
+  if (!rafPending) {
+    rafPending = true;
+    requestAnimationFrame(() => { rafPending = false; updateConnectionPositions(); });
+  }
+});
+
+window.addEventListener('mouseup', () => {
+  if (!dragState) return;
+  dragState.el.style.cursor = '';
+  if (dragState.moved) saveState();
+  dragState = null;
+});
+
+// ─────────────────────────────────────────────
+// DOM REFS
+// ─────────────────────────────────────────────
+const workspace    = document.getElementById('workspace');
+const connSvg      = document.getElementById('conn-svg');
+const simPacketSvg = document.getElementById('sim-packet-svg');
+const consoleOut   = document.getElementById('console-output');
+const propsBody    = document.getElementById('props-body');
+const ifacesBody   = document.getElementById('ifaces-body');
+const statDevices  = document.getElementById('stat-devices');
+const statLinks    = document.getElementById('stat-links');
+const toolbarStatus = document.getElementById('toolbar-status');
+
+// ─────────────────────────────────────────────
+// CONSOLE
+// ─────────────────────────────────────────────
+function consoleLog(text, cls = 'info') {
+  const line = document.createElement('div');
+  line.className = 'console-line ' + cls;
+  line.textContent = text;
+  consoleOut.appendChild(line);
+  consoleOut.scrollTop = consoleOut.scrollHeight;
+  // Keep max 120 lines
+  while (consoleOut.children.length > 120) consoleOut.removeChild(consoleOut.firstChild);
+}
+
+// ─────────────────────────────────────────────
+// PERSISTENCE
+// ─────────────────────────────────────────────
+function saveState() {
+  try {
+    localStorage.setItem('bluetracer_state', JSON.stringify({
+      devices: state.devices,
+      connections: state.connections,
+      counters: state.counters,
+    }));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('bluetracer_state');
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    if (!saved.devices) return false;
+    state.devices = saved.devices;
+    state.connections = saved.connections || [];
+    state.counters = saved.counters || { router:0, switch:0, pc:0, server:0, hub:0, cloud:0 };
+    return true;
+  } catch(e) { return false; }
+}
+
+// ─────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────
+function getDeviceCenter(dev) {
+  return { x: dev.x + 27, y: dev.y + 22 };
+}
+
+// Fast path: update line coords in-place without rebuilding DOM
+function updateConnectionPositions() {
+  for (const conn of state.connections) {
+    const fromDev = state.devices.find(d => d.id === conn.from);
+    const toDev   = state.devices.find(d => d.id === conn.to);
+    if (!fromDev || !toDev) continue;
+    const fc = getDeviceCenter(fromDev);
+    const tc = getDeviceCenter(toDev);
+    const grp = connSvg.querySelector('[data-gid="' + conn.id + '"]');
+    if (!grp) continue;
+    grp.querySelectorAll('line').forEach(l => {
+      l.setAttribute('x1', fc.x); l.setAttribute('y1', fc.y);
+      l.setAttribute('x2', tc.x); l.setAttribute('y2', tc.y);
+    });
+  }
+}
+
+function renderConnections() {
+  connSvg.innerHTML = '';
+  for (const conn of state.connections) {
+    const fromDev = state.devices.find(d => d.id === conn.from);
+    const toDev   = state.devices.find(d => d.id === conn.to);
+    if (!fromDev || !toDev) continue;
+    const fc = getDeviceCenter(fromDev);
+    const tc = getDeviceCenter(toDev);
+
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('data-gid', conn.id);
+
+    // Invisible wide hit line for delete clicks
+    const hitLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+    hitLine.setAttribute('x1', fc.x); hitLine.setAttribute('y1', fc.y);
+    hitLine.setAttribute('x2', tc.x); hitLine.setAttribute('y2', tc.y);
+    hitLine.setAttribute('stroke','transparent');
+    hitLine.setAttribute('stroke-width','12');
+    hitLine.style.pointerEvents = 'stroke';
+    hitLine.style.cursor = state.tool === 'delete' ? 'pointer' : 'default';
+    hitLine.setAttribute('data-conn-id', conn.id);
+    hitLine.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (state.tool === 'delete') {
+        deleteConnection(conn.id);
+      }
+    });
+
+    // Visible line
+    const visLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+    visLine.setAttribute('x1', fc.x); visLine.setAttribute('y1', fc.y);
+    visLine.setAttribute('x2', tc.x); visLine.setAttribute('y2', tc.y);
+    visLine.setAttribute('stroke','#27c93f');
+    visLine.setAttribute('stroke-width','1.5');
+    visLine.setAttribute('opacity','0.55');
+    visLine.style.pointerEvents = 'none';
+    visLine.setAttribute('id', 'line-' + conn.id);
+
+    g.appendChild(hitLine);
+    g.appendChild(visLine);
+    connSvg.appendChild(g);
+  }
+}
+
+function renderDevices() {
+  // Remove device nodes no longer in state
+  const existing = workspace.querySelectorAll('.device-node');
+  existing.forEach(el => {
+    if (!state.devices.find(d => d.id === el.dataset.id)) {
+      el.remove();
+    }
+  });
+
+  for (const dev of state.devices) {
+    let el = workspace.querySelector('[data-id="' + dev.id + '"]');
+    if (!el) {
+      el = createDeviceElement(dev);
+      workspace.appendChild(el);
+    }
+    // Update position
+    el.style.left = dev.x + 'px';
+    el.style.top  = dev.y + 'px';
+    // Update label
+    const labelEl = el.querySelector('.device-label');
+    if (labelEl) labelEl.textContent = dev.hostname;
+    const ipEl = el.querySelector('.device-ip-label');
+    if (ipEl) ipEl.textContent = dev.ip !== '0.0.0.0' ? dev.ip : '';
+    // Update selection state
+    el.classList.toggle('selected', state.selected === dev.id && state.tool === 'select');
+    el.classList.toggle('connecting-source', state.connecting === dev.id);
+    el.classList.toggle('sim-source', state.simSource === dev.id);
+  }
+}
+
+function getDeviceSVG(type) {
+  const svgs = {
+    router: `<svg viewBox="0 0 40 32" width="36" height="29" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="20" cy="18" r="10" fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.5"/>
+      <line x1="20" y1="8" x2="20" y2="28" stroke="#FF4500" stroke-width="1" opacity="0.6"/>
+      <line x1="10" y1="18" x2="30" y2="18" stroke="#FF4500" stroke-width="1" opacity="0.6"/>
+      <polyline points="17,6 20,2 23,6" fill="none" stroke="#FF4500" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>`,
+    switch: `<svg viewBox="0 0 40 32" width="36" height="29" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="11" width="34" height="14" rx="2" fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.5"/>
+      <circle cx="9" cy="18" r="1.5" fill="#27c93f"/>
+      <circle cx="14" cy="18" r="1.5" fill="#27c93f"/>
+      <circle cx="19" cy="18" r="1.5" fill="#27c93f"/>
+      <circle cx="24" cy="18" r="1.5" fill="#ffbd2e"/>
+      <circle cx="29" cy="18" r="1.5" fill="#27c93f"/>
+      <circle cx="34" cy="18" r="1.5" fill="#27c93f"/>
+      <polyline points="13,7 16,4 19,7" fill="none" stroke="#FF4500" stroke-width="1.2"/>
+      <line x1="16" y1="4" x2="16" y2="11" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+      <polyline points="21,7 24,4 27,7" fill="none" stroke="#FF4500" stroke-width="1.2"/>
+      <line x1="24" y1="4" x2="24" y2="11" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+    </svg>`,
+    pc: `<svg viewBox="0 0 40 32" width="36" height="29" xmlns="http://www.w3.org/2000/svg">
+      <rect x="4" y="3" width="28" height="20" rx="2" fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.5"/>
+      <rect x="8" y="6" width="20" height="13" rx="1" fill="rgba(255,69,0,0.05)" stroke="#FF4500" stroke-width="0.8" opacity="0.6"/>
+      <line x1="11" y1="9" x2="25" y2="9" stroke="#FF4500" stroke-width="0.8" opacity="0.4"/>
+      <line x1="11" y1="12" x2="22" y2="12" stroke="#FF4500" stroke-width="0.8" opacity="0.4"/>
+      <line x1="11" y1="15" x2="24" y2="15" stroke="#FF4500" stroke-width="0.8" opacity="0.4"/>
+      <line x1="18" y1="23" x2="18" y2="28" stroke="#FF4500" stroke-width="1.5"/>
+      <line x1="13" y1="28" x2="23" y2="28" stroke="#FF4500" stroke-width="1.5"/>
+    </svg>`,
+    server: `<svg viewBox="0 0 40 32" width="36" height="29" xmlns="http://www.w3.org/2000/svg">
+      <rect x="6" y="3"  width="28" height="7" rx="1" fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.2"/>
+      <circle cx="30" cy="6.5" r="1.2" fill="#27c93f"/>
+      <rect x="9" y="5" width="14" height="3" rx="0.5" fill="rgba(255,69,0,0.1)" stroke="#FF4500" stroke-width="0.6"/>
+      <rect x="6" y="12" width="28" height="7" rx="1" fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.2"/>
+      <circle cx="30" cy="15.5" r="1.2" fill="#27c93f"/>
+      <rect x="9" y="14" width="14" height="3" rx="0.5" fill="rgba(255,69,0,0.1)" stroke="#FF4500" stroke-width="0.6"/>
+      <rect x="6" y="21" width="28" height="7" rx="1" fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.2"/>
+      <circle cx="30" cy="24.5" r="1.2" fill="#ffbd2e"/>
+      <rect x="9" y="23" width="14" height="3" rx="0.5" fill="rgba(255,69,0,0.1)" stroke="#FF4500" stroke-width="0.6"/>
+    </svg>`,
+    hub: `<svg viewBox="0 0 40 32" width="36" height="29" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="14" width="34" height="9" rx="2" fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.5"/>
+      <circle cx="9"  cy="18.5" r="1.3" fill="#27c93f"/>
+      <circle cx="15" cy="18.5" r="1.3" fill="#27c93f"/>
+      <circle cx="21" cy="18.5" r="1.3" fill="#ffbd2e"/>
+      <circle cx="27" cy="18.5" r="1.3" fill="#27c93f"/>
+      <circle cx="33" cy="18.5" r="1.3" fill="#27c93f"/>
+      <line x1="9"  y1="10" x2="9"  y2="14" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+      <line x1="15" y1="10" x2="15" y2="14" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+      <line x1="21" y1="10" x2="21" y2="14" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+      <line x1="27" y1="23" x2="27" y2="27" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+      <line x1="33" y1="23" x2="33" y2="27" stroke="#FF4500" stroke-width="1" opacity="0.5"/>
+    </svg>`,
+    cloud: `<svg viewBox="0 0 40 32" width="36" height="29" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8,22 Q4,22 4,17 Q4,12 9,12 Q10,7 16,7 Q21,7 22,12 Q27,11 28,16 Q32,16 32,20 Q32,24 28,24 L8,24 Q8,24 8,22 Z"
+        fill="rgba(255,69,0,0.08)" stroke="#FF4500" stroke-width="1.5" stroke-linejoin="round"/>
+      <line x1="14" y1="24" x2="14" y2="29" stroke="#FF4500" stroke-width="1" opacity="0.6"/>
+      <line x1="20" y1="24" x2="20" y2="29" stroke="#FF4500" stroke-width="1" opacity="0.6"/>
+      <line x1="26" y1="24" x2="26" y2="29" stroke="#FF4500" stroke-width="1" opacity="0.6"/>
+    </svg>`,
+  };
+  return svgs[type] || svgs.pc;
+}
+
+function createDeviceElement(dev) {
+  const el = document.createElement('div');
+  el.className = 'device-node';
+  el.dataset.id = dev.id;
+  el.style.left = dev.x + 'px';
+  el.style.top  = dev.y + 'px';
+
+  el.innerHTML = `
+    <div class="device-icon-wrap">${getDeviceSVG(dev.type)}</div>
+    <div class="device-label">${dev.hostname}</div>
+    <div class="device-ip-label">${dev.ip !== '0.0.0.0' ? dev.ip : ''}</div>
+  `;
+
+
+  el.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+    if (state.tool !== 'select') return;
+    const rect = workspace.getBoundingClientRect();
+    dragState = { dev, el, offX: e.clientX - rect.left - dev.x, offY: e.clientY - rect.top - dev.y, moved: false };
+    el.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+
+  el.addEventListener('click', (e) => {
+    e.stopPropagation();
+    handleDeviceClick(dev.id);
+  });
+
+  return el;
+}
+
+let _lastRenderedSelection = undefined;
+
+function render() {
+  renderDevices();
+  renderConnections();
+  // Only rebuild the properties panel when selection changes
+  if (state.selected !== _lastRenderedSelection) {
+    _lastRenderedSelection = state.selected;
+    renderPropsPanel();
+  }
+  updateStats();
+}
+
+// ─────────────────────────────────────────────
+// PROPERTIES PANEL
+// ─────────────────────────────────────────────
+function renderPropsPanel() {
+  const dev = state.selected ? state.devices.find(d => d.id === state.selected) : null;
+  if (!dev) {
+    propsBody.innerHTML = '<div class="no-selection-msg">NO DEVICE SELECTED</div>';
+    ifacesBody.innerHTML = '<div class="no-selection-msg">—</div>';
+    return;
+  }
+
+  propsBody.innerHTML = `
+    <span class="prop-type-badge">${dev.type.toUpperCase()}</span>
+    <div class="prop-field">
+      <div class="prop-label">HOSTNAME</div>
+      <input class="prop-input" id="prop-hostname" type="text" value="${escHtml(dev.hostname)}" maxlength="32"/>
+    </div>
+    <div class="prop-field">
+      <div class="prop-label">IP ADDRESS</div>
+      <input class="prop-input" id="prop-ip" type="text" value="${escHtml(dev.ip)}" maxlength="15"/>
+    </div>
+    <div class="prop-field">
+      <div class="prop-label">SUBNET MASK</div>
+      <input class="prop-input" id="prop-mask" type="text" value="${escHtml(dev.mask)}" maxlength="15"/>
+    </div>
+    <button class="terminal-open-btn" id="prop-terminal-btn">▶ OPEN TERMINAL</button>
+    <button class="delete-device-btn" id="prop-delete-btn">DELETE DEVICE</button>
+  `;
+
+  document.getElementById('prop-hostname').addEventListener('input', (e) => {
+    dev.hostname = e.target.value || dev.hostname;
+    const labelEl = workspace.querySelector('[data-id="' + dev.id + '"] .device-label');
+    if (labelEl) labelEl.textContent = dev.hostname;
+    saveState();
+  });
+
+  document.getElementById('prop-ip').addEventListener('input', (e) => {
+    dev.ip = e.target.value;
+    const ipEl = workspace.querySelector('[data-id="' + dev.id + '"] .device-ip-label');
+    if (ipEl) ipEl.textContent = dev.ip !== '0.0.0.0' ? dev.ip : '';
+    saveState();
+  });
+
+  document.getElementById('prop-mask').addEventListener('input', (e) => {
+    dev.mask = e.target.value;
+    saveState();
+  });
+
+  document.getElementById('prop-terminal-btn').addEventListener('click', () => {
+    openTerminal(dev.id);
+  });
+
+  document.getElementById('prop-delete-btn').addEventListener('click', () => {
+    deleteDevice(dev.id);
+  });
+
+  // Interfaces
+  const connectedDevIds = new Set();
+  state.connections.forEach(c => {
+    if (c.from === dev.id) connectedDevIds.add(c.to);
+    if (c.to   === dev.id) connectedDevIds.add(c.from);
+  });
+  const connectedCount = connectedDevIds.size;
+
+  ifacesBody.innerHTML = dev.interfaces.map((iface, i) => {
+    const up = i < connectedCount;
+    return `<div class="iface-row">
+      <div class="iface-dot ${up ? 'up' : 'down'}"></div>
+      <span class="iface-name">${iface}</span>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function updateStats() {
+  statDevices.textContent = state.devices.length;
+  statLinks.textContent   = state.connections.length;
+}
+
+// ─────────────────────────────────────────────
+// TOOL SELECTION
+// ─────────────────────────────────────────────
+function setTool(tool) {
+  state.tool = tool;
+  state.connecting = null;
+  state.simSource  = null;
+  if (tool !== 'select') {
+    state.selected = null;
+  }
+  // Clear palette placing if switching away
+  if (tool !== null) {
+    state.placingType = null;
+    document.querySelectorAll('.palette-item').forEach(p => p.classList.remove('placing'));
+  }
+  // Update button states
+  document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tool === tool);
+    if (btn.dataset.tool === 'simulate') {
+      btn.classList.toggle('green-btn', true);
+      btn.classList.toggle('active', tool === 'simulate');
+    }
+  });
+
+  const statusMap = {
+    select:   'CLICK TO SELECT / DRAG TO MOVE',
+    connect:  'CLICK SOURCE DEVICE, THEN TARGET',
+    delete:   'CLICK DEVICE OR LINK TO DELETE',
+    simulate: 'CLICK SOURCE DEVICE, THEN DESTINATION',
+  };
+  toolbarStatus.textContent = statusMap[tool] || '';
+  render();
+}
+
+// ─────────────────────────────────────────────
+// DEVICE CLICK HANDLER
+// ─────────────────────────────────────────────
+function handleDeviceClick(devId) {
+  if (simRunning) return;
+
+  if (state.tool === 'select') {
+    state.selected = devId;
+    render();
+    return;
+  }
+
+  if (state.tool === 'delete') {
+    deleteDevice(devId);
+    return;
+  }
+
+  if (state.tool === 'connect') {
+    if (!state.connecting) {
+      state.connecting = devId;
+      render();
+      toolbarStatus.textContent = 'NOW CLICK TARGET DEVICE';
+    } else {
+      if (state.connecting === devId) {
+        consoleLog('Cannot connect device to itself.', 'error');
+        state.connecting = null;
+        render();
+        return;
+      }
+      // Check duplicate
+      const dup = state.connections.find(c =>
+        (c.from === state.connecting && c.to === devId) ||
+        (c.from === devId && c.to === state.connecting)
+      );
+      if (dup) {
+        consoleLog('Connection already exists.', 'error');
+        state.connecting = null;
+        render();
+        return;
+      }
+      const conn = { id: uid(), from: state.connecting, to: devId };
+      state.connections.push(conn);
+      const srcDev = state.devices.find(d => d.id === state.connecting);
+      const dstDev = state.devices.find(d => d.id === devId);
+      consoleLog(`LINK: ${srcDev.hostname} <--> ${dstDev.hostname}`, 'success');
+      state.connecting = null;
+      saveState();
+      render();
+      toolbarStatus.textContent = 'CLICK SOURCE DEVICE, THEN TARGET';
+    }
+    return;
+  }
+
+  if (state.tool === 'simulate') {
+    if (!state.simSource) {
+      state.simSource = devId;
+      render();
+      toolbarStatus.textContent = 'NOW CLICK DESTINATION DEVICE';
+    } else {
+      if (state.simSource === devId) {
+        state.simSource = null;
+        render();
+        toolbarStatus.textContent = 'CLICK SOURCE DEVICE, THEN DESTINATION';
+        return;
+      }
+      const srcId = state.simSource;
+      state.simSource = null;
+      render();
+      runSimulation(srcId, devId);
+    }
+    return;
+  }
+}
+
+// ─────────────────────────────────────────────
+// ADD DEVICE
+// ─────────────────────────────────────────────
+function addDevice(type, x, y) {
+  const defaults = DEVICE_DEFAULTS[type];
+  state.counters[type]++;
+  const prefixes = { router:'R', switch:'SW', pc:'PC', server:'SRV', hub:'HUB', cloud:'CLO' };
+  const hostname = prefixes[type] + state.counters[type];
+  const dev = {
+    id: uid(),
+    type,
+    x: Math.max(0, x - 27),
+    y: Math.max(0, y - 22),
+    hostname,
+    ip: defaults.ip,
+    mask: defaults.mask,
+    interfaces: defaults.interfaces.map(name => ({ name, up: false })),
+  };
+  // flatten interfaces to array of strings for rendering ease
+  dev.interfaces = defaults.interfaces.slice();
+  state.devices.push(dev);
+  consoleLog(`PLACED: ${hostname} (${type.toUpperCase()}) @ ${dev.x},${dev.y}`, 'info');
+  saveState();
+  render();
+  return dev;
+}
+
+// ─────────────────────────────────────────────
+// DELETE
+// ─────────────────────────────────────────────
+function deleteDevice(devId) {
+  const dev = state.devices.find(d => d.id === devId);
+  if (!dev) return;
+  const removed = state.connections.filter(c => c.from === devId || c.to === devId).length;
+  state.connections = state.connections.filter(c => c.from !== devId && c.to !== devId);
+  state.devices = state.devices.filter(d => d.id !== devId);
+  if (state.selected === devId) state.selected = null;
+  if (state.connecting === devId) state.connecting = null;
+  if (state.simSource === devId) state.simSource = null;
+  consoleLog(`DELETED: ${dev.hostname} + ${removed} link(s)`, 'info');
+  // Remove DOM element
+  const el = workspace.querySelector('[data-id="' + devId + '"]');
+  if (el) el.remove();
+  saveState();
+  render();
+}
+
+function deleteConnection(connId) {
+  const conn = state.connections.find(c => c.id === connId);
+  if (!conn) return;
+  const src = state.devices.find(d => d.id === conn.from);
+  const dst = state.devices.find(d => d.id === conn.to);
+  state.connections = state.connections.filter(c => c.id !== connId);
+  consoleLog(`LINK REMOVED: ${src ? src.hostname : '?'} <--> ${dst ? dst.hostname : '?'}`, 'info');
+  saveState();
+  render();
+}
+
+// ─────────────────────────────────────────────
+// SIMULATION
+// ─────────────────────────────────────────────
+function bfs(srcId, dstId) {
+  const adj = {};
+  for (const dev of state.devices) adj[dev.id] = [];
+  for (const conn of state.connections) {
+    adj[conn.from] = adj[conn.from] || [];
+    adj[conn.to]   = adj[conn.to]   || [];
+    adj[conn.from].push(conn.to);
+    adj[conn.to].push(conn.from);
+  }
+  const visited = new Set([srcId]);
+  const queue = [[srcId]];
+  while (queue.length) {
+    const path = queue.shift();
+    const cur = path[path.length - 1];
+    if (cur === dstId) return path;
+    for (const nb of (adj[cur] || [])) {
+      if (!visited.has(nb)) {
+        visited.add(nb);
+        queue.push([...path, nb]);
+      }
+    }
+  }
+  return null;
+}
+
+function findConnId(fromId, toId) {
+  return state.connections.find(c =>
+    (c.from === fromId && c.to === toId) ||
+    (c.from === toId && c.to === fromId)
+  );
+}
+
+async function animatePacket(x1, y1, x2, y2, connId) {
+  return new Promise(resolve => {
+    const dur = 500; // ms per hop
+    const start = performance.now();
+
+    // Flash the link line
+    const visLine = document.getElementById('line-' + connId);
+    if (visLine) {
+      visLine.setAttribute('opacity','1');
+      visLine.setAttribute('stroke-width','2.5');
+      visLine.setAttribute('stroke','#27c93f');
+    }
+
+    // Create packet circle in sim SVG
+    const pkt = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    pkt.setAttribute('r','7');
+    pkt.setAttribute('fill','#27c93f');
+    pkt.setAttribute('filter','url(#glow-filter)');
+    pkt.setAttribute('opacity','0.95');
+
+    // Ensure filter exists
+    if (!simPacketSvg.querySelector('#glow-filter')) {
+      const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+      defs.innerHTML = `<filter id="glow-filter" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>`;
+      simPacketSvg.appendChild(defs);
+    }
+
+    simPacketSvg.appendChild(pkt);
+
+    function step(now) {
+      const t = Math.min((now - start) / dur, 1);
+      // ease in-out
+      const e = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+      pkt.setAttribute('cx', x1 + (x2 - x1) * e);
+      pkt.setAttribute('cy', y1 + (y2 - y1) * e);
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        simPacketSvg.removeChild(pkt);
+        // Restore link
+        if (visLine) {
+          visLine.setAttribute('opacity','0.55');
+          visLine.setAttribute('stroke-width','1.5');
+        }
+        resolve();
+      }
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+async function runSimulation(srcId, dstId) {
+  if (simRunning) return;
+  simRunning = true;
+  toolbarStatus.textContent = 'SIMULATING...';
+
+  const srcDev = state.devices.find(d => d.id === srcId);
+  const dstDev = state.devices.find(d => d.id === dstId);
+
+  consoleLog('', 'info');
+  consoleLog(`PING ${dstDev.ip} (${dstDev.hostname}) from ${srcDev.hostname}`, 'info');
+  consoleLog('---', 'info');
+
+  const path = bfs(srcId, dstId);
+  if (!path) {
+    consoleLog('NO ROUTE TO HOST', 'error');
+    simRunning = false;
+    toolbarStatus.textContent = 'SIMULATE: CLICK SOURCE DEVICE, THEN DESTINATION';
+    return;
+  }
+
+  let totalMs = 0;
+  for (let i = 0; i < path.length - 1; i++) {
+    const fromDev = state.devices.find(d => d.id === path[i]);
+    const toDev   = state.devices.find(d => d.id === path[i+1]);
+    const fc = getDeviceCenter(fromDev);
+    const tc = getDeviceCenter(toDev);
+    const hopMs = Math.floor(Math.random() * 8) + 1;
+    totalMs += hopMs;
+    const conn = findConnId(path[i], path[i+1]);
+    consoleLog(`  Hop ${i+1}: ${fromDev.hostname} → ${toDev.hostname}  [${hopMs}ms]`, 'hop');
+    if (conn) {
+      await animatePacket(fc.x, fc.y, tc.x, tc.y, conn.id);
+    }
+  }
+
+  consoleLog(`Reply from ${dstDev.ip}: bytes=32 TTL=64 time=${totalMs}ms`, 'success');
+  consoleLog('SUCCESS', 'success');
+  simRunning = false;
+  toolbarStatus.textContent = 'CLICK SOURCE DEVICE, THEN DESTINATION';
+}
+
+// ─────────────────────────────────────────────
+// PALETTE CLICK → placing mode
+// ─────────────────────────────────────────────
+document.querySelectorAll('.palette-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const type = item.dataset.type;
+    if (state.placingType === type) {
+      // Cancel placing
+      state.placingType = null;
+      item.classList.remove('placing');
+      toolbarStatus.textContent = 'SELECT A DEVICE OR PALETTE ITEM';
+    } else {
+      state.placingType = type;
+      document.querySelectorAll('.palette-item').forEach(p => p.classList.remove('placing'));
+      item.classList.add('placing');
+      // Switch to select tool visually but allow placing
+      setTool('select');
+      state.placingType = type; // restore after setTool clears it
+      item.classList.add('placing');
+      toolbarStatus.textContent = `CLICK WORKSPACE TO PLACE ${type.toUpperCase()}`;
+    }
+  });
+});
+
+// ─────────────────────────────────────────────
+// WORKSPACE CLICK (only fires on workspace div itself)
+// ─────────────────────────────────────────────
+workspace.addEventListener('click', (e) => {
+  if (e.target !== workspace && e.target !== connSvg) return;
+
+  if (state.placingType) {
+    const rect = workspace.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    addDevice(state.placingType, x, y);
+    // Stay in placing mode for rapid placement; clear on palette re-click
+    return;
+  }
+
+  // Cancel pending connection
+  if (state.tool === 'connect' && state.connecting) {
+    state.connecting = null;
+    toolbarStatus.textContent = 'CLICK SOURCE DEVICE, THEN TARGET';
+    render();
+    return;
+  }
+
+  // Deselect
+  if (state.tool === 'select') {
+    state.selected = null;
+    render();
+  }
+});
+
+// ─────────────────────────────────────────────
+// TOOLBAR BUTTONS
+// ─────────────────────────────────────────────
+document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+  btn.addEventListener('click', () => setTool(btn.dataset.tool));
+});
+
+document.getElementById('btn-clear').addEventListener('click', () => {
+  if (!confirm('Clear all devices and connections?')) return;
+  state.devices = [];
+  state.connections = [];
+  state.selected = null;
+  state.connecting = null;
+  state.simSource = null;
+  state.placingType = null;
+  state.counters = { router:0, switch:0, pc:0, server:0, hub:0, cloud:0 };
+  document.querySelectorAll('.device-node').forEach(el => el.remove());
+  document.querySelectorAll('.palette-item').forEach(p => p.classList.remove('placing'));
+  saveState();
+  render();
+  consoleLog('WORKSPACE CLEARED.', 'info');
+});
+
+document.getElementById('btn-save').addEventListener('click', () => {
+  saveState();
+  consoleLog('STATE SAVED TO LOCALSTORAGE.', 'success');
+});
+
+document.getElementById('btn-load-example').addEventListener('click', () => {
+  // Clear first
+  state.devices = [];
+  state.connections = [];
+  state.counters = { router:0, switch:0, pc:0, server:0, hub:0, cloud:0 };
+  document.querySelectorAll('.device-node').forEach(el => el.remove());
+
+  const W = workspace.getBoundingClientRect().width  || 600;
+  const H = workspace.getBoundingClientRect().height || 400;
+  const cx = W / 2;
+  const cy = H / 2;
+
+  function place(type, hostname, ip, x, y) {
+    const defaults = DEVICE_DEFAULTS[type];
+    state.counters[type]++;
+    const dev = {
+      id: uid(),
+      type,
+      x: Math.round(x - 27),
+      y: Math.round(y - 22),
+      hostname,
+      ip,
+      mask: defaults.mask,
+      interfaces: defaults.interfaces.slice(),
+    };
+    state.devices.push(dev);
+    return dev;
+  }
+
+  function link(a, b) {
+    state.connections.push({ id: uid(), from: a.id, to: b.id });
+  }
+
+  const R1   = place('router', 'R1',   '10.0.0.1',      cx - 180, cy - 130);
+  const R2   = place('router', 'R2',   '10.0.1.1',      cx + 20,  cy - 130);
+  const SW1  = place('switch', 'SW1',  '192.168.1.254', cx - 80,  cy);
+  const PC1  = place('pc',     'PC1',  '192.168.1.10',  cx - 200, cy + 130);
+  const PC2  = place('pc',     'PC2',  '192.168.1.11',  cx - 70,  cy + 130);
+  const PC3  = place('pc',     'PC3',  '192.168.1.12',  cx + 60,  cy + 130);
+  const SRV1 = place('server', 'SRV1', '10.0.2.1',      cx + 180, cy - 130);
+
+  link(R1, R2);
+  link(R1, SW1);
+  link(R2, SRV1);
+  link(SW1, PC1);
+  link(SW1, PC2);
+  link(SW1, PC3);
+
+  saveState();
+  render();
+
+  consoleLog('', 'info');
+  consoleLog('EXAMPLE TOPOLOGY LOADED', 'success');
+  consoleLog('TRY: SIMULATE → click PC1 → click SRV1', 'info');
+});
+
+// ─────────────────────────────────────────────
+// TERMINAL (Cisco IOS CLI)
+// ─────────────────────────────────────────────
+const termOverlay = document.getElementById('terminal-overlay');
+const termOutput  = document.getElementById('terminal-output');
+const termInput   = document.getElementById('terminal-input');
+const termPromptEl= document.getElementById('terminal-prompt');
+const termTitleEl = document.getElementById('terminal-title');
+
+let term = {
+  device:  null,
+  mode:    'user',       // user | priv | config | config-if
+  iface:   null,         // selected interface name when in config-if
+  history: [],
+  histIdx: -1,
+  routes:  [],           // [{network, mask, nextHop}]
+};
+
+function openTerminal(devId) {
+  const dev = state.devices.find(d => d.id === devId);
+  if (!dev) return;
+  term.device  = dev;
+  term.mode    = 'user';
+  term.iface   = null;
+  term.history = [];
+  term.histIdx = -1;
+  term.routes  = [];
+  termOutput.innerHTML = '';
+  termTitleEl.textContent = `BLUE-TRACER — ${dev.hostname} [${dev.type.toUpperCase()}]`;
+  termPrint('');
+  termPrint('  ************************************************************', 'dim');
+  termPrint('  *                   Blue-NET IOS Software                  *', 'dim');
+  termPrint(`  *  Hostname: ${dev.hostname.padEnd(14)} Type: ${dev.type.toUpperCase().padEnd(8)}          *`, 'dim');
+  termPrint('  *  Version: 12.4(24)T            Blue-NET Systems          *', 'dim');
+  termPrint('  ************************************************************', 'dim');
+  termPrint('');
+  termPrint(`  ${dev.hostname} uptime is 0 hours, 0 minutes`);
+  termPrint('  Type ? for available commands');
+  termPrint('');
+  termUpdatePrompt();
+  termOverlay.classList.add('open');
+  termInput.focus();
+}
+
+function closeTerminal() {
+  termOverlay.classList.remove('open');
+}
+
+function termPrint(text, cls = '') {
+  if (text === '') { const b = document.createElement('div'); b.className = 'term-line blank'; termOutput.appendChild(b); }
+  else {
+    const line = document.createElement('div');
+    line.className = 'term-line ' + cls;
+    line.textContent = text;
+    termOutput.appendChild(line);
+  }
+  termOutput.scrollTop = termOutput.scrollHeight;
+  while (termOutput.children.length > 300) termOutput.removeChild(termOutput.firstChild);
+}
+
+function termUpdatePrompt() {
+  if (!term.device) return;
+  const h = term.device.hostname;
+  const map = { user: h+'>', priv: h+'#', config: h+'(config)#', 'config-if': h+'(config-if)#' };
+  termPromptEl.textContent = map[term.mode] || h+'>';
+}
+
+function termExec(raw) {
+  const cmd = raw.trim();
+  termPrint(termPromptEl.textContent + ' ' + cmd, 'cmd');
+  if (!cmd) return;
+  if (term.history.length === 0 || term.history[0] !== cmd) {
+    term.history.unshift(cmd);
+    if (term.history.length > 60) term.history.pop();
+  }
+  term.histIdx = -1;
+
+  const parts = cmd.split(/\s+/);
+  const c0 = parts[0].toLowerCase();
+
+  // Universal commands
+  if (c0 === '?') { termHelp(); return; }
+  if (c0 === 'clear') { termOutput.innerHTML = ''; return; }
+  if (c0 === 'end') {
+    if (term.mode === 'config' || term.mode === 'config-if') { term.mode = 'priv'; term.iface = null; }
+    termUpdatePrompt(); return;
+  }
+  if (c0 === 'exit' || c0 === 'quit' || c0 === 'logout') {
+    if (term.mode === 'user') { closeTerminal(); return; }
+    if (term.mode === 'priv') { term.mode = 'user'; }
+    else if (term.mode === 'config') { term.mode = 'priv'; }
+    else if (term.mode === 'config-if') { term.mode = 'config'; term.iface = null; }
+    termUpdatePrompt(); return;
+  }
+
+  if (term.mode === 'user')       termUserMode(c0, parts);
+  else if (term.mode === 'priv')  termPrivMode(c0, parts);
+  else if (term.mode === 'config') termConfigMode(c0, parts);
+  else if (term.mode === 'config-if') termIfaceMode(c0, parts);
+}
+
+function termUserMode(c0, parts) {
+  if (tm(c0,'enable',2))   { term.mode = 'priv'; termUpdatePrompt(); return; }
+  if (tm(c0,'ping'))        { termDoPing(parts[1]); return; }
+  if (tm(c0,'show',2))      { termDoShow(parts.slice(1)); return; }
+  termUnknown();
+}
+
+function termPrivMode(c0, parts) {
+  if (tm(c0,'disable',3))   { term.mode = 'user'; termUpdatePrompt(); return; }
+  if ((tm(c0,'configure',4) || c0 === 'conf') && (parts[1]||'').toLowerCase().startsWith('t')) {
+    term.mode = 'config';
+    termPrint('Enter configuration commands, one per line.  End with CNTL/Z.');
+    termUpdatePrompt(); return;
+  }
+  if (tm(c0,'ping'))         { termDoPing(parts[1]); return; }
+  if (tm(c0,'traceroute',5) || tm(c0,'trace',5)) { termDoTrace(parts[1]); return; }
+  if (tm(c0,'show',2))       { termDoShow(parts.slice(1)); return; }
+  if (c0 === 'write' || (c0 === 'wr' && (!parts[1] || parts[1].startsWith('m')))) {
+    termPrint('Building configuration...[OK]'); saveState(); return;
+  }
+  if (tm(c0,'reload',3)) { termPrint('Proceed with reload? [confirm]  (simulation — no actual reload)'); return; }
+  termUnknown();
+}
+
+function termConfigMode(c0, parts) {
+  if (tm(c0,'hostname',2)) {
+    if (!parts[1]) { termPrint('% Incomplete command.','err'); return; }
+    term.device.hostname = parts[1];
+    termTitleEl.textContent = `BLUE-TRACER — ${term.device.hostname} [${term.device.type.toUpperCase()}]`;
+    const lbl = workspace.querySelector('[data-id="'+term.device.id+'"] .device-label');
+    if (lbl) lbl.textContent = term.device.hostname;
+    termUpdatePrompt(); render(); saveState(); return;
+  }
+  if (tm(c0,'interface',2)) {
+    const name = parts.slice(1).join(' ');
+    if (!name) { termPrint('% Incomplete command.','err'); return; }
+    const match = term.device.interfaces.find(i => i.toLowerCase().startsWith(name.toLowerCase()));
+    if (!match) { termPrint(`% Invalid interface: ${name}`,'err'); return; }
+    term.iface = match; term.mode = 'config-if'; termUpdatePrompt(); return;
+  }
+  if (c0 === 'ip' && (parts[1]||'').toLowerCase().startsWith('r')) {
+    if (parts.length < 5) { termPrint('% Incomplete command.','err'); return; }
+    term.routes.push({ network: parts[2], mask: parts[3], nextHop: parts[4] });
+    termPrint(`% Static route to ${parts[2]} via ${parts[4]} added.`); return;
+  }
+  if (tm(c0,'enable',2) && (parts[1]||'') === 'password') {
+    termPrint('% Enable password set.'); return;
+  }
+  if (tm(c0,'banner',3)) { termPrint('% Enter TEXT message. End with the character \'%\'.'); return; }
+  termUnknown();
+}
+
+function termIfaceMode(c0, parts) {
+  if (c0 === 'ip' && (parts[1]||'').toLowerCase().startsWith('a')) {
+    if (parts.length < 4) { termPrint('% Incomplete command.','err'); return; }
+    term.device.ip   = parts[2];
+    term.device.mask = parts[3];
+    const ipEl = workspace.querySelector('[data-id="'+term.device.id+'"] .device-ip-label');
+    if (ipEl) ipEl.textContent = term.device.ip !== '0.0.0.0' ? term.device.ip : '';
+    termPrint(`% IP address set on ${term.iface}: ${parts[2]} ${parts[3]}`);
+    saveState(); return;
+  }
+  if (c0 === 'no' && (parts[1]||'').toLowerCase().startsWith('s')) {
+    termPrint(`%LINEPROTO-5-UPDOWN: Line protocol on Interface ${term.iface}, changed state to up`); return;
+  }
+  if (tm(c0,'shutdown',2)) {
+    termPrint(`%LINEPROTO-5-UPDOWN: Line protocol on Interface ${term.iface}, changed state to administratively down`); return;
+  }
+  if (tm(c0,'description',4)) {
+    termPrint(`% Description set on ${term.iface}.`); return;
+  }
+  if (tm(c0,'duplex',3)) { termPrint(`% Duplex set on ${term.iface}.`); return; }
+  if (tm(c0,'speed',3))  { termPrint(`% Speed set on ${term.iface}.`); return; }
+  termUnknown();
+}
+
+// ── show commands ─────────────────────────────
+function termDoShow(sub) {
+  const s0 = (sub[0]||'').toLowerCase();
+  const s1 = (sub[1]||'').toLowerCase();
+  const s2 = (sub[2]||'').toLowerCase();
+  const dev = term.device;
+
+  if (tm(s0,'version',3)) {
+    termPrint('Blue-NET IOS Software, Version 12.4(24)T');
+    termPrint('Technical Support: http://www.bluenet.local/techsupport');
+    termPrint('');
+    termPrint(`${dev.hostname} uptime is 0 hours, 0 minutes`);
+    termPrint('System returned to ROM by reload');
+    termPrint('');
+    const id = Math.random().toString(36).slice(2,10).toUpperCase();
+    termPrint(`cisco ${dev.type.toUpperCase()} processor with 249856K/12288K bytes of memory.`);
+    termPrint(`Processor board ID ${id}`);
+    termPrint(`${dev.interfaces.length} interface(s)`);
+    termPrint('');
+    termPrint('Configuration register is 0x2102');
+    return;
+  }
+
+  if (tm(s0,'interfaces',3) && !s1) {
+    const connCount = state.connections.filter(c => c.from===dev.id||c.to===dev.id).length;
+    dev.interfaces.forEach((iface, i) => {
+      const up = i < connCount;
+      termPrint(`${iface} is ${up?'up':'administratively down'}, line protocol is ${up?'up':'down'}`);
+      const mac = Array.from({length:3},()=>Math.floor(Math.random()*0xffff).toString(16).padStart(4,'0')).join('.');
+      termPrint(`  Hardware is ${dev.type==='router'?'AmdFE':'EtherSVI'}, address is ${mac} (bia ${mac})`);
+      if (i===0 && dev.ip !== '0.0.0.0') termPrint(`  Internet address is ${dev.ip}/${termMaskToCidr(dev.mask)}`);
+      termPrint(`  MTU 1500 bytes, BW 100000 Kbit/sec, DLY 100 usec`);
+      termPrint(`  ${up?'Full-duplex, 100Mb/s, media type is RJ45':'Auto-duplex, Auto Speed'}`);
+      termPrint('');
+    });
+    return;
+  }
+
+  if (s0.startsWith('ip') && tm(s1,'interface',3) && s2.startsWith('b')) {
+    termPrint('Interface              IP-Address      OK? Method Status                Protocol');
+    const connCount = state.connections.filter(c=>c.from===dev.id||c.to===dev.id).length;
+    dev.interfaces.forEach((iface, i) => {
+      const up  = i < connCount;
+      const ip  = i===0 && dev.ip!=='0.0.0.0' ? dev.ip : 'unassigned';
+      termPrint(`${iface.padEnd(23)}${ip.padEnd(16)}YES manual ${(up?'up':'administratively down').padEnd(22)}${up?'up':'down'}`);
+    });
+    return;
+  }
+
+  if (s0.startsWith('ip') && tm(s1,'route',3)) {
+    termPrint('Codes: C - connected, S - static, R - RIP, O - OSPF, B - BGP');
+    termPrint('');
+    if (dev.ip !== '0.0.0.0') {
+      const net  = termGetNetwork(dev.ip, dev.mask);
+      const cidr = termMaskToCidr(dev.mask);
+      termPrint(`C    ${net}/${cidr} is directly connected, ${dev.interfaces[0]||'Gi0/0'}`);
+    }
+    const seen = new Set();
+    state.connections.filter(c=>c.from===dev.id||c.to===dev.id).forEach(c => {
+      const other = state.devices.find(d=>d.id===(c.from===dev.id?c.to:c.from));
+      if (other && other.ip!=='0.0.0.0' && !seen.has(other.id)) {
+        seen.add(other.id);
+        termPrint(`C    ${termGetNetwork(other.ip,other.mask)}/${termMaskToCidr(other.mask)} is directly connected, ${dev.interfaces[seen.size]||dev.interfaces[0]||'Gi0/1'}`);
+      }
+    });
+    term.routes.forEach(r => termPrint(`S    ${r.network}/${termMaskToCidr(r.mask)} [1/0] via ${r.nextHop}`));
+    return;
+  }
+
+  if (tm(s0,'running-config',3) || tm(s0,'startup-config',3)) {
+    if (term.mode === 'user') { termPrint('% Authorization failed.','err'); return; }
+    termPrint('Building configuration...');
+    termPrint('');
+    termPrint('Current configuration : ' + (200+dev.interfaces.length*80) + ' bytes');
+    termPrint('!');
+    termPrint('version 12.4');
+    termPrint('service timestamps debug datetime msec');
+    termPrint('!');
+    termPrint(`hostname ${dev.hostname}`);
+    termPrint('!');
+    dev.interfaces.forEach((iface, i) => {
+      termPrint(`interface ${iface}`);
+      if (i===0 && dev.ip!=='0.0.0.0') {
+        termPrint(` ip address ${dev.ip} ${dev.mask}`);
+        termPrint(' no shutdown');
+      } else {
+        termPrint(' no ip address');
+        termPrint(' shutdown');
+      }
+      termPrint('!');
+    });
+    term.routes.forEach(r => termPrint(`ip route ${r.network} ${r.mask} ${r.nextHop}`));
+    termPrint('!');
+    termPrint('end');
+    termPrint('');
+    return;
+  }
+
+  if (tm(s0,'cdp',2) && tm(s1,'neighbors',3)) {
+    const nbConns = state.connections.filter(c=>c.from===dev.id||c.to===dev.id);
+    if (!nbConns.length) { termPrint('No CDP neighbor entries found.'); return; }
+    termPrint('Capability Codes: R - Router, T - Trans Bridge, S - Switch, H - Host');
+    termPrint('');
+    termPrint('Device ID        Local Intrfce     Holdtme    Capability  Platform  Port ID');
+    nbConns.forEach((c, i) => {
+      const nb = state.devices.find(d=>d.id===(c.from===dev.id?c.to:c.from));
+      if (!nb) return;
+      const cap = {router:'R',switch:'S',pc:'H',server:'H',hub:'T',cloud:'R'}[nb.type]||'R';
+      const plat = {router:'CISCO2811',switch:'WS-C2960',pc:'PC-HOST',server:'SRV',hub:'HUB',cloud:'CLOUD'}[nb.type]||'CISCO';
+      const localIf = dev.interfaces[i]||dev.interfaces[0]||'Gi0/0';
+      const remoteIf= nb.interfaces[0]||'Gi0/0';
+      termPrint(`${nb.hostname.padEnd(17)}${localIf.padEnd(18)}120        ${cap.padEnd(12)}${plat.padEnd(10)}${remoteIf}`);
+    });
+    return;
+  }
+
+  if (tm(s0,'arp',2)) {
+    const nbConns = state.connections.filter(c=>c.from===dev.id||c.to===dev.id);
+    termPrint('Protocol  Address          Age (min)  Hardware Addr   Type   Interface');
+    if (dev.ip !== '0.0.0.0') {
+      const mac = Array.from({length:3},()=>Math.floor(Math.random()*0xffff).toString(16).padStart(4,'0')).join('.');
+      termPrint(`Internet  ${dev.ip.padEnd(17)}-          ${mac}   ARPA   ${dev.interfaces[0]||'Gi0/0'}`);
+    }
+    nbConns.forEach((c,i) => {
+      const nb = state.devices.find(d=>d.id===(c.from===dev.id?c.to:c.from));
+      if (!nb || nb.ip==='0.0.0.0') return;
+      const mac = Array.from({length:3},()=>Math.floor(Math.random()*0xffff).toString(16).padStart(4,'0')).join('.');
+      termPrint(`Internet  ${nb.ip.padEnd(17)}0          ${mac}   ARPA   ${dev.interfaces[i]||dev.interfaces[0]||'Gi0/0'}`);
+    });
+    return;
+  }
+
+  termPrint(`% Invalid input detected at '^' marker.  (try: show ?)`, 'err');
+}
+
+// ── ping ──────────────────────────────────────
+function termDoPing(target) {
+  if (!target) { termPrint('% Incomplete command.','err'); return; }
+  const dev  = term.device;
+  const dest = state.devices.find(d => d.ip === target);
+  termPrint(`Type escape sequence to abort.`);
+  termPrint(`Sending 5, 100-byte ICMP Echos to ${target}, timeout is 2 seconds:`);
+  if (!dest) {
+    termPrint('.....');
+    termPrint('Success rate is 0 percent (0/5)');
+    termPrint(`% Destination host unreachable`, 'err');
+    return;
+  }
+  const path = termFindPath(dev.id, dest.id);
+  if (!path) {
+    termPrint('.....');
+    termPrint('Success rate is 0 percent (0/5)', 'err');
+    return;
+  }
+  const ms = (path.length-1)*2+1;
+  termPrint('!!!!!');
+  termPrint(`Success rate is 100 percent (5/5), round-trip min/avg/max = ${ms-1}/${ms}/${ms+2} ms`);
+}
+
+// ── traceroute ────────────────────────────────
+function termDoTrace(target) {
+  if (!target) { termPrint('% Incomplete command.','err'); return; }
+  const dev  = term.device;
+  const dest = state.devices.find(d => d.ip === target);
+  termPrint(`Type escape sequence to abort.`);
+  termPrint(`Tracing the route to ${target}`);
+  termPrint('');
+  if (!dest) {
+    termPrint(' 1  * * *');
+    termPrint(`% No route to host`, 'err'); return;
+  }
+  const path = termFindPath(dev.id, dest.id);
+  if (!path || path.length < 2) {
+    termPrint(' 1  * * *');
+    termPrint('% No route to host', 'err'); return;
+  }
+  path.slice(1).forEach((id, i) => {
+    const d = state.devices.find(x => x.id === id);
+    const ms = (i+1)*2;
+    termPrint(` ${i+1}  ${(d?.ip||'?').padEnd(18)} [${d?.hostname||'?'}]  ${ms} msec  ${ms} msec  ${ms+1} msec`);
+  });
+}
+
+// ── help ──────────────────────────────────────
+function termHelp() {
+  const helps = {
+    user: [
+      ['enable',               'Enter privileged EXEC mode'],
+      ['ping <ip>',            'Send ICMP echo packets'],
+      ['show version',         'System hardware and software status'],
+      ['show interfaces',      'Interface status and configuration'],
+      ['show ip interface brief','Brief IP interface summary'],
+      ['clear',                'Clear terminal output'],
+      ['exit',                 'Close terminal'],
+    ],
+    priv: [
+      ['configure terminal',   'Enter global configuration mode'],
+      ['disable',              'Return to user EXEC mode'],
+      ['ping <ip>',            'Send ICMP echo packets'],
+      ['traceroute <ip>',      'Trace packet path to destination'],
+      ['show running-config',  'Current operating configuration'],
+      ['show ip route',        'IP routing table'],
+      ['show ip interface brief','Brief interface summary'],
+      ['show arp',             'ARP table'],
+      ['show cdp neighbors',   'CDP neighbor information'],
+      ['write memory',         'Save running config to NVRAM'],
+      ['end',                  'Return to privileged mode'],
+      ['exit',                 'Return to user mode'],
+    ],
+    config: [
+      ['hostname <name>',      'Set system hostname'],
+      ['interface <name>',     'Enter interface configuration mode'],
+      ['ip route <net> <mask> <hop>', 'Add static route'],
+      ['enable password <pw>', 'Set enable password'],
+      ['end',                  'Return to privileged mode'],
+      ['exit',                 'Return to privileged mode'],
+    ],
+    'config-if': [
+      ['ip address <ip> <mask>','Set interface IP address'],
+      ['no shutdown',          'Enable the interface'],
+      ['shutdown',             'Disable the interface'],
+      ['description <text>',   'Set interface description'],
+      ['duplex [full|half|auto]','Set duplex mode'],
+      ['speed <value>',        'Set interface speed'],
+      ['end',                  'Return to privileged mode'],
+      ['exit',                 'Return to global config mode'],
+    ],
+  };
+  const cmds = helps[term.mode] || helps.user;
+  termPrint('');
+  cmds.forEach(([c, d]) => termPrint(`  ${c.padEnd(30)} ${d}`, 'dim'));
+  termPrint('');
+}
+
+// ── utilities ─────────────────────────────────
+function tm(input, full, minLen = full.length) {
+  if (!input) return false;
+  return full.toLowerCase().startsWith(input.toLowerCase()) && input.length >= minLen;
+}
+
+function termUnknown() {
+  termPrint("                                 ^", 'err');
+  termPrint('% Invalid input detected at \'^\' marker.', 'err');
+}
+
+function termMaskToCidr(mask) {
+  if (!mask) return 24;
+  return mask.split('.').reduce((acc, oct) => {
+    let n = parseInt(oct)||0, c = 0;
+    while (n) { c += n & 1; n >>= 1; }
+    return acc + c;
+  }, 0);
+}
+
+function termGetNetwork(ip, mask) {
+  if (!ip||!mask) return '0.0.0.0';
+  return ip.split('.').map((o,i)=>((parseInt(o)||0)&(parseInt((mask.split('.')||[])[i])||0))).join('.');
+}
+
+function termFindPath(srcId, dstId) {
+  const adj = {};
+  state.devices.forEach(d => adj[d.id] = []);
+  state.connections.forEach(c => { adj[c.from].push(c.to); adj[c.to].push(c.from); });
+  const queue = [[srcId]], visited = new Set([srcId]);
+  while (queue.length) {
+    const path = queue.shift(), node = path[path.length-1];
+    if (node === dstId) return path;
+    for (const nb of (adj[node]||[])) {
+      if (!visited.has(nb)) { visited.add(nb); queue.push([...path, nb]); }
+    }
+  }
+  return null;
+}
+
+// ── keyboard handling ─────────────────────────
+document.getElementById('terminal-close').addEventListener('click', closeTerminal);
+termOverlay.addEventListener('click', e => { if (e.target === termOverlay) closeTerminal(); });
+
+termInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const cmd = termInput.value;
+    termInput.value = '';
+    termExec(cmd);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (term.histIdx < term.history.length-1) { term.histIdx++; termInput.value = term.history[term.histIdx]||''; }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (term.histIdx > 0) { term.histIdx--; termInput.value = term.history[term.histIdx]||''; }
+    else { term.histIdx = -1; termInput.value = ''; }
+  } else if (e.key === 'Tab') {
+    e.preventDefault();
+    const input = termInput.value.trim().toLowerCase();
+    if (!input) return;
+    const all = ['enable','disable','configure terminal','ping','traceroute','show version',
+      'show interfaces','show ip interface brief','show ip route','show running-config',
+      'show startup-config','show cdp neighbors','show arp','write memory','reload',
+      'exit','end','hostname','interface','ip address','ip route',
+      'no shutdown','shutdown','description','duplex','speed','clear'];
+    const match = all.find(c => c.startsWith(input) && c !== input);
+    if (match) termInput.value = match;
+  } else if (e.ctrlKey && e.key === 'c') {
+    termPrint('');
+    termInput.value = '';
+  } else if (e.ctrlKey && e.key === 'z') {
+    if (term.mode === 'config' || term.mode === 'config-if') {
+      term.mode = 'priv'; term.iface = null; termUpdatePrompt(); termPrint('');
+    }
+  }
+});
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+function init() {
+  if (loadState()) {
+    // Re-render from saved state
+    render();
+    consoleLog('STATE RESTORED FROM LOCALSTORAGE.', 'info');
+  } else {
+    consoleLog('BLUE-TRACER INITIALIZED. SELECT A DEVICE FROM THE PALETTE.', 'info');
+    consoleLog('TOOLS: SELECT | CONNECT | DELETE | SIMULATE', 'info');
+  }
+  setTool('select');
+}
+
+init();
+</script>
+</body>
+</html>

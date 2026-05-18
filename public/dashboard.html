@@ -67,6 +67,9 @@
     .dash-card-net      { grid-column: 2; grid-row: 2; }
     .dash-card-tip      { grid-column: 3; grid-row: 2; }
 
+    /* Row 3: tools */
+    .dash-card-tracer   { grid-column: 2; grid-row: 3; }
+
     .dash-center {
       grid-column: 2;
       grid-row: 2;
@@ -134,7 +137,9 @@
       .dash-card-sike,
       .dash-card-tip,
       .dash-card-tdisplay,
-      .dash-card-can { grid-column: 1; grid-row: auto; }
+      .dash-card-can,
+      .dash-card-tracer,
+      [style*="grid-column:3"] { grid-column: 1; grid-row: auto; }
     }
 
     .dash-card {
@@ -381,25 +386,35 @@
         <!-- Blue-NET — middle left -->
         <a href="/admin" class="dash-card dash-card-net">
           <div class="dash-card-icon">
-            <svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="8" width="56" height="14" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
-              <rect x="6"  y="11" width="3" height="3" rx="0.3" fill="none" stroke="#5DADE2" stroke-width="1"/>
-              <rect x="10" y="11" width="3" height="3" rx="0.3" fill="none" stroke="#5DADE2" stroke-width="1"/>
-              <rect x="14" y="11" width="3" height="3" rx="0.3" fill="none" stroke="#5DADE2" stroke-width="1"/>
-              <rect x="18" y="11" width="3" height="3" rx="0.3" fill="none" stroke="#5DADE2" stroke-width="1"/>
-              <rect x="22" y="11" width="3" height="3" rx="0.3" fill="none" stroke="#5DADE2" stroke-width="1"/>
-              <rect x="26" y="11" width="3" height="3" rx="0.3" fill="none" stroke="#5DADE2" stroke-width="1"/>
-              <rect x="30" y="11" width="3" height="3" rx="0.3" fill="none" stroke="#5DADE2" stroke-width="1"/>
-              <rect x="34" y="11" width="3" height="3" rx="0.3" fill="none" stroke="#5DADE2" stroke-width="1"/>
-              <circle cx="7.5"  cy="17" r="1" fill="#27c93f"/>
-              <circle cx="11.5" cy="17" r="1" fill="#ffbd2e"/>
-              <circle cx="15.5" cy="17" r="1" fill="#27c93f"/>
-              <circle cx="19.5" cy="17" r="1" fill="#ffbd2e"/>
-              <circle cx="23.5" cy="17" r="1" fill="#27c93f"/>
-              <circle cx="27.5" cy="17" r="1" fill="#ffbd2e"/>
-              <circle cx="31.5" cy="17" r="1" fill="#27c93f"/>
-              <circle cx="35.5" cy="17" r="1" fill="#ffbd2e"/>
-              <circle cx="52"   cy="15" r="1.5" fill="currentColor"/>
+            <svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" style="color:currentColor;">
+              <!-- Switch core -->
+              <rect x="22" y="12" width="16" height="6" rx="1" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="1.2"/>
+              <circle cx="26" cy="15" r="0.9" fill="#27c93f" opacity="0.8"/>
+              <circle cx="30" cy="15" r="0.9" fill="#27c93f" opacity="0.8"/>
+              <circle cx="34" cy="15" r="0.9" fill="#27c93f" opacity="0.8"/>
+              <!-- Left node -->
+              <circle cx="8"  cy="15" r="2.8" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="1.1"/>
+              <circle cx="8"  cy="15" r="1.1" fill="currentColor" opacity="0.7"/>
+              <!-- Right node -->
+              <circle cx="52" cy="15" r="2.8" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="1.1"/>
+              <circle cx="52" cy="15" r="1.1" fill="currentColor" opacity="0.7"/>
+              <!-- Top node -->
+              <circle cx="30" cy="4"  r="2.8" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="1.1"/>
+              <circle cx="30" cy="4"  r="1.1" fill="currentColor" opacity="0.7"/>
+              <!-- Bottom node -->
+              <circle cx="30" cy="26" r="2.8" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="1.1"/>
+              <circle cx="30" cy="26" r="1.1" fill="currentColor" opacity="0.7"/>
+              <!-- Connection lines -->
+              <line x1="11"  y1="15" x2="22" y2="15" stroke="currentColor" stroke-width="0.9" opacity="0.4"/>
+              <line x1="38"  y1="15" x2="49" y2="15" stroke="currentColor" stroke-width="0.9" opacity="0.4"/>
+              <line x1="30"  y1="7"  x2="30" y2="12" stroke="currentColor" stroke-width="0.9" opacity="0.4"/>
+              <line x1="30"  y1="18" x2="30" y2="23" stroke="currentColor" stroke-width="0.9" opacity="0.4"/>
+              <!-- Data packets -->
+              <circle r="1.3" fill="#27c93f" opacity="0.95"><animateMotion dur="1.2s" repeatCount="indefinite" begin="0s"   path="M8,15 L22,15"/></circle>
+              <circle r="1.3" fill="#27c93f" opacity="0.95"><animateMotion dur="1.2s" repeatCount="indefinite" begin="0.4s" path="M38,15 L52,15"/></circle>
+              <circle r="1.3" fill="#27c93f" opacity="0.95"><animateMotion dur="1.0s" repeatCount="indefinite" begin="0.2s" path="M30,7 L30,12"/></circle>
+              <circle r="1.3" fill="#FF4500" opacity="0.8"><animateMotion dur="1.4s" repeatCount="indefinite" begin="0.6s" path="M52,15 L38,15"/></circle>
+              <circle r="1.3" fill="#FF4500" opacity="0.8"><animateMotion dur="1.3s" repeatCount="indefinite" begin="0.1s" path="M30,18 L30,23"/></circle>
             </svg>
           </div>
           <div class="dash-card-name">BLUE-NET</div>
@@ -496,21 +511,37 @@
         <a href="/bluesike" class="dash-card dash-card-sike">
           <div class="dash-card-icon">
             <svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" style="color:#FF4500;">
-              <circle cx="30" cy="15" r="12" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.5"/>
-              <circle cx="30" cy="15" r="7"  fill="none" stroke="#27c93f" stroke-width="1" opacity="0.7"/>
-              <line x1="30" y1="2"  x2="30" y2="8"  stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
-              <line x1="30" y1="22" x2="30" y2="28" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
-              <line x1="17" y1="15" x2="23" y2="15" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
-              <line x1="37" y1="15" x2="43" y2="15" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
-              <circle cx="30" cy="15" r="2.5" fill="#27c93f" opacity="0.9"/>
-              <circle cx="30" cy="15" r="4.5" fill="none" stroke="#27c93f" stroke-width="0.7" opacity="0.4">
-                <animate attributeName="r" values="4.5;10;4.5" dur="2s" repeatCount="indefinite"/>
-                <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite"/>
-              </circle>
+              <!-- Corner brackets -->
               <path d="M4 6 L4 2 L8 2"       fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
               <path d="M52 2 L56 2 L56 6"    fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
               <path d="M4 24 L4 28 L8 28"    fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
               <path d="M52 28 L56 28 L56 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+              <!-- Outer ring -->
+              <circle cx="30" cy="15" r="12" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.5"/>
+              <!-- Middle ring -->
+              <circle cx="30" cy="15" r="7"  fill="none" stroke="#27c93f"    stroke-width="1"   opacity="0.7"/>
+              <!-- Inner ring -->
+              <circle cx="30" cy="15" r="3.5" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.35"/>
+              <!-- Crosshairs -->
+              <line x1="30" y1="2"  x2="30" y2="8"  stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+              <line x1="30" y1="22" x2="30" y2="28" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+              <line x1="17" y1="15" x2="23" y2="15" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+              <line x1="37" y1="15" x2="43" y2="15" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
+              <!-- Radar sweep line -->
+              <line x1="30" y1="15" x2="30" y2="3" stroke="#27c93f" stroke-width="1.2" opacity="0.85" stroke-linecap="round">
+                <animateTransform attributeName="transform" type="rotate" from="0 30 15" to="360 30 15" dur="2.5s" repeatCount="indefinite"/>
+              </line>
+              <!-- Sweep trail -->
+              <line x1="30" y1="15" x2="38" y2="4" stroke="#27c93f" stroke-width="0.8" opacity="0.35" stroke-linecap="round">
+                <animateTransform attributeName="transform" type="rotate" from="-25 30 15" to="335 30 15" dur="2.5s" repeatCount="indefinite"/>
+              </line>
+              <!-- Center dot -->
+              <circle cx="30" cy="15" r="2" fill="#27c93f" opacity="0.95"/>
+              <!-- Pulse ring -->
+              <circle cx="30" cy="15" r="2" fill="none" stroke="#27c93f" stroke-width="0.7" opacity="0">
+                <animate attributeName="r"       values="2;12;2"    dur="2.5s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.7;0;0.7" dur="2.5s" repeatCount="indefinite"/>
+              </circle>
             </svg>
           </div>
           <div class="dash-card-name">BLUE-SIKE</div>
@@ -518,6 +549,72 @@
           <div class="dash-card-arrow">ENTER →</div>
         </a>
 
+
+        <!-- Blue-Tracer — row 3 center -->
+        <a href="/bluetracer" class="dash-card dash-card-tracer">
+          <div class="dash-card-icon">
+            <svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" style="color:#FF4500;">
+              <!-- Router left -->
+              <rect x="2"  y="11" width="12" height="8" rx="1.2" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="1.2"/>
+              <circle cx="5"  cy="15" r="0.9" fill="#27c93f" opacity="0.8"/>
+              <circle cx="8"  cy="15" r="0.9" fill="#27c93f" opacity="0.8"/>
+              <circle cx="11" cy="15" r="0.9" fill="#ffbd2e" opacity="0.8"/>
+              <!-- Router center-top -->
+              <rect x="24" y="3"  width="12" height="8" rx="1.2" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="1.2"/>
+              <circle cx="27" cy="7"  r="0.9" fill="#27c93f" opacity="0.8"/>
+              <circle cx="30" cy="7"  r="0.9" fill="#27c93f" opacity="0.8"/>
+              <circle cx="33" cy="7"  r="0.9" fill="#ffbd2e" opacity="0.8"/>
+              <!-- Router center-bottom -->
+              <rect x="24" y="19" width="12" height="8" rx="1.2" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="1.2"/>
+              <circle cx="27" cy="23" r="0.9" fill="#27c93f" opacity="0.8"/>
+              <circle cx="30" cy="23" r="0.9" fill="#27c93f" opacity="0.8"/>
+              <circle cx="33" cy="23" r="0.9" fill="#27c93f" opacity="0.8"/>
+              <!-- Router right -->
+              <rect x="46" y="11" width="12" height="8" rx="1.2" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="1.2"/>
+              <circle cx="49" cy="15" r="0.9" fill="#27c93f" opacity="0.8"/>
+              <circle cx="52" cy="15" r="0.9" fill="#ffbd2e" opacity="0.8"/>
+              <circle cx="55" cy="15" r="0.9" fill="#27c93f" opacity="0.8"/>
+              <!-- Links -->
+              <line x1="14" y1="15" x2="24" y2="7"  stroke="currentColor" stroke-width="0.9" opacity="0.35"/>
+              <line x1="14" y1="15" x2="24" y2="23" stroke="currentColor" stroke-width="0.9" opacity="0.35"/>
+              <line x1="36" y1="7"  x2="46" y2="15" stroke="currentColor" stroke-width="0.9" opacity="0.35"/>
+              <line x1="36" y1="23" x2="46" y2="15" stroke="currentColor" stroke-width="0.9" opacity="0.35"/>
+              <!-- Traced path highlight -->
+              <line x1="14" y1="15" x2="24" y2="7"  stroke="#27c93f" stroke-width="1.4" opacity="0.6"/>
+              <line x1="36" y1="7"  x2="46" y2="15" stroke="#27c93f" stroke-width="1.4" opacity="0.6"/>
+              <!-- Trace packet -->
+              <circle r="1.8" fill="#27c93f" opacity="0.95">
+                <animateMotion dur="2s" repeatCount="indefinite" begin="0s"
+                  path="M8,15 L30,7 L52,15"/>
+              </circle>
+              <!-- Return packet -->
+              <circle r="1.4" fill="#FF4500" opacity="0.8">
+                <animateMotion dur="2.4s" repeatCount="indefinite" begin="1s"
+                  path="M52,15 L30,7 L8,15"/>
+              </circle>
+            </svg>
+          </div>
+          <div class="dash-card-name">BLUE-TRACER</div>
+          <div class="dash-card-desc">NETWORK SIMULATOR<br>TOPOLOGY & PACKET TRACER</div>
+          <div class="dash-card-arrow">ENTER →</div>
+        </a>
+
+        <!-- Last.fm / Music status — row 3 right -->
+        <a href="https://www.last.fm/api/account/create" target="_blank" class="dash-card" style="grid-column:3;grid-row:3;">
+          <div class="dash-card-icon">
+            <svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" style="color:#27c93f;">
+              <!-- Music note pair -->
+              <text x="10" y="22" font-size="20" fill="currentColor" opacity="0.9" font-family="serif">♫</text>
+              <!-- Sound bars -->
+              <rect x="40" y="18" width="4" height="8"  rx="1" fill="currentColor" opacity="0.9"><animate attributeName="height" values="8;18;8"  dur="0.8s" repeatCount="indefinite" begin="0s"/><animate attributeName="y"      values="18;8;18" dur="0.8s" repeatCount="indefinite" begin="0s"/></rect>
+              <rect x="46" y="12" width="4" height="14" rx="1" fill="currentColor" opacity="0.9"><animate attributeName="height" values="14;6;14" dur="0.7s" repeatCount="indefinite" begin="0.15s"/><animate attributeName="y"      values="12;18;12" dur="0.7s" repeatCount="indefinite" begin="0.15s"/></rect>
+              <rect x="52" y="15" width="4" height="11" rx="1" fill="currentColor" opacity="0.9"><animate attributeName="height" values="11;20;11" dur="0.9s" repeatCount="indefinite" begin="0.05s"/><animate attributeName="y"      values="15;6;15" dur="0.9s" repeatCount="indefinite" begin="0.05s"/></rect>
+            </svg>
+          </div>
+          <div class="dash-card-name">LAST.FM</div>
+          <div class="dash-card-desc">GET FREE API KEY<br>FOR T-DISPLAY MUSIC</div>
+          <div class="dash-card-arrow" style="color:#27c93f;">SETUP →</div>
+        </a>
 
       </div>
     </div>

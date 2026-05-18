@@ -1,7 +1,7 @@
 {
-  "name": "can-reader",
+  "name": "command-center",
   "version": "1.0.0",
-  "description": "CAN Reader — ECU binary file editor",
+  "description": "Command Center \u2014 Blue-NET admin & operations hub",
   "main": "electron-main.js",
   "scripts": {
     "start": "node server.js",

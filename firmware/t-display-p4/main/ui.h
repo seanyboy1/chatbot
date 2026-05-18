@@ -34,6 +34,8 @@ void ui_set_cal_cb(ui_cal_cb_t cb);
 void ui_set_music_cmd_cb(ui_music_cmd_cb_t cb);
 void ui_set_bt_scan_cb(ui_bt_scan_cb_t cb);
 void ui_set_weather_radio_cb(ui_weather_radio_cb_t cb);
+typedef void (*ui_weather_fetch_cb_t)(void);
+void ui_set_weather_fetch_cb(ui_weather_fetch_cb_t cb);
 void ui_set_flap_cb(ui_flap_cb_t cb);
 void ui_set_screenshot_cb(ui_screenshot_cb_t cb);
 
@@ -90,6 +92,9 @@ void ui_cable_set_summary(bool pass, const char *mdi_str);
 typedef void (*ui_speed_test_cb_t)(void);
 void ui_set_speed_test_cb(ui_speed_test_cb_t cb);
 void ui_speed_set_result(const char *result);
+
+typedef void (*ui_c6_flash_cb_t)(void);
+void ui_set_c6_flash_cb(ui_c6_flash_cb_t cb);
 
 typedef void (*ui_locate_cb_t)(bool start);
 void ui_set_locate_cb(ui_locate_cb_t cb);

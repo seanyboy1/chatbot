@@ -38,11 +38,13 @@ static ui_cal_cb_t           s_cb_cal;
 static ui_music_cmd_cb_t     s_cb_music;
 static ui_bt_scan_cb_t       s_cb_bt;
 static ui_weather_radio_cb_t s_cb_wx;
+static ui_weather_fetch_cb_t s_cb_wx_fetch;
 static ui_flap_cb_t          s_cb_flap;
 static ui_screenshot_cb_t    s_cb_ss;
 static ui_lora_send_cb_t     s_cb_lora_send;
 static ui_cable_test_cb_t    s_cb_cable_test;
 static ui_locate_cb_t        s_cb_locate;
+static ui_c6_flash_cb_t      s_cb_c6_flash;
 
 /* ── Screens ─────────────────────────────────────────────────────────────── */
 static lv_obj_t *s_scr_splash;
@@ -56,6 +58,20 @@ static lv_obj_t *s_scr_net;
 static lv_obj_t *s_scr_gps;
 static lv_obj_t *s_scr_can;
 static lv_obj_t *s_scr_music;
+
+/* ── Navigation stack ────────────────────────────────────────────────────── */
+#define NAV_STACK_DEPTH 8
+static lv_obj_t *s_nav_stack[NAV_STACK_DEPTH];
+static int       s_nav_top = 0;
+
+static void nav_push(lv_obj_t *scr) {
+    if (s_nav_top < NAV_STACK_DEPTH) s_nav_stack[s_nav_top++] = scr;
+}
+
+static lv_obj_t *nav_pop(void) {
+    if (s_nav_top > 0) return s_nav_stack[--s_nav_top];
+    return NULL;
+}
 
 /* ── Home status bar ─────────────────────────────────────────────────────── */
 static lv_obj_t *s_home_ip_lbl;
@@ -143,9 +159,10 @@ static lv_obj_t *s_dash_log_cont;
 static char      s_dash_log_buf[3072];
 
 /* ── COMMS / music screen ────────────────────────────────────────────────── */
-static lv_obj_t *s_comms_panels[4];
-static lv_obj_t *s_comms_btns[4];
-static int       s_comms_active;
+static lv_obj_t *s_scr_comms_spotify;
+static lv_obj_t *s_scr_comms_weather;
+static lv_obj_t *s_scr_comms_broadcast;
+static lv_obj_t *s_scr_comms_lora;
 
 /* Spotify panel */
 static lv_obj_t *s_music_title_lbl;
@@ -183,11 +200,13 @@ void ui_set_brightness_cb(ui_brightness_cb_t cb)      { s_cb_bright     = cb; }
 void ui_set_term_cmd_cb(ui_term_cmd_cb_t cb)           { s_cb_term       = cb; }
 void ui_set_wifi_connect_cb(ui_wifi_connect_cb_t cb)   { s_cb_wifi_con   = cb; }
 void ui_set_wifi_scan_cb(ui_wifi_scan_cb_t cb)         { s_cb_wifi_scan  = cb; }
+void ui_set_c6_flash_cb(ui_c6_flash_cb_t cb)           { s_cb_c6_flash   = cb; }
 void ui_set_capture_cb(ui_capture_cb_t cb)             { s_cb_capture    = cb; }
 void ui_set_cal_cb(ui_cal_cb_t cb)                     { s_cb_cal        = cb; }
 void ui_set_music_cmd_cb(ui_music_cmd_cb_t cb)         { s_cb_music      = cb; }
 void ui_set_bt_scan_cb(ui_bt_scan_cb_t cb)             { s_cb_bt         = cb; }
 void ui_set_weather_radio_cb(ui_weather_radio_cb_t cb) { s_cb_wx         = cb; }
+void ui_set_weather_fetch_cb(ui_weather_fetch_cb_t cb) { s_cb_wx_fetch   = cb; }
 void ui_set_flap_cb(ui_flap_cb_t cb)                   { s_cb_flap       = cb; }
 void ui_set_screenshot_cb(ui_screenshot_cb_t cb)       { s_cb_ss         = cb; }
 void ui_set_lora_send_cb(ui_lora_send_cb_t cb)         { s_cb_lora_send  = cb; }
@@ -296,7 +315,9 @@ static void swipe_back_cb(lv_event_t *e) {
     (void)e;
     lv_indev_t *indev = lv_indev_active();
     if (indev && lv_indev_get_gesture_dir(indev) == LV_DIR_RIGHT) {
-        lv_screen_load_anim(s_scr_home, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 300, 0, false);
+        lv_obj_t *prev = nav_pop();
+        if (!prev) prev = s_scr_home;
+        lv_screen_load_anim(prev, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 300, 0, false);
     }
 }
 
@@ -342,29 +363,12 @@ static lv_obj_t *make_hdr(lv_obj_t *scr, const char *title, bool with_back) {
     }
 
     if (with_back) {
-        /* Title centered */
+        /* Title centered — no back button, swipe to go back */
         lv_obj_t *ttl = lv_label_create(hdr);
         lv_label_set_text(ttl, title);
         lv_obj_set_style_text_color(ttl, C_ORANGE, 0);
         lv_obj_set_style_text_font(ttl, &lv_font_montserrat_14, 0);
         lv_obj_align(ttl, LV_ALIGN_TOP_MID, 0, 8);
-
-        /* Back button — bottom-left */
-        lv_obj_t *btn = lv_btn_create(hdr);
-        lv_obj_set_size(btn, 70, 28);
-        lv_obj_align(btn, LV_ALIGN_BOTTOM_LEFT, 8, -6);
-        lv_obj_set_style_bg_color(btn, C_DIMMER, 0);
-        lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, 0);
-        lv_obj_set_style_border_color(btn, C_BORDER, 0);
-        lv_obj_set_style_border_width(btn, 1, 0);
-        lv_obj_set_style_radius(btn, 4, 0);
-        lv_obj_set_style_shadow_width(btn, 0, 0);
-        lv_obj_add_event_cb(btn, back_cb, LV_EVENT_CLICKED, NULL);
-        lv_obj_t *bbl = lv_label_create(btn);
-        lv_label_set_text(bbl, LV_SYMBOL_LEFT " HOME");
-        lv_obj_set_style_text_color(bbl, C_WHITE, 0);
-        lv_obj_set_style_text_font(bbl, &lv_font_montserrat_12, 0);
-        lv_obj_center(bbl);
     } else {
         /* Home screen: title centered */
         lv_obj_t *ttl = lv_label_create(hdr);
@@ -457,6 +461,7 @@ static void build_splash(void) {
 /* Tile nav callback — user_data = target screen pointer */
 static void tile_nav_cb(lv_event_t *e) {
     lv_obj_t *scr = (lv_obj_t *)lv_event_get_user_data(e);
+    nav_push(lv_screen_active());
     lv_screen_load_anim(scr, LV_SCR_LOAD_ANIM_MOVE_LEFT, 300, 0, false);
 }
 
@@ -526,7 +531,7 @@ static void build_home(void) {
     build_tile(s_scr_home, 0, 0, LV_SYMBOL_GPS,    "GPS / NAV",   "L76K NMEA",    C_ORANGE, s_scr_gps);
     build_tile(s_scr_home, 1, 0, LV_SYMBOL_CHARGE, "DASHBOARD",   "SYSTEM STATS", C_ORANGE, s_scr_dash);
     build_tile(s_scr_home, 0, 1, LV_SYMBOL_IMAGE,  "CAMERA",      "CSI MIPI",     C_BLUE,   s_scr_cam);
-    build_tile(s_scr_home, 1, 1, LV_SYMBOL_AUDIO,  "COMMS",       "LORA/BT/WX",   C_BLUE,   s_scr_music);
+    build_tile(s_scr_home, 1, 1, LV_SYMBOL_WIFI,   "COMMS",       "LORA/BT/WX",   C_BLUE,   s_scr_music);
     build_tile(s_scr_home, 0, 2, LV_SYMBOL_LIST,   "TERMINAL",    "SHELL CMD",    C_BLUE,   s_scr_term);
     build_tile(s_scr_home, 1, 2, LV_SYMBOL_SHUFFLE,"CAN BUS",     "OBD-II 500K",  C_BLUE,   s_scr_can);
     build_tile(s_scr_home, 0, 3, LV_SYMBOL_USB,    "ETH TESTER",  "LAN8720 RMII", C_GREEN,  s_scr_eth);
@@ -910,14 +915,8 @@ static void build_term(void) {
     lv_obj_add_event_cb(s_scr_term, swipe_back_cb, LV_EVENT_GESTURE, NULL);
     make_hdr(s_scr_term, LV_SYMBOL_LIST "  TERMINAL", true);
 
-    /* Log area */
-    int log_h = CY - 80;
-    s_term_log_lbl = make_log_area(s_scr_term, 8, HDR + 8,
-                                    W - 16, log_h, &s_term_log_cont);
-    lv_obj_set_style_text_color(s_term_log_lbl, C_GREEN, 0);
-
-    /* Input row */
-    int iy = HDR + log_h + 16;
+    /* Input row at top — stays visible above the keyboard */
+    int iy = HDR + 8;
     s_term_input_ta = make_ta(s_scr_term, "type command...", false, true);
     lv_obj_set_pos(s_term_input_ta, 8, iy);
     lv_obj_set_size(s_term_input_ta, W - 100, 52);
@@ -926,6 +925,13 @@ static void build_term(void) {
                               C_ORANGE, term_send_cb, NULL);
     lv_obj_set_size(send, 80, 52);
     lv_obj_set_pos(send, W - 86, iy);
+
+    /* Log area fills rest of screen below input */
+    int log_y = iy + 60;
+    int log_h = H - log_y - 8;
+    s_term_log_lbl = make_log_area(s_scr_term, 8, log_y,
+                                    W - 16, log_h, &s_term_log_cont);
+    lv_obj_set_style_text_color(s_term_log_lbl, C_GREEN, 0);
 
     /* Welcome message */
     log_append(s_term_log_lbl, s_term_log_cont,
@@ -939,6 +945,11 @@ static void build_term(void) {
 static void net_scan_btn_cb(lv_event_t *e) {
     (void)e;
     if (s_cb_wifi_scan) s_cb_wifi_scan();
+}
+
+static void net_flash_c6_btn_cb(lv_event_t *e) {
+    (void)e;
+    if (s_cb_c6_flash) s_cb_c6_flash();
 }
 
 static void net_connect_btn_cb(lv_event_t *e) {
@@ -977,7 +988,7 @@ static void build_net(void) {
     make_label(s_scr_net, "PASSWORD:", &lv_font_montserrat_12, C_DIM);
     lv_obj_set_pos(lv_obj_get_child(s_scr_net, lv_obj_get_child_cnt(s_scr_net)-1), 12, y);
     y += 22;
-    s_net_pass_ta = make_ta(s_scr_net, "Password", true, true);
+    s_net_pass_ta = make_ta(s_scr_net, "Password", false, true);
     lv_obj_set_pos(s_net_pass_ta, 8, y);
     lv_obj_set_size(s_net_pass_ta, W - 16, 52);
     y += 72;
@@ -993,6 +1004,16 @@ static void build_net(void) {
     lv_obj_set_size(scn, 260, 56);
     lv_obj_set_pos(scn, W - 268, y);
     y += 72;
+
+    /* FLASH C6 button */
+    lv_obj_t *fc6 = make_btn(s_scr_net, LV_SYMBOL_WIFI "  WIFI RECONNECT",
+                             C_DIMMER, net_flash_c6_btn_cb, NULL);
+    lv_obj_set_style_border_color(fc6, C_ORANGE, 0);
+    lv_obj_set_style_border_width(fc6, 2, 0);
+    lv_obj_set_style_text_color(lv_obj_get_child(fc6, 0), C_ORANGE, 0);
+    lv_obj_set_size(fc6, W - 16, 56);
+    lv_obj_set_pos(fc6, 8, y);
+    y += 68;
 
     /* Scan results */
     make_label(s_scr_net, "SCAN RESULTS:", &lv_font_montserrat_12, C_DIM);
@@ -1158,22 +1179,6 @@ static void build_settings(void) {
  *  COMMS SCREEN  (Spotify / Weather / Broadcast / LoRa)
  * ═══════════════════════════════════════════════════════════════════════════ */
 
-static void comms_tab_cb(lv_event_t *e) {
-    int idx = (int)(intptr_t)lv_event_get_user_data(e);
-    s_comms_active = idx;
-    for (int i = 0; i < 4; i++) {
-        if (i == idx) {
-            lv_obj_clear_flag(s_comms_panels[i], LV_OBJ_FLAG_HIDDEN);
-            lv_obj_set_style_bg_color(s_comms_btns[i], C_ORANGE, 0);
-            lv_obj_set_style_bg_color(s_comms_btns[i], C_ORANGE, LV_PART_MAIN);
-        } else {
-            lv_obj_add_flag(s_comms_panels[i], LV_OBJ_FLAG_HIDDEN);
-            lv_obj_set_style_bg_color(s_comms_btns[i], C_DIMMER, 0);
-            lv_obj_set_style_bg_color(s_comms_btns[i], C_DIMMER, LV_PART_MAIN);
-        }
-    }
-}
-
 static void music_prev_cb(lv_event_t *e) { (void)e; if (s_cb_music) s_cb_music("previous"); }
 static void music_play_cb(lv_event_t *e) { (void)e; if (s_cb_music) s_cb_music("play-pause"); }
 static void music_next_cb(lv_event_t *e) { (void)e; if (s_cb_music) s_cb_music("next"); }
@@ -1190,175 +1195,268 @@ static void lora_send_btn_cb(lv_event_t *e) {
     lv_textarea_set_text(s_lora_tx_ta, "");
 }
 
-static void wx_start_btn_cb(lv_event_t *e) {
+static bool s_wx_radio_live = false;
+static lv_obj_t *s_wx_radio_btn     = NULL;
+static lv_obj_t *s_wx_radio_btn_lbl = NULL;
+
+static void wx_fetch_btn_cb(lv_event_t *e) {
     (void)e;
-    if (s_cb_wx) s_cb_wx(true);
+    if (s_cb_wx_fetch) s_cb_wx_fetch();
 }
 
-static void build_comms_spotify(lv_obj_t *parent) {
-    /* Connected status */
-    s_music_conn_lbl = make_label(parent, "NOT CONNECTED",
-                                  &lv_font_montserrat_14, C_DIM);
-    lv_obj_align(s_music_conn_lbl, LV_ALIGN_TOP_MID, 0, 20);
+static void wx_radio_btn_cb(lv_event_t *e) {
+    (void)e;
+    if (!s_cb_wx) return;
+    s_wx_radio_live = !s_wx_radio_live;
+    if (s_wx_radio_live) {
+        s_cb_wx(true);
+        lv_obj_set_style_bg_color(s_wx_radio_btn, C_FIRE, 0);
+        if (s_wx_radio_btn_lbl)
+            lv_label_set_text(s_wx_radio_btn_lbl, LV_SYMBOL_STOP " STOP RADIO");
+    } else {
+        s_cb_wx(false);
+        lv_obj_set_style_bg_color(s_wx_radio_btn, C_BLUE, 0);
+        if (s_wx_radio_btn_lbl)
+            lv_label_set_text(s_wx_radio_btn_lbl, LV_SYMBOL_AUDIO " LISTEN LIVE");
+    }
+}
 
-    /* Track info */
-    s_music_title_lbl = make_label(parent, "---", &lv_font_montserrat_24, C_WHITE);
+/* ── helper: tile sized for 2×2 grid within a sub-screen ─────────────────── */
+static void build_comms_tile(lv_obj_t *parent, int col, int row,
+                              const char *icon, const char *title,
+                              const char *sub, lv_color_t accent,
+                              lv_obj_t *target_scr) {
+    const int GAP = 8;
+    const int TW  = (W - 3*GAP) / 2;
+    const int TH  = (CY - 3*GAP) / 2;
+    int x = GAP + col*(TW + GAP);
+    int y = HDR + GAP + row*(TH + GAP);
+
+    lv_obj_t *card = make_card(parent, x, y, TW, TH);
+    if (target_scr) {
+        lv_obj_add_flag(card, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_add_event_cb(card, tile_nav_cb, LV_EVENT_CLICKED, target_scr);
+    }
+
+    lv_obj_t *bar = lv_obj_create(card);
+    lv_obj_set_pos(bar, 0, 0);
+    lv_obj_set_size(bar, TW, 6);
+    lv_obj_set_style_bg_color(bar, accent, 0);
+    lv_obj_set_style_bg_opa(bar, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(bar, 0, 0);
+    lv_obj_set_style_radius(bar, 0, 0);
+
+    lv_obj_t *ic = lv_label_create(card);
+    lv_label_set_text(ic, icon);
+    lv_obj_set_style_text_color(ic, accent, 0);
+    lv_obj_set_style_text_font(ic, &lv_font_montserrat_48, 0);
+    lv_obj_align(ic, LV_ALIGN_CENTER, 0, -48);
+
+    lv_obj_t *ttl = lv_label_create(card);
+    lv_label_set_text(ttl, title);
+    lv_obj_set_style_text_color(ttl, C_WHITE, 0);
+    lv_obj_set_style_text_font(ttl, &lv_font_montserrat_20, 0);
+    lv_obj_align(ttl, LV_ALIGN_CENTER, 0, 20);
+
+    lv_obj_t *st = lv_label_create(card);
+    lv_label_set_text(st, sub);
+    lv_obj_set_style_text_color(st, C_DIM, 0);
+    lv_obj_set_style_text_font(st, &lv_font_montserrat_14, 0);
+    lv_obj_align(st, LV_ALIGN_CENTER, 0, 56);
+}
+
+/* ── Spotify sub-screen ───────────────────────────────────────────────────── */
+static void build_comms_spotify_screen(void) {
+    s_scr_comms_spotify = lv_obj_create(NULL);
+    scr_bg(s_scr_comms_spotify);
+    lv_obj_add_event_cb(s_scr_comms_spotify, swipe_back_cb, LV_EVENT_GESTURE, NULL);
+    make_hdr(s_scr_comms_spotify, LV_SYMBOL_AUDIO "  SPOTIFY", true);
+
+    int y = HDR + 20;
+
+    s_music_conn_lbl = make_label(s_scr_comms_spotify, "NOT CONNECTED",
+                                  &lv_font_montserrat_14, C_DIM);
+    lv_obj_set_pos(s_music_conn_lbl, 0, y);
+    lv_obj_set_width(s_music_conn_lbl, W);
+    lv_obj_set_style_text_align(s_music_conn_lbl, LV_TEXT_ALIGN_CENTER, 0);
+    y += 50;
+
+    s_music_title_lbl = make_label(s_scr_comms_spotify, "---", &lv_font_montserrat_24, C_WHITE);
     lv_obj_set_width(s_music_title_lbl, W - 32);
     lv_label_set_long_mode(s_music_title_lbl, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_obj_set_style_text_align(s_music_title_lbl, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_align(s_music_title_lbl, LV_ALIGN_TOP_MID, 0, 60);
+    lv_obj_set_pos(s_music_title_lbl, 16, y);
+    y += 44;
 
-    s_music_artist_lbl = make_label(parent, "---", &lv_font_montserrat_16, C_DIM);
+    s_music_artist_lbl = make_label(s_scr_comms_spotify, "---", &lv_font_montserrat_16, C_DIM);
     lv_obj_set_style_text_align(s_music_artist_lbl, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_align(s_music_artist_lbl, LV_ALIGN_TOP_MID, 0, 100);
+    lv_obj_set_width(s_music_artist_lbl, W);
+    lv_obj_set_pos(s_music_artist_lbl, 0, y);
+    y += 36;
 
-    s_music_album_lbl = make_label(parent, "", &lv_font_montserrat_12, C_DIM);
+    s_music_album_lbl = make_label(s_scr_comms_spotify, "", &lv_font_montserrat_12, C_DIM);
     lv_obj_set_style_text_align(s_music_album_lbl, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_align(s_music_album_lbl, LV_ALIGN_TOP_MID, 0, 128);
+    lv_obj_set_width(s_music_album_lbl, W);
+    lv_obj_set_pos(s_music_album_lbl, 0, y);
+    y += 40;
 
-    /* Progress bar */
-    s_music_prog_bar = lv_bar_create(parent);
+    s_music_prog_bar = lv_bar_create(s_scr_comms_spotify);
     lv_obj_set_size(s_music_prog_bar, W - 40, 8);
-    lv_obj_align(s_music_prog_bar, LV_ALIGN_TOP_MID, 0, 160);
+    lv_obj_set_pos(s_music_prog_bar, 20, y);
     lv_bar_set_range(s_music_prog_bar, 0, 1000);
     lv_bar_set_value(s_music_prog_bar, 0, LV_ANIM_OFF);
     lv_obj_set_style_bg_color(s_music_prog_bar, C_DIMMER, 0);
     lv_obj_set_style_bg_color(s_music_prog_bar, C_GREEN, LV_PART_INDICATOR);
     lv_obj_set_style_radius(s_music_prog_bar, 4, 0);
     lv_obj_set_style_radius(s_music_prog_bar, 4, LV_PART_INDICATOR);
+    y += 24;
 
-    s_music_prog_lbl = make_label(parent, "0:00 / 0:00",
+    s_music_prog_lbl = make_label(s_scr_comms_spotify, "0:00 / 0:00",
                                   &lv_font_montserrat_12, C_DIM);
     lv_obj_set_style_text_align(s_music_prog_lbl, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_align(s_music_prog_lbl, LV_ALIGN_TOP_MID, 0, 178);
+    lv_obj_set_width(s_music_prog_lbl, W);
+    lv_obj_set_pos(s_music_prog_lbl, 0, y);
+    y += 48;
 
-    /* Control buttons */
-    int by = 210;
     int bw = (W - 48) / 3;
-    lv_obj_t *prev = make_btn(parent, LV_SYMBOL_PREV, C_DIMMER, music_prev_cb, NULL);
-    lv_obj_set_size(prev, bw, 64);
-    lv_obj_set_pos(prev, 16, by);
+    lv_obj_t *prev = make_btn(s_scr_comms_spotify, LV_SYMBOL_PREV, C_DIMMER, music_prev_cb, NULL);
+    lv_obj_set_size(prev, bw, 72);
+    lv_obj_set_pos(prev, 16, y);
 
-    lv_obj_t *play = make_btn(parent, LV_SYMBOL_PLAY, C_ORANGE, music_play_cb, NULL);
-    lv_obj_set_size(play, bw, 64);
-    lv_obj_set_pos(play, 16 + bw + 8, by);
+    lv_obj_t *play = make_btn(s_scr_comms_spotify, LV_SYMBOL_PLAY, C_ORANGE, music_play_cb, NULL);
+    lv_obj_set_size(play, bw, 72);
+    lv_obj_set_pos(play, 16 + bw + 8, y);
 
-    lv_obj_t *next = make_btn(parent, LV_SYMBOL_NEXT, C_DIMMER, music_next_cb, NULL);
-    lv_obj_set_size(next, bw, 64);
-    lv_obj_set_pos(next, 16 + 2*(bw + 8), by);
+    lv_obj_t *next = make_btn(s_scr_comms_spotify, LV_SYMBOL_NEXT, C_DIMMER, music_next_cb, NULL);
+    lv_obj_set_size(next, bw, 72);
+    lv_obj_set_pos(next, 16 + 2*(bw + 8), y);
 }
 
-static void build_comms_weather(lv_obj_t *parent) {
-    s_wx_status_lbl = make_label(parent, "WEATHER RADIO IDLE",
+/* ── Weather sub-screen ───────────────────────────────────────────────────── */
+static void build_comms_weather_screen(void) {
+    s_scr_comms_weather = lv_obj_create(NULL);
+    scr_bg(s_scr_comms_weather);
+    lv_obj_add_event_cb(s_scr_comms_weather, swipe_back_cb, LV_EVENT_GESTURE, NULL);
+    make_hdr(s_scr_comms_weather, LV_SYMBOL_REFRESH "  WEATHER", true);
+
+    int y = HDR + 16;
+
+    s_wx_status_lbl = make_label(s_scr_comms_weather, "READY",
                                  &lv_font_montserrat_14, C_DIM);
-    lv_obj_align(s_wx_status_lbl, LV_ALIGN_TOP_MID, 0, 16);
+    lv_obj_set_pos(s_wx_status_lbl, 0, y);
+    lv_obj_set_width(s_wx_status_lbl, W);
+    lv_obj_set_style_text_align(s_wx_status_lbl, LV_TEXT_ALIGN_CENTER, 0);
+    y += 48;
 
-    lv_obj_t *wb = make_btn(parent, LV_SYMBOL_REFRESH " FETCH WEATHER",
-                            C_BLUE, wx_start_btn_cb, NULL);
-    lv_obj_set_size(wb, W - 32, 52);
-    lv_obj_align(wb, LV_ALIGN_TOP_MID, 0, 48);
+    /* Two buttons side by side: FETCH DATA | LISTEN LIVE */
+    int bw = (W - 40) / 2;
+    lv_obj_t *wb = make_btn(s_scr_comms_weather, LV_SYMBOL_REFRESH " WEATHER DATA",
+                            C_GREEN, wx_fetch_btn_cb, NULL);
+    lv_obj_set_size(wb, bw, 60);
+    lv_obj_set_pos(wb, 12, y);
 
-    int log_y = 112;
-    s_wx_log_lbl = make_log_area(parent, 8, log_y,
-                                  W - 16, 400, &s_wx_log_cont);
+    s_wx_radio_btn = make_btn(s_scr_comms_weather, LV_SYMBOL_AUDIO " LISTEN LIVE",
+                              C_BLUE, wx_radio_btn_cb, NULL);
+    lv_obj_set_size(s_wx_radio_btn, bw, 60);
+    lv_obj_set_pos(s_wx_radio_btn, 16 + bw + 8, y);
+    s_wx_radio_btn_lbl = lv_obj_get_child(s_wx_radio_btn, 0);
+    lv_obj_set_style_text_font(lv_obj_get_child(wb, 0), &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_font(s_wx_radio_btn_lbl, &lv_font_montserrat_12, 0);
+    y += 76;
+
+    s_wx_log_lbl = make_log_area(s_scr_comms_weather, 8, y,
+                                  W - 16, H - y - 8, &s_wx_log_cont);
 }
 
-static void build_comms_broadcast(lv_obj_t *parent) {
-    make_label(parent, "MESH BROADCAST", &lv_font_montserrat_16, C_WHITE);
-    lv_obj_align(lv_obj_get_child(parent, 0), LV_ALIGN_TOP_MID, 0, 20);
+/* ── Broadcast sub-screen ─────────────────────────────────────────────────── */
+static void build_comms_broadcast_screen(void) {
+    s_scr_comms_broadcast = lv_obj_create(NULL);
+    scr_bg(s_scr_comms_broadcast);
+    lv_obj_add_event_cb(s_scr_comms_broadcast, swipe_back_cb, LV_EVENT_GESTURE, NULL);
+    make_hdr(s_scr_comms_broadcast, LV_SYMBOL_UPLOAD "  BROADCAST", true);
 
-    make_label(parent, "Send a message to all mesh nodes",
-               &lv_font_montserrat_12, C_DIM);
-    lv_obj_align(lv_obj_get_child(parent, 1), LV_ALIGN_TOP_MID, 0, 52);
+    int y = HDR + 24;
 
-    lv_obj_t *bcast_ta = make_ta(parent, "Broadcast message...", false, false);
-    lv_obj_set_pos(bcast_ta, 8, 80);
-    lv_obj_set_size(bcast_ta, W - 16, 160);
+    make_label(s_scr_comms_broadcast, "MESH BROADCAST", &lv_font_montserrat_20, C_WHITE);
+    lv_obj_set_pos(lv_obj_get_child(s_scr_comms_broadcast,
+                   lv_obj_get_child_cnt(s_scr_comms_broadcast)-1), 0, y);
+    lv_obj_set_width(lv_obj_get_child(s_scr_comms_broadcast,
+                     lv_obj_get_child_cnt(s_scr_comms_broadcast)-1), W);
+    lv_obj_set_style_text_align(lv_obj_get_child(s_scr_comms_broadcast,
+                                lv_obj_get_child_cnt(s_scr_comms_broadcast)-1),
+                                LV_TEXT_ALIGN_CENTER, 0);
+    y += 52;
 
-    lv_obj_t *sb = make_btn(parent, LV_SYMBOL_UPLOAD " BROADCAST",
+    make_label(s_scr_comms_broadcast, "Send a message to all mesh nodes",
+               &lv_font_montserrat_14, C_DIM);
+    lv_obj_set_pos(lv_obj_get_child(s_scr_comms_broadcast,
+                   lv_obj_get_child_cnt(s_scr_comms_broadcast)-1), 0, y);
+    lv_obj_set_width(lv_obj_get_child(s_scr_comms_broadcast,
+                     lv_obj_get_child_cnt(s_scr_comms_broadcast)-1), W);
+    lv_obj_set_style_text_align(lv_obj_get_child(s_scr_comms_broadcast,
+                                lv_obj_get_child_cnt(s_scr_comms_broadcast)-1),
+                                LV_TEXT_ALIGN_CENTER, 0);
+    y += 40;
+
+    lv_obj_t *bcast_ta = make_ta(s_scr_comms_broadcast, "Broadcast message...", false, false);
+    lv_obj_set_pos(bcast_ta, 8, y);
+    lv_obj_set_size(bcast_ta, W - 16, 200);
+    y += 216;
+
+    lv_obj_t *sb = make_btn(s_scr_comms_broadcast, LV_SYMBOL_UPLOAD " BROADCAST",
                             C_ORANGE, NULL, NULL);
-    lv_obj_set_size(sb, W - 16, 56);
-    lv_obj_set_pos(sb, 8, 252);
+    lv_obj_set_size(sb, W - 16, 64);
+    lv_obj_set_pos(sb, 8, y);
 }
 
-static void build_comms_lora(lv_obj_t *parent) {
-    /* Status */
-    s_lora_status_lbl = make_label(parent, LV_SYMBOL_REFRESH "  LORA INIT...",
+/* ── LoRa sub-screen ──────────────────────────────────────────────────────── */
+static void build_comms_lora_screen(void) {
+    s_scr_comms_lora = lv_obj_create(NULL);
+    scr_bg(s_scr_comms_lora);
+    lv_obj_add_event_cb(s_scr_comms_lora, swipe_back_cb, LV_EVENT_GESTURE, NULL);
+    make_hdr(s_scr_comms_lora, LV_SYMBOL_BARS "  LORA", true);
+
+    int y = HDR + 12;
+
+    s_lora_status_lbl = make_label(s_scr_comms_lora, LV_SYMBOL_REFRESH "  LORA INIT...",
                                    &lv_font_montserrat_14, C_DIM);
-    lv_obj_align(s_lora_status_lbl, LV_ALIGN_TOP_MID, 0, 12);
+    lv_obj_set_pos(s_lora_status_lbl, 0, y);
+    lv_obj_set_width(s_lora_status_lbl, W);
+    lv_obj_set_style_text_align(s_lora_status_lbl, LV_TEXT_ALIGN_CENTER, 0);
+    y += 32;
 
-    /* Config */
-    s_lora_config_lbl = make_label(parent, "915MHz  SF7  BW125  +14dBm",
+    s_lora_config_lbl = make_label(s_scr_comms_lora, "915MHz  SF7  BW125  +14dBm",
                                    &lv_font_montserrat_12, C_DIM);
-    lv_obj_align(s_lora_config_lbl, LV_ALIGN_TOP_MID, 0, 40);
+    lv_obj_set_pos(s_lora_config_lbl, 0, y);
+    lv_obj_set_width(s_lora_config_lbl, W);
+    lv_obj_set_style_text_align(s_lora_config_lbl, LV_TEXT_ALIGN_CENTER, 0);
+    y += 36;
 
-    /* RX log */
-    int log_h = 340;
-    s_lora_log_lbl = make_log_area(parent, 8, 68,
-                                    W - 16, log_h, &s_lora_log_cont);
+    int log_h = H - y - 8 - 68;
+    s_lora_log_lbl = make_log_area(s_scr_comms_lora, 8, y, W - 16, log_h, &s_lora_log_cont);
+    y += log_h + 8;
 
-    /* TX row */
-    int ty = 68 + log_h + 8;
-    s_lora_tx_ta = make_ta(parent, "Type message to transmit...", false, true);
-    lv_obj_set_pos(s_lora_tx_ta, 8, ty);
+    s_lora_tx_ta = make_ta(s_scr_comms_lora, "Type message to transmit...", false, true);
+    lv_obj_set_pos(s_lora_tx_ta, 8, y);
     lv_obj_set_size(s_lora_tx_ta, W - 108, 52);
 
-    lv_obj_t *sb = make_btn(parent, LV_SYMBOL_UP " TX",
+    lv_obj_t *sb = make_btn(s_scr_comms_lora, LV_SYMBOL_UP " TX",
                             C_ORANGE, lora_send_btn_cb, NULL);
     lv_obj_set_size(sb, 90, 52);
-    lv_obj_set_pos(sb, W - 98, ty);
+    lv_obj_set_pos(sb, W - 98, y);
 }
 
+/* ── COMMS landing page (2×2 tile grid) ──────────────────────────────────── */
 static void build_music(void) {
     s_scr_music = lv_obj_create(NULL);
     scr_bg(s_scr_music);
     lv_obj_add_event_cb(s_scr_music, swipe_back_cb, LV_EVENT_GESTURE, NULL);
-    make_hdr(s_scr_music, LV_SYMBOL_AUDIO "  COMMS", true);
+    make_hdr(s_scr_music, LV_SYMBOL_WIFI "  COMMS", true);
 
-    /* Tab button row */
-    const char *tab_names[] = {
-        LV_SYMBOL_AUDIO " SPOTIFY",
-        LV_SYMBOL_REFRESH " WEATHER",
-        LV_SYMBOL_UPLOAD " BROADCAST",
-        LV_SYMBOL_BARS " LORA"
-    };
-    int tab_y   = HDR + 4;
-    int tab_h   = 40;
-    int tab_w   = W / 4;
-    for (int i = 0; i < 4; i++) {
-        lv_color_t bg = (i == 0) ? C_ORANGE : C_DIMMER;
-        lv_obj_t *btn = make_btn(s_scr_music, tab_names[i],
-                                 bg, comms_tab_cb, (void *)(intptr_t)i);
-        lv_obj_set_size(btn, tab_w - 4, tab_h);
-        lv_obj_set_pos(btn, i * tab_w + 2, tab_y);
-        lv_obj_set_style_radius(btn, 4, 0);
-        /* Make text smaller to fit */
-        lv_obj_set_style_text_font(lv_obj_get_child(btn, 0),
-                                   &lv_font_montserrat_12, 0);
-        s_comms_btns[i] = btn;
-    }
-
-    /* Content panels (stacked, only one visible at a time) */
-    int panel_y = HDR + tab_h + 8;
-    int panel_h = H - panel_y - 4;
-
-    for (int i = 0; i < 4; i++) {
-        lv_obj_t *p = lv_obj_create(s_scr_music);
-        lv_obj_set_pos(p, 0, panel_y);
-        lv_obj_set_size(p, W, panel_h);
-        lv_obj_set_style_bg_color(p, C_BG, 0);
-        lv_obj_set_style_bg_opa(p, LV_OPA_COVER, 0);
-        lv_obj_set_style_border_width(p, 0, 0);
-        lv_obj_set_style_pad_all(p, 0, 0);
-        lv_obj_clear_flag(p, LV_OBJ_FLAG_SCROLLABLE);
-        if (i != 0) lv_obj_add_flag(p, LV_OBJ_FLAG_HIDDEN);
-        s_comms_panels[i] = p;
-    }
-
-    build_comms_spotify(s_comms_panels[0]);
-    build_comms_weather(s_comms_panels[1]);
-    build_comms_broadcast(s_comms_panels[2]);
-    build_comms_lora(s_comms_panels[3]);
+    build_comms_tile(s_scr_music, 0, 0, LV_SYMBOL_AUDIO,   "SPOTIFY",   "Bluetooth music",  C_BLUE,   s_scr_comms_spotify);
+    build_comms_tile(s_scr_music, 1, 0, LV_SYMBOL_REFRESH, "WEATHER",   "NOAA radio feed",  C_BLUE,   s_scr_comms_weather);
+    build_comms_tile(s_scr_music, 0, 1, LV_SYMBOL_UPLOAD,  "BROADCAST", "Mesh network TX",  C_ORANGE, s_scr_comms_broadcast);
+    build_comms_tile(s_scr_music, 1, 1, LV_SYMBOL_BARS,    "LORA",      "SX1262 915MHz",    C_ORANGE, s_scr_comms_lora);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
@@ -1378,6 +1476,10 @@ void ui_init(void) {
     build_net();
     build_gps();
     build_can();
+    build_comms_spotify_screen();
+    build_comms_weather_screen();
+    build_comms_broadcast_screen();
+    build_comms_lora_screen();
     build_music();
     build_home();
 
@@ -1600,15 +1702,43 @@ void ui_net_clear_scan(void) {
     if (s_net_scan_cont) lv_obj_clean(s_net_scan_cont);
 }
 
+static void scan_row_click_cb(lv_event_t *e) {
+    const char *ssid = (const char *)lv_event_get_user_data(e);
+    if (s_net_ssid_ta && ssid) lv_textarea_set_text(s_net_ssid_ta, ssid);
+}
+
+static void scan_row_delete_cb(lv_event_t *e) {
+    void *ssid = lv_event_get_user_data(e);
+    lv_free(ssid);
+}
+
 void ui_net_add_scan_result(const char *ssid, int rssi) {
     if (!s_net_scan_cont) return;
+
+    char *ssid_copy = lv_malloc(strlen(ssid) + 1);
+    if (!ssid_copy) return;
+    strcpy(ssid_copy, ssid);
+
+    lv_obj_t *row = lv_obj_create(s_net_scan_cont);
+    lv_obj_set_width(row, lv_pct(100));
+    lv_obj_set_height(row, LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(row, 0, 0);
+    lv_obj_set_style_pad_all(row, 4, 0);
+    lv_obj_set_style_radius(row, 4, 0);
+    lv_obj_set_style_bg_color(row, lv_color_hex(0x1a2a1a), LV_STATE_PRESSED);
+    lv_obj_set_style_bg_opa(row, LV_OPA_COVER, LV_STATE_PRESSED);
+    lv_obj_add_flag(row, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_event_cb(row, scan_row_click_cb,  LV_EVENT_CLICKED, ssid_copy);
+    lv_obj_add_event_cb(row, scan_row_delete_cb, LV_EVENT_DELETE,  ssid_copy);
+
     char buf[96];
     snprintf(buf, sizeof(buf), "%s  (%d dBm)", ssid, rssi);
-    lv_obj_t *row = lv_label_create(s_net_scan_cont);
-    lv_label_set_text(row, buf);
-    lv_obj_set_style_text_color(row, rssi > -70 ? C_GREEN : C_YELLOW, 0);
-    lv_obj_set_style_text_font(row, &lv_font_montserrat_14, 0);
-    lv_obj_set_width(row, W - 32);
+    lv_obj_t *lbl = lv_label_create(row);
+    lv_label_set_text(lbl, buf);
+    lv_obj_set_style_text_color(lbl, rssi > -70 ? C_GREEN : C_YELLOW, 0);
+    lv_obj_set_style_text_font(lbl, &lv_font_montserrat_14, 0);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
@@ -1762,6 +1892,12 @@ void ui_weather_radio_set_status(const char *msg, bool active) {
     if (!s_wx_status_lbl) return;
     lv_label_set_text(s_wx_status_lbl, msg);
     lv_obj_set_style_text_color(s_wx_status_lbl, active ? C_GREEN : C_DIM, 0);
+    /* If stream stopped externally, reset the listen button */
+    if (!active && s_wx_radio_live && s_wx_radio_btn && s_wx_radio_btn_lbl) {
+        s_wx_radio_live = false;
+        lv_obj_set_style_bg_color(s_wx_radio_btn, C_BLUE, 0);
+        lv_label_set_text(s_wx_radio_btn_lbl, LV_SYMBOL_AUDIO " LISTEN LIVE");
+    }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
