@@ -3,6 +3,8 @@ idf_component_register(
         "main.c"
         "ui.c"
         "wifi_at.cpp"
+        "sx1262.c"
+        "walkie.c"
     INCLUDE_DIRS
         "."
     REQUIRES
@@ -27,6 +29,10 @@ idf_component_register(
         lvgl__lvgl
         esp_system
         esp_driver_i2s
+        esp_driver_i2c
         mbedtls
         cpp_bus_driver
+        esp_video
+        espressif__esp_cam_sensor
+        codec2
 )

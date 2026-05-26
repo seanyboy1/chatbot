@@ -41,6 +41,7 @@ void ui_set_screenshot_cb(ui_screenshot_cb_t cb);
 
 void ui_init(void);
 void ui_splash_done(void);
+void ui_clock_tick(void);
 
 void ui_set_status(const char *msg);
 void ui_set_wifi_ip(const char *ip);
@@ -70,6 +71,7 @@ void ui_can_append_msg(const char *msg);
 
 void ui_cam_set_frame(const void *rgb565, int w, int h);
 void ui_cam_invalidate_cache(void);
+void ui_cam_set_status(const char *msg);
 
 void ui_music_set_track(const char *title, const char *artist, const char *album);
 void ui_music_set_progress(int pos_ms, int dur_ms);
@@ -98,3 +100,7 @@ void ui_set_c6_flash_cb(ui_c6_flash_cb_t cb);
 
 typedef void (*ui_locate_cb_t)(bool start);
 void ui_set_locate_cb(ui_locate_cb_t cb);
+
+typedef void (*ui_walkie_ptt_cb_t)(bool pressed);
+void ui_set_walkie_ptt_cb(ui_walkie_ptt_cb_t cb);
+void ui_walkie_set_rx_info(int rssi, int snr);   // called from walkie RX task

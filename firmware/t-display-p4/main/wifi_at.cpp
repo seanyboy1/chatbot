@@ -21,6 +21,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
+#include <time.h>
 
 #include "cpp_bus_driver_library.h"
 
@@ -96,8 +97,6 @@ extern "C" bool wifi_at_init(c6_en_fn_t en_fn, const char *ssid, const char *pas
     }
     ESP_LOGI(TAG, "SDIO-AT link established");
 
-    s_at->SetFlashSave(true);
-
     if (!s_at->SetWifiMode(cpp_bus_driver::EspAt::WifiMode::kStation)) {
         ESP_LOGE(TAG, "SetWifiMode(station) failed");
         return false;
@@ -110,6 +109,9 @@ extern "C" bool wifi_at_init(c6_en_fn_t en_fn, const char *ssid, const char *pas
         return false;
     }
     ESP_LOGI(TAG, "WiFi connected");
+    // Save credentials to C6 flash only after a successful connect so a failed
+    // attempt with wrong credentials doesn't erase the C6's working saved network.
+    s_at->SetFlashSave(true);
 
     // Retrieve assigned IP
     std::string cifsr = send_at_raw("AT+CIFSR\r\n", 3000);
@@ -142,23 +144,40 @@ extern "C" void wifi_at_get_ip(char *buf, size_t len) {
 
 extern "C" time_t wifi_at_get_epoch(void) {
     if (!s_at) return 0;
-    // SNTP may need a few seconds to sync after connect
+    // GetRealTime() fetches http://httpbin.org/get via AT+HTTPCLIENT and parses
+    // the HTTP Date header — values are UTC.  Use UTC0 zone when calling mktime
+    // so it treats the struct as UTC rather than local time.
     for (int i = 0; i < 8; i++) {
         cpp_bus_driver::EspAt::RealTime rt;
         if (s_at->GetRealTime(rt) && rt.year > 2020) {
             struct tm t = {};
-            t.tm_year = rt.year - 1900;
-            t.tm_mon  = rt.month - 1;
-            t.tm_mday = rt.day;
-            t.tm_hour = rt.hour;
-            t.tm_min  = rt.minute;
-            t.tm_sec  = rt.second;
-            t.tm_isdst = -1;
+            t.tm_year  = rt.year - 1900;
+            t.tm_mon   = rt.month - 1;
+            t.tm_mday  = rt.day;
+            t.tm_hour  = rt.hour;
+            t.tm_min   = rt.minute;
+            t.tm_sec   = rt.second;
+            t.tm_isdst = 0;
+            // Date header is UTC; temporarily set TZ=UTC so mktime doesn't
+            // apply a local offset and produce an epoch that's hours off.
+            char *saved_tz = getenv("TZ");
+            char tz_buf[64] = "";
+            if (saved_tz) strlcpy(tz_buf, saved_tz, sizeof(tz_buf));
+            setenv("TZ", "UTC0", 1);
+            tzset();
             time_t epoch = mktime(&t);
-            if (epoch > 1000000000LL) return epoch;
+            setenv("TZ", tz_buf[0] ? tz_buf : "UTC0", 1);
+            tzset();
+            if (epoch > 1000000000LL) {
+                ESP_LOGI(TAG, "Time from GetRealTime: %lld (%04d-%02d-%02d %02d:%02d:%02d UTC)",
+                         (long long)epoch, rt.year, rt.month, rt.day,
+                         rt.hour, rt.minute, rt.second);
+                return epoch;
+            }
         }
         vTaskDelay(pdMS_TO_TICKS(1500));
     }
+    ESP_LOGW(TAG, "GetRealTime failed after 8 retries");
     return 0;
 }
 

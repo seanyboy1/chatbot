@@ -20,6 +20,7 @@
 #include "lwip/ip4_addr.h"
 #include "esp_http_client.h"
 #include "driver/gpio.h"
+#include "esp_private/gpio.h"
 #include "driver/i2c_master.h"
 #include "esp_ldo_regulator.h"
 #include "esp_heap_caps.h"
@@ -44,7 +45,20 @@
 #include "esp_crt_bundle.h"
 #include "esp_check.h"
 #include "wifi_at.h"
+#include "sx1262.h"
+#include "walkie.h"
 #include <math.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/errno.h>
+#include "esp_video_init.h"
+#include "esp_video_device.h"
+#include "linux/videodev2.h"
+#include "esp_private/esp_cam_dvp.h"
+#include "esp_rom_gpio.h"
+#include "soc/gpio_sig_map.h"
+#include "driver/ledc.h"
 
 #define MINIMP3_IMPLEMENTATION
 #define MINIMP3_NO_STDIO
@@ -53,8 +67,8 @@
 // ── User config ───────────────────────────────────────────────────────────────
 #define CONFIG_WIFI_SSID        "your_wifi_ssid"
 #define CONFIG_WIFI_PASSWORD    "your_wifi_password"
-#define CONFIG_WIFI_SSID2       "your_fallback_ssid"
-#define CONFIG_WIFI_PASSWORD2   "your_fallback_password"
+#define CONFIG_WIFI_SSID2       "your_wifi_ssid"
+#define CONFIG_WIFI_PASSWORD2   "your_wifi_password"
 #ifndef CONFIG_BLUENET_SERVER
 #define CONFIG_BLUENET_SERVER   "http://10.0.0.242:3000"
 #endif
@@ -76,6 +90,28 @@
 #define LCD_H_RES   568
 #define LCD_V_RES  1232
 
+// ── IIC_2 bus (GPIO20/21, I2C_NUM_1) — SGM38121 + ES8311 + ICM20948 + camera SCCB ──
+#define IIC2_SDA_GPIO      GPIO_NUM_20
+#define IIC2_SCL_GPIO      GPIO_NUM_21
+
+// SGM38121 camera power regulator (addr 0x28 on IIC_2)
+// Register map from factory sgm38121.h Cmd enum (verified against cpp_bus_driver source):
+//   0x00=DeviceId  0x02=DischargeResistor  0x03=DVDD1  0x04=DVDD2
+//   0x05=AVDD1  0x06=AVDD2  0x07=Function  0x0A=PowerSeq1  0x0E=EnableControl
+#define SGM38121_ADDR           0x28
+#define SGM38121_REG_DVDD1      0x03   // digital core 1.2V
+#define SGM38121_REG_DVDD2      0x04   // digital IO 1.8V
+#define SGM38121_REG_AVDD1      0x05   // analog 1 2.8V
+#define SGM38121_REG_AVDD2      0x06   // analog 2 2.8V
+#define SGM38121_REG_EN         0x0E
+// DVDD formula: (mV - 504) / 8   AVDD formula: (mV - 1384) / 8
+#define SGM38121_DVDD1_1200MV   87     // (1200-504)/8
+#define SGM38121_DVDD2_1800MV   162    // (1800-504)/8
+#define SGM38121_AVDD1_2800MV   177    // (2800-1384)/8
+#define SGM38121_AVDD2_2800MV   177    // (2800-1384)/8
+// Enable bits: DVDD1=bit0, DVDD2=bit1, AVDD1=bit2, AVDD2=bit3
+#define SGM38121_EN_ALL         0x0F
+
 // ── XL9535 I2C GPIO expander ──────────────────────────────────────────────────
 #define I2C_SDA_GPIO       GPIO_NUM_7
 #define I2C_SCL_GPIO       GPIO_NUM_8
@@ -96,6 +132,12 @@
 #define XL_C6_WAKE  (1 << 3)   // IO13 → port1 bit3  ESP32-C6 WAKE
 #define XL_C6_EN    (1 << 4)   // IO14 → port1 bit4  ESP32-C6 EN (power)
 #define XL_SD_EN    (1 << 5)   // IO15 → port1 bit5 (SD card power)
+
+// ── GPS — L76K on UART1 ───────────────────────────────────────────────────────
+#define GPS_UART_NUM  UART_NUM_1
+#define GPS_TX_PIN    22          // P4 TX → GPS RX
+#define GPS_RX_PIN    23          // GPS TX → P4 RX
+#define GPS_BAUD      9600
 
 // ── GT9895 touch controller ───────────────────────────────────────────────────
 #define GT9895_ADDR         0x5D
@@ -130,6 +172,7 @@ static volatile char   s_eth_ip[40]    = "0.0.0.0";
 static volatile bool   s_eth_ip_ready  = false;
 static volatile bool   s_wifi_up    = false;
 static volatile bool   s_wifi_status_dirty = false;
+static char            s_wifi_ssid[64] = "";
 
 // ── Cable / speed test ────────────────────────────────────────────────────────
 static volatile bool   s_speed_test_running = false;
@@ -150,10 +193,20 @@ static bool lvgl_lock(uint32_t ms) {
 static void lvgl_unlock(void) { xSemaphoreGiveRecursive(s_lvgl_mutex); }
 
 // ── XL9535 ────────────────────────────────────────────────────────────────────
-static i2c_master_bus_handle_t s_i2c_bus = NULL;
+static i2c_master_bus_handle_t s_i2c_bus  = NULL;  /* IIC_1: GPIO7/8 */
+static i2c_master_bus_handle_t s_iic2_bus = NULL;  /* IIC_2: GPIO20/21 — SGM38121 + ES8311 */
 static i2c_master_dev_handle_t s_xl9535  = NULL;
 static i2c_master_dev_handle_t s_gt9895  = NULL;
-static uint8_t s_p0 = 0, s_p1 = 0;
+// Device handles saved so IIC_2 bus can be cleanly deleted before camera SCCB takes I2C_NUM_1
+static i2c_master_dev_handle_t s_sgm_dev    = NULL;
+static i2c_master_dev_handle_t s_es8311_dev = NULL;
+// Shadow registers — must be kept in sync with hardware at all times.
+// Pre-initialized with IO1/IO7/IO11/IO12/IO16/IO17 HIGH (possible camera XSHUTDOWN/RST)
+// and C6_EN/C6_WAKE HIGH so they survive every xl9535_p0/p1 call.
+static uint8_t s_p0 = (1 << 1) | (1 << 7);  // IO1=H, IO7=H
+static uint8_t s_p1 = ((1 << 3) | (1 << 4)  // C6_WAKE=H, C6_EN=H
+                       | (1 << 1) | (1 << 2)  // IO11=H, IO12=H
+                       | (1 << 6) | (1 << 7)); // IO16=H, IO17=H
 
 static void xl9535_wr(uint8_t reg, uint8_t val) {
     uint8_t buf[2] = {reg, val};
@@ -196,22 +249,23 @@ static void xl9535_init(void) {
         return;
     }
 
-    // Port0: all outputs low (ETH_RST, DISP_RST etc driven by init sequence below)
-    xl9535_wr(XL9535_REG_OUT0, 0x00);
-    // Port1: C6_EN and C6_WAKE HIGH before setting direction — prevents glitching C6 off
-    xl9535_wr(XL9535_REG_OUT1, XL_C6_EN | XL_C6_WAKE);
-    // IO0=3V3_EN, IO2=DISP_RST, IO3=TOUCH_RST, IO5=ETH_RST, IO6=5V_EN = outputs; IO4=TOUCH_INT = input
-    xl9535_wr(XL9535_REG_CFG0, (uint8_t)~(XL_3V3_EN | XL_DISP_RST | XL_TOUCH_RST | XL_ETH_RST | XL_5V_EN));
-    // IO10=VCCA_EN, IO13=C6_WAKE, IO14=C6_EN, IO15=SD_EN = outputs; C6 already powered via OUT1 above
-    xl9535_wr(XL9535_REG_CFG1, (uint8_t)~(XL_VCCA_EN | XL_C6_WAKE | XL_C6_EN | XL_SD_EN));
-    ESP_LOGI(TAG, "XL9535 OK");
+    // Write output registers from shadow — IO1/IO7/IO11/IO12/IO16/IO17 start HIGH
+    // (possible camera XSHUTDOWN; shadow is pre-initialized to these values)
+    xl9535_wr(XL9535_REG_OUT0, s_p0);
+    xl9535_wr(XL9535_REG_OUT1, s_p1);
+    // IO0=3V3_EN, IO1=?, IO2=DISP_RST, IO3=TOUCH_RST, IO5=ETH_RST, IO6=5V_EN, IO7=? = outputs; IO4=TOUCH_INT = input
+    xl9535_wr(XL9535_REG_CFG0, (uint8_t)~(XL_3V3_EN | (1<<1) | XL_DISP_RST | XL_TOUCH_RST | XL_ETH_RST | XL_5V_EN | (1<<7)));
+    // IO10=VCCA_EN, IO11=?, IO12=?, IO13=C6_WAKE, IO14=C6_EN, IO15=SD_EN, IO16=?, IO17=? = outputs
+    xl9535_wr(XL9535_REG_CFG1, (uint8_t)~(XL_VCCA_EN | (1<<1) | (1<<2) | XL_C6_WAKE | XL_C6_EN | XL_SD_EN | (1<<6) | (1<<7)));
+    ESP_LOGI(TAG, "XL9535 OK — p0=0x%02X p1=0x%02X", s_p0, s_p1);
 
     // Release ETH PHY from XL9535 reset — GPIO51 drives the actual reset sequence
     xl9535_p0(XL_ETH_RST, true);
 
     // Power-on sequence matching LilyGo screen_lvgl/main.cpp exactly:
-    // VCCA stays LOW (not enabled for RM69A10)
-    xl9535_p1(XL_VCCA_EN, false);
+    // VCCA: enable HIGH — camera module FPC may use VCCA for I2C level-shifter or analog power
+    // (RM69A10 display does not need VCCA, but camera module does)
+    xl9535_p1(XL_VCCA_EN, true);
 
     // 5V: HIGH → 200ms → LOW → 200ms → HIGH (stays HIGH = 5V on)
     xl9535_p0(XL_5V_EN, true);  vTaskDelay(pdMS_TO_TICKS(200));
@@ -225,6 +279,57 @@ static void xl9535_init(void) {
 
     vTaskDelay(pdMS_TO_TICKS(200));
     ESP_LOGI(TAG, "Power sequence done — LDO and RST next");
+
+    // ── IIC_2 bus: init early so SGM38121 camera power is set before any task runs ──
+    // Factory firmware creates this as a C++ global before app_main; we match that here.
+    {
+        i2c_master_bus_config_t bc2 = {
+            .i2c_port             = I2C_NUM_1,
+            .sda_io_num           = IIC2_SDA_GPIO,
+            .scl_io_num           = IIC2_SCL_GPIO,
+            .clk_source           = I2C_CLK_SRC_DEFAULT,
+            .glitch_ignore_cnt    = 7,
+            .flags.enable_internal_pullup = true,
+        };
+        if (i2c_new_master_bus(&bc2, &s_iic2_bus) != ESP_OK) {
+            ESP_LOGE(TAG, "IIC_2 bus init failed");
+        } else {
+            ESP_LOGI(TAG, "IIC_2 bus ready");
+            // SGM38121: factory firmware uses disable_ack_check on this device
+            i2c_device_config_t sgm_dc = {
+                .dev_addr_length         = I2C_ADDR_BIT_LEN_7,
+                .device_address          = SGM38121_ADDR,
+                .scl_speed_hz            = 100000,
+                .flags.disable_ack_check = 1,
+            };
+            if (i2c_master_bus_add_device(s_iic2_bus, &sgm_dc, &s_sgm_dev) == ESP_OK) {
+                uint8_t buf[2];
+                // SC2336: DVDD1=1.2V (core), DVDD2=1.8V (IO), AVDD1=2.8V, AVDD2=2.8V
+                buf[0] = SGM38121_REG_DVDD1; buf[1] = SGM38121_DVDD1_1200MV;
+                i2c_master_transmit(s_sgm_dev, buf, 2, 100);
+                buf[0] = SGM38121_REG_DVDD2; buf[1] = SGM38121_DVDD2_1800MV;
+                i2c_master_transmit(s_sgm_dev, buf, 2, 100);
+                buf[0] = SGM38121_REG_AVDD1; buf[1] = SGM38121_AVDD1_2800MV;
+                i2c_master_transmit(s_sgm_dev, buf, 2, 100);
+                buf[0] = SGM38121_REG_AVDD2; buf[1] = SGM38121_AVDD2_2800MV;
+                i2c_master_transmit(s_sgm_dev, buf, 2, 100);
+                buf[0] = SGM38121_REG_EN; buf[1] = SGM38121_EN_ALL;
+                i2c_master_transmit(s_sgm_dev, buf, 2, 100);
+
+                // Verify: read chip ID (reg 0x00, expect 0x80), DVDD1 (reg 0x03, expect 87=0x57), AVDD1 (reg 0x05, expect 177=0xB1), enable (reg 0x0E, expect 0x0F)
+                uint8_t rb_id = 0, rb_dvdd1 = 0, rb_avdd1 = 0, rb_en = 0;
+                uint8_t r = 0x00;              i2c_master_transmit_receive(s_sgm_dev, &r, 1, &rb_id,    1, 100);
+                r = SGM38121_REG_DVDD1;        i2c_master_transmit_receive(s_sgm_dev, &r, 1, &rb_dvdd1, 1, 100);
+                r = SGM38121_REG_AVDD1;        i2c_master_transmit_receive(s_sgm_dev, &r, 1, &rb_avdd1, 1, 100);
+                r = SGM38121_REG_EN;           i2c_master_transmit_receive(s_sgm_dev, &r, 1, &rb_en,    1, 100);
+                ESP_LOGI(TAG, "SGM38121 id=0x%02X(want 0x80) dvdd1=0x%02X(want 0x57/1.2V) avdd1=0x%02X(want 0xB1/2.8V) en=0x%02X(want 0x0F)",
+                         rb_id, rb_dvdd1, rb_avdd1, rb_en);
+            } else {
+                ESP_LOGW(TAG, "SGM38121 add device failed");
+            }
+            vTaskDelay(pdMS_TO_TICKS(200));  // let camera analog rails settle
+        }
+    }
 }
 
 // ── RM69A10 init handled by rm69a10_driver component (LilyGo's driver) ────────
@@ -353,6 +458,731 @@ static void lcd_init(void) {
     ESP_LOGI(TAG, "LCD init complete");
 }
 
+// ── Camera — MIPI CSI + SC2336 ────────────────────────────────────────────────
+// SC2336 SCCB confirmed on GPIO6(SDA)/GPIO5(SCL) — dedicated camera I2C bus
+#define CAM_SCCB_SDA   GPIO_NUM_6
+#define CAM_SCCB_SCL   GPIO_NUM_5
+#define CAM_PWDN_PIN   (-1)
+#define CAM_RESET_PIN  (-1)
+#define CAM_WIDTH      640
+#define CAM_HEIGHT     480
+#define CAM_BUFS       2
+
+static i2c_master_bus_handle_t s_cam_i2c_bus = NULL;
+
+// Try to read SC2336 chip-ID registers (0x3107/0x3108) on a given bus/address.
+// Tries both Repeated-START and SCCB-style STOP+START 2-phase reads.
+// Returns true if PID high byte = 0xCB.
+static bool cam_probe_addr(i2c_master_bus_handle_t bus, const char *bus_name, uint8_t addr)
+{
+    i2c_device_config_t dc = {
+        .dev_addr_length         = I2C_ADDR_BIT_LEN_7,
+        .device_address          = addr,
+        .scl_speed_hz            = 100000,
+        .flags.disable_ack_check = 1,
+    };
+    i2c_master_dev_handle_t dev = NULL;
+    if (i2c_master_bus_add_device(bus, &dc, &dev) != ESP_OK) {
+        ESP_LOGW(TAG, "CAM probe %s@0x%02X: add_device failed", bus_name, addr);
+        return false;
+    }
+
+    // Method 1: Repeated-START (standard I2C) — write reg addr, then read data
+    uint8_t reg_h[2] = {0x31, 0x07};
+    uint8_t reg_l[2] = {0x31, 0x08};
+    uint8_t val_h = 0, val_l = 0;
+    esp_err_t r1 = i2c_master_transmit_receive(dev, reg_h, 2, &val_h, 1, 50);
+    esp_err_t r2 = i2c_master_transmit_receive(dev, reg_l, 2, &val_l, 1, 50);
+    ESP_LOGI(TAG, "CAM probe %s@0x%02X RS: PID=0x%04X [0x3107=0x%02X(%s) 0x3108=0x%02X(%s)]",
+             bus_name, addr, (val_h << 8) | val_l,
+             val_h, esp_err_to_name(r1), val_l, esp_err_to_name(r2));
+    if (val_h == 0xcb) {
+        i2c_master_bus_rm_device(dev);
+        return true;
+    }
+
+    // Method 2: SCCB 2-phase (STOP between write and read) — some sensors need this
+    uint8_t val_h2 = 0, val_l2 = 0;
+    esp_err_t w1 = i2c_master_transmit(dev, reg_h, 2, 50);
+    vTaskDelay(pdMS_TO_TICKS(1));
+    esp_err_t rd1 = i2c_master_receive(dev, &val_h2, 1, 50);
+    esp_err_t w2 = i2c_master_transmit(dev, reg_l, 2, 50);
+    vTaskDelay(pdMS_TO_TICKS(1));
+    esp_err_t rd2 = i2c_master_receive(dev, &val_l2, 1, 50);
+    ESP_LOGI(TAG, "CAM probe %s@0x%02X 2P: PID=0x%04X [0x3107=0x%02X(w:%s r:%s) 0x3108=0x%02X(w:%s r:%s)]",
+             bus_name, addr, (val_h2 << 8) | val_l2,
+             val_h2, esp_err_to_name(w1), esp_err_to_name(rd1),
+             val_l2, esp_err_to_name(w2), esp_err_to_name(rd2));
+
+    i2c_master_bus_rm_device(dev);
+    return (val_h2 == 0xcb);
+}
+
+static bool cam_probe_sc2336_on_bus(i2c_master_bus_handle_t bus, const char *bus_name)
+{
+    // SC2336 SADDR=LOW → 0x30, SADDR=HIGH → 0x32
+    bool found = cam_probe_addr(bus, bus_name, 0x30);
+    if (!found) found = cam_probe_addr(bus, bus_name, 0x32);
+    return found;
+}
+
+// Scan candidate GPIOs as potential camera XSHUTDOWN (active-HIGH).
+// Sets each HIGH, waits, probes SC2336 on IIC_1, logs result.
+// Called only when normal probe fails.
+static int cam_find_xshutdown_gpio(void)
+{
+    // GPIOs not used by any known peripheral on T-Display P4
+    // Excluded: 14-19 (C6 SDIO), 37/38 (UART console), 39-44 (SDMMC), 51/52 (ETH)
+    static const int candidates[] = { 22, 23, 25, 26, 27, 28, 29, 30, 32, 33, 34, 35, 36, 45, 46, 47, 48, 49, 50, 53, 54 };
+    const int n = sizeof(candidates) / sizeof(candidates[0]);
+
+    if (!s_i2c_bus) return -1;
+
+    for (int i = 0; i < n; i++) {
+        int g = candidates[i];
+        gpio_config_t gc = {
+            .pin_bit_mask = 1ULL << g,
+            .mode = GPIO_MODE_OUTPUT,
+            .pull_up_en = GPIO_PULLUP_DISABLE,
+            .pull_down_en = GPIO_PULLDOWN_DISABLE,
+            .intr_type = GPIO_INTR_DISABLE,
+        };
+        gpio_config(&gc);
+        gpio_set_level(g, 1);
+        vTaskDelay(pdMS_TO_TICKS(10));
+
+        bool found = cam_probe_addr(s_i2c_bus, "IIC_1", 0x30) ||
+                     cam_probe_addr(s_i2c_bus, "IIC_1", 0x32);
+        ESP_LOGI(TAG, "CAM XSHUTDOWN scan GPIO%d: %s", g, found ? "FOUND!" : "no");
+
+        if (found) {
+            ESP_LOGI(TAG, "Camera XSHUTDOWN = GPIO%d", g);
+            return g;
+        }
+        // Leave GPIO low and move to next
+        gpio_set_level(g, 0);
+    }
+    return -1;
+}
+
+// Scan XL9535 "unknown" IO pins as potential camera XSHUTDOWN/RESETB.
+// Pulses each pin LOW→HIGH (reset pulse) then probes SC2336.
+// Unknown port-0 pins: IO1(bit1), IO7(bit7)
+// Unknown port-1 pins: IO11(bit1), IO12(bit2), IO13(bit3), IO14(bit4), IO16(bit6), IO17(bit7)
+static int cam_find_xshutdown_xl9535(void)
+{
+    if (!s_i2c_bus || !s_xl9535) return -1;
+
+    // {port, bit_mask, pin_name}
+    struct { int port; uint8_t mask; const char *name; } pins[] = {
+        { 0, (1<<1), "IO1"  },
+        { 0, (1<<7), "IO7"  },
+        { 1, (1<<1), "IO11" },
+        { 1, (1<<2), "IO12" },
+        { 1, (1<<3), "IO13" },   // previously missed — bit3 of port1
+        { 1, (1<<4), "IO14" },   // previously missed — bit4 of port1
+        { 1, (1<<6), "IO16" },
+        { 1, (1<<7), "IO17" },
+    };
+    const int n = sizeof(pins) / sizeof(pins[0]);
+
+    ESP_LOGI(TAG, "CAM XL9535 scan: pulsing each unknown IO LOW→HIGH as XSHUTDOWN/RESETB");
+
+    for (int i = 0; i < n; i++) {
+        // Pulse LOW (reset/shutdown asserted)
+        if (pins[i].port == 0) {
+            xl9535_p0(pins[i].mask, false);
+        } else {
+            xl9535_p1(pins[i].mask, false);
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
+
+        // Pulse HIGH (reset released / sensor enabled)
+        if (pins[i].port == 0) {
+            xl9535_p0(pins[i].mask, true);
+        } else {
+            xl9535_p1(pins[i].mask, true);
+        }
+        vTaskDelay(pdMS_TO_TICKS(30));  // SC2336 needs ~8ms after XSHUTDOWN HIGH
+
+        bool found = cam_probe_addr(s_i2c_bus, "IIC_1", 0x30) ||
+                     cam_probe_addr(s_i2c_bus, "IIC_1", 0x32);
+        ESP_LOGI(TAG, "CAM XL9535 scan %s: %s", pins[i].name, found ? "FOUND!" : "no");
+
+        if (found) {
+            ESP_LOGI(TAG, "Camera XSHUTDOWN/RESETB = XL9535 %s", pins[i].name);
+            return i;
+        }
+    }
+
+    // Also try all pins simultaneously LOW→HIGH (some boards tie them together or need all HIGH)
+    ESP_LOGI(TAG, "CAM XL9535 scan: trying all unknown pins together");
+    xl9535_p0((1<<1)|(1<<7), false);
+    xl9535_p1((1<<1)|(1<<2)|(1<<3)|(1<<4)|(1<<6)|(1<<7), false);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    xl9535_p0((1<<1)|(1<<7), true);
+    xl9535_p1((1<<1)|(1<<2)|(1<<3)|(1<<4)|(1<<6)|(1<<7), true);
+    vTaskDelay(pdMS_TO_TICKS(30));
+    bool found_all = cam_probe_addr(s_i2c_bus, "IIC_1", 0x30) ||
+                     cam_probe_addr(s_i2c_bus, "IIC_1", 0x32);
+    ESP_LOGI(TAG, "CAM XL9535 scan all-LOW→HIGH: %s", found_all ? "FOUND!" : "no");
+
+    return found_all ? 99 : -1;
+}
+
+// Software I2C bitbang probe — sends START + address + checks ACK.
+// Works on any two GPIO pins without needing an I2C controller.
+// Returns true if the device at addr ACKs.
+static bool soft_i2c_probe(int sda_gpio, int scl_gpio, uint8_t addr)
+{
+    // Configure as open-drain with internal pull-up
+    gpio_config_t cfg = {
+        .pin_bit_mask = (1ULL << sda_gpio) | (1ULL << scl_gpio),
+        .mode         = GPIO_MODE_INPUT_OUTPUT_OD,
+        .pull_up_en   = GPIO_PULLUP_ENABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type    = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&cfg);
+
+    // Both HIGH (idle bus)
+    gpio_set_level(sda_gpio, 1);
+    gpio_set_level(scl_gpio, 1);
+    esp_rom_delay_us(10);
+
+    // START: SDA HIGH→LOW while SCL HIGH
+    gpio_set_level(sda_gpio, 0);
+    esp_rom_delay_us(5);
+    gpio_set_level(scl_gpio, 0);
+    esp_rom_delay_us(5);
+
+    // Send address byte (7-bit + write bit=0)
+    uint8_t byte = (uint8_t)((addr << 1) | 0);
+    for (int bit = 7; bit >= 0; bit--) {
+        gpio_set_level(sda_gpio, (byte >> bit) & 1);
+        esp_rom_delay_us(5);
+        gpio_set_level(scl_gpio, 1);
+        esp_rom_delay_us(5);
+        gpio_set_level(scl_gpio, 0);
+        esp_rom_delay_us(5);
+    }
+
+    // Release SDA, clock one ACK bit and read it
+    gpio_set_level(sda_gpio, 1);
+    esp_rom_delay_us(5);
+    gpio_set_level(scl_gpio, 1);
+    esp_rom_delay_us(5);
+    bool ack = (gpio_get_level(sda_gpio) == 0);  // device pulls SDA low for ACK
+    gpio_set_level(scl_gpio, 0);
+    esp_rom_delay_us(5);
+
+    // STOP: SCL HIGH, then SDA LOW→HIGH
+    gpio_set_level(sda_gpio, 0);
+    esp_rom_delay_us(5);
+    gpio_set_level(scl_gpio, 1);
+    esp_rom_delay_us(5);
+    gpio_set_level(sda_gpio, 1);
+    esp_rom_delay_us(10);
+
+    // Release pins back to input
+    gpio_set_direction(sda_gpio, GPIO_MODE_INPUT);
+    gpio_set_direction(scl_gpio, GPIO_MODE_INPUT);
+
+    return ack;
+}
+
+// Brute-force scan for SC2336 SCCB SDA/SCL GPIO pair using software I2C bitbang.
+// Works without needing a spare I2C controller.
+// Tries priority pairs likely for T-Display P4 then broader set.
+static int cam_find_sccb_gpio_pair(int *out_sda, int *out_scl)
+{
+    // Ordered by likelihood: free GPIOs near camera interface area
+    // Excluded: 1=ADC, 7/8=IIC_1, 9-13=I2S, 14-19=C6_SDIO, 20/21=IIC_2,
+    //           31=ETH_MDC, 37/38=UART, 39-44=SDMMC, 51=ETH_RST, 52=ETH_MDIO
+    static const int8_t pairs[][2] = {
+        // Highest priority: small free GPIOs
+        {5, 6}, {6, 5}, {4, 5}, {5, 4}, {4, 6}, {6, 4},
+        {3, 4}, {4, 3}, {2, 3}, {3, 2}, {0, 2}, {2, 0},
+        {3, 5}, {5, 3}, {0, 3}, {3, 0}, {0, 4}, {4, 0},
+        {0, 5}, {5, 0}, {0, 6}, {6, 0}, {2, 4}, {4, 2},
+        {2, 5}, {5, 2}, {2, 6}, {6, 2},
+        // Medium priority: higher GPIO pairs
+        {22, 23}, {23, 22}, {23, 24}, {24, 23},
+        {24, 25}, {25, 24}, {25, 26}, {26, 25},
+        {26, 27}, {27, 26}, {27, 28}, {28, 27},
+        {28, 29}, {29, 28}, {29, 30}, {30, 29},
+        {32, 33}, {33, 32}, {33, 34}, {34, 33},
+        {34, 35}, {35, 34}, {35, 36}, {36, 35},
+        {45, 46}, {46, 45}, {46, 47}, {47, 46},
+        {47, 48}, {48, 47}, {48, 49}, {49, 48},
+        {49, 50}, {50, 49}, {53, 54}, {54, 53},
+    };
+    const int n = sizeof(pairs) / sizeof(pairs[0]);
+
+    ESP_LOGI(TAG, "CAM SCCB pair scan: soft-I2C probing %d GPIO pairs for SC2336", n);
+
+    for (int i = 0; i < n; i++) {
+        int sda = pairs[i][0];
+        int scl = pairs[i][1];
+
+        bool found = soft_i2c_probe(sda, scl, 0x30) ||
+                     soft_i2c_probe(sda, scl, 0x32);
+        if (found) {
+            uint8_t hit_addr = soft_i2c_probe(sda, scl, 0x30) ? 0x30 : 0x32;
+            ESP_LOGI(TAG, "CAM SCCB pair FOUND: SDA=GPIO%d SCL=GPIO%d addr=0x%02X",
+                     sda, scl, hit_addr);
+            *out_sda = sda;
+            *out_scl = scl;
+            return hit_addr;
+        }
+    }
+
+    ESP_LOGW(TAG, "CAM SCCB pair scan: SC2336 not found on any GPIO pair");
+    return -1;
+}
+
+// Scan candidate GPIOs for the SC2336 XCLK/MCLK pin.
+// Starts a 20MHz DVP clock output, routes it to each candidate GPIO via GPIO matrix,
+// and probes SC2336 after each.  SmartSens sensors need XCLK before SCCB responds.
+// GPIO4 is the most likely candidate (ESP32-P4 default MIPI CAM MCLK pin).
+// Note: I2S BCLK=GPIO12 (not 6), MCLK=GPIO13, WS=GPIO9, DIN=GPIO11, DOUT=GPIO10
+// Excluded: 7/8=IIC_1, 9=I2S_WS, 10=I2S_DOUT, 11=I2S_DIN, 12=I2S_BCLK, 13=I2S_MCLK,
+//           14-19=C6_SDIO, 20/21=IIC_2, 31=ETH_MDC, 37/38=UART, 39-44=SDMMC, 51-52=ETH
+static int cam_find_mclk_gpio(void)
+{
+    // Priority order: GPIO4 first (common MIPI MCLK on ESP32-P4 boards)
+    // GPIO6 added — previously wrongly excluded (I2S BCLK is GPIO12, not GPIO6)
+    static const int candidates[] = { 4, 6, 0, 1, 2, 3, 5,
+                                       23, 25, 26, 27, 28, 29, 30, 32, 33, 34, 35, 36 };
+    const int n = sizeof(candidates) / sizeof(candidates[0]);
+
+    if (!s_i2c_bus) return -1;
+
+    // Start 20MHz clock: PLL_F160M(160MHz) / 8 = 20MHz (exact integer divisor)
+    // SC2336 accepts 6–27MHz XCLK; 20MHz is well within spec.
+    esp_err_t clk_ret = esp_cam_ctlr_dvp_start_clock(0, GPIO_NUM_4, CAM_CLK_SRC_DEFAULT, 20000000);
+    if (clk_ret != ESP_OK) {
+        // Fallback: use LEDC to generate ~20MHz on GPIO4
+        ESP_LOGW(TAG, "CAM MCLK scan: DVP clock failed (%s) — trying LEDC fallback", esp_err_to_name(clk_ret));
+        ledc_timer_config_t ledc_t = {
+            .speed_mode      = LEDC_LOW_SPEED_MODE,
+            .duty_resolution = LEDC_TIMER_1_BIT,
+            .timer_num       = LEDC_TIMER_1,
+            .freq_hz         = 20000000,
+            .clk_cfg         = LEDC_USE_PLL_DIV_CLK,
+        };
+        ledc_channel_config_t ledc_c = {
+            .gpio_num   = GPIO_NUM_4,
+            .speed_mode = LEDC_LOW_SPEED_MODE,
+            .channel    = LEDC_CHANNEL_4,
+            .timer_sel  = LEDC_TIMER_1,
+            .duty       = 1,  // 50% at 1-bit resolution
+            .hpoint     = 0,
+        };
+        if (ledc_timer_config(&ledc_t) == ESP_OK && ledc_channel_config(&ledc_c) == ESP_OK) {
+            ESP_LOGI(TAG, "CAM MCLK scan: LEDC 20MHz running on GPIO4");
+            clk_ret = ESP_OK;
+        } else {
+            ESP_LOGE(TAG, "CAM MCLK scan: LEDC also failed — skipping MCLK scan");
+            return -1;
+        }
+    }
+    ESP_LOGI(TAG, "CAM MCLK scan: 20MHz clock running — scanning %d GPIO candidates", n);
+
+    int found_gpio = -1;
+    for (int i = 0; i < n; i++) {
+        int g = candidates[i];
+        // Route CAM_CLK signal to this GPIO
+        gpio_config_t gc = {
+            .pin_bit_mask = 1ULL << g,
+            .mode = GPIO_MODE_OUTPUT,
+            .pull_up_en = GPIO_PULLUP_DISABLE,
+            .pull_down_en = GPIO_PULLDOWN_DISABLE,
+            .intr_type = GPIO_INTR_DISABLE,
+        };
+        gpio_config(&gc);
+        esp_rom_gpio_connect_out_signal(g, CAM_CLK_PAD_OUT_IDX, false, false);
+        vTaskDelay(pdMS_TO_TICKS(20));  // let sensor PLL lock
+
+        bool found = cam_probe_addr(s_i2c_bus, "IIC_1", 0x30) ||
+                     cam_probe_addr(s_i2c_bus, "IIC_1", 0x32);
+        ESP_LOGI(TAG, "CAM MCLK scan GPIO%d: %s", g, found ? "FOUND!" : "no");
+
+        if (found) {
+            ESP_LOGI(TAG, "Camera XCLK/MCLK = GPIO%d", g);
+            found_gpio = g;
+            break;
+        }
+        // Disconnect this GPIO from cam clock before next iteration
+        esp_rom_gpio_connect_out_signal(g, SIG_GPIO_OUT_IDX, false, false);
+    }
+
+    if (found_gpio < 0) {
+        ESP_LOGW(TAG, "CAM MCLK scan: no GPIO found");
+        esp_cam_ctlr_dvp_deinit(0);
+    }
+    return found_gpio;
+}
+
+// Scan all 7-bit I2C addresses on a bus and log which respond.
+// Uses disable_ack_check=0 so we can detect standard ACKs.
+static void i2c_bus_scan(i2c_master_bus_handle_t bus, const char *bus_name)
+{
+    ESP_LOGI(TAG, "I2C scan %s:", bus_name);
+    char found_buf[128] = "";
+    int found_count = 0;
+    for (uint8_t addr = 0x08; addr <= 0x77; addr++) {
+        // Use i2c_master_probe which sends a zero-length write
+        esp_err_t r = i2c_master_probe(bus, addr, 10);
+        if (r == ESP_OK) {
+            char tmp[8];
+            snprintf(tmp, sizeof(tmp), " 0x%02X", addr);
+            strncat(found_buf, tmp, sizeof(found_buf) - strlen(found_buf) - 1);
+            found_count++;
+        }
+    }
+    if (found_count) {
+        ESP_LOGI(TAG, "  Found %d device(s):%s", found_count, found_buf);
+    } else {
+        ESP_LOGW(TAG, "  No devices found on %s", bus_name);
+    }
+}
+
+static esp_err_t cam_power_on(void) {
+    // LDO ch3 1830mV for MIPI CSI DVDD — lcd_init already holds this, log warning on failure
+    esp_ldo_channel_handle_t ldo = NULL;
+    esp_ldo_channel_config_t ldo_cfg = { .chan_id = 3, .voltage_mv = 1830 };
+    esp_err_t ret = esp_ldo_acquire_channel(&ldo_cfg, &ldo);
+    if (ret != ESP_OK) {
+        ESP_LOGW(TAG, "Camera: LDO ch3: %s (already held by DSI — OK)", esp_err_to_name(ret));
+    }
+
+    // Start MCLK on GPIO4 BEFORE sensor power-on so the sensor boots with a valid
+    // clock. SC2336 SCCB interface won't initialise without MCLK running.
+    // SC2336 accepts 6–27 MHz; 20 MHz via LEDC is safe (DVP clock API unavailable here).
+    {
+        ledc_timer_config_t lt = {
+            .speed_mode      = LEDC_LOW_SPEED_MODE,
+            .duty_resolution = LEDC_TIMER_1_BIT,
+            .timer_num       = LEDC_TIMER_1,
+            .freq_hz         = 20000000,
+            .clk_cfg         = LEDC_USE_PLL_DIV_CLK,
+        };
+        ledc_channel_config_t lc = {
+            .gpio_num   = GPIO_NUM_4,
+            .speed_mode = LEDC_LOW_SPEED_MODE,
+            .channel    = LEDC_CHANNEL_4,
+            .timer_sel  = LEDC_TIMER_1,
+            .duty       = 1,
+            .hpoint     = 0,
+        };
+        if (ledc_timer_config(&lt) == ESP_OK && ledc_channel_config(&lc) == ESP_OK) {
+            ESP_LOGI(TAG, "Camera: MCLK 20 MHz via LEDC on GPIO4");
+        } else {
+            ESP_LOGW(TAG, "Camera: MCLK start failed — sensor may not respond to SCCB");
+        }
+    }
+
+    // Power-cycle the SC2336 via SGM38121 to reset its SCCB state machine.
+    // SGM38121 maintains state across ESP32 resets (its rails are always on), so the
+    // sensor can be stuck mid-I2C from a previous session. Disabling EN briefly resets it.
+    if (s_sgm_dev != NULL) {
+        uint8_t buf[2];
+        buf[0] = SGM38121_REG_EN; buf[1] = 0x00;  // disable all rails
+        i2c_master_transmit(s_sgm_dev, buf, 2, 50);
+        vTaskDelay(pdMS_TO_TICKS(30));             // let rails discharge
+        buf[0] = SGM38121_REG_EN; buf[1] = SGM38121_EN_ALL;  // re-enable
+        i2c_master_transmit(s_sgm_dev, buf, 2, 50);
+        vTaskDelay(pdMS_TO_TICKS(50));             // sensor power-on + PLL lock
+        ESP_LOGI(TAG, "Camera: SC2336 power-cycled via SGM38121 (SCCB state machine reset)");
+    }
+
+    // Retain IIC_2 (GPIO20/21, I2C_NUM_1) for ES8311 — walkie-talkie needs to be
+    // able to reconfigure the codec at runtime. Camera SCCB falls back to
+    // bit-bang or the camera scan below will simply fail gracefully on I2C_NUM_1.
+    if (s_iic2_bus != NULL && s_sgm_dev != NULL) {
+        i2c_master_bus_rm_device(s_sgm_dev);
+        s_sgm_dev = NULL;
+        ESP_LOGI(TAG, "Camera: SGM38121 removed from IIC_2 (ES8311 retained)");
+    }
+
+    // Scan for MCLK GPIO using soft I2C probe on both pin orientations.
+    // cam_find_mclk_gpio() used the wrong bus (IIC_1 for touchscreen), so we must
+    // do this scan here with soft_i2c_probe on the actual camera SCCB lines.
+    // Candidates: GPIO4 is most likely; also try 0,2,3 and no-MCLK case.
+    // Test both GPIO5/6 orientations since soft-I2C previous result may have been wrong.
+    {
+        static const int mclk_cands[] = { -1, 4, 0, 2, 3 };  // -1 = no MCLK (sensor may have internal OSC)
+        static const struct { int sda; int scl; } sccb_pairs[] = { {6,5}, {5,6} };
+        int best_mclk = -2;   // -2 = not found yet
+        int best_sda = -1, best_scl = -1;
+
+        for (int ci = 0; ci < (int)(sizeof(mclk_cands)/sizeof(mclk_cands[0])) && best_mclk == -2; ci++) {
+            int mclk_gpio = mclk_cands[ci];
+
+            if (mclk_gpio >= 0) {
+                // Update LEDC channel to this GPIO
+                ledc_channel_config_t lc2 = {
+                    .gpio_num   = mclk_gpio,
+                    .speed_mode = LEDC_LOW_SPEED_MODE,
+                    .channel    = LEDC_CHANNEL_4,
+                    .timer_sel  = LEDC_TIMER_1,
+                    .duty       = 1,
+                    .hpoint     = 0,
+                };
+                ledc_channel_config(&lc2);
+                vTaskDelay(pdMS_TO_TICKS(5));
+            }
+
+            for (int pi = 0; pi < 2; pi++) {
+                int sda = sccb_pairs[pi].sda;
+                int scl = sccb_pairs[pi].scl;
+                bool ack = soft_i2c_probe(sda, scl, 0x30) || soft_i2c_probe(sda, scl, 0x32);
+                ESP_LOGI(TAG, "Camera MCLK scan: MCLK=GPIO%d SDA=GPIO%d SCL=GPIO%d → %s",
+                         mclk_gpio, sda, scl, ack ? "ACK!" : "no");
+                if (ack) {
+                    best_mclk = mclk_gpio;
+                    best_sda  = sda;
+                    best_scl  = scl;
+                    break;
+                }
+            }
+
+            if (best_mclk == -2 && mclk_gpio >= 0) {
+                // Disconnect this MCLK GPIO before trying next
+                ledc_stop(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_4, 0);
+                gpio_reset_pin(mclk_gpio);
+            }
+        }
+
+        if (best_mclk >= -1) {
+            ESP_LOGI(TAG, "Camera: FOUND — MCLK=GPIO%d SDA=GPIO%d SCL=GPIO%d",
+                     best_mclk, best_sda, best_scl);
+            if (best_mclk >= 0) {
+                // Re-enable LEDC on the found MCLK GPIO and keep it running
+                ledc_channel_config_t lc2 = {
+                    .gpio_num   = best_mclk,
+                    .speed_mode = LEDC_LOW_SPEED_MODE,
+                    .channel    = LEDC_CHANNEL_4,
+                    .timer_sel  = LEDC_TIMER_1,
+                    .duty       = 1,
+                    .hpoint     = 0,
+                };
+                ledc_channel_config(&lc2);
+            }
+        } else {
+            ESP_LOGW(TAG, "Camera: SC2336 not found on any MCLK/pin combo — proceeding with GPIO5/6");
+            // Fall back to GPIO4 MCLK and original GPIO5/6 assignment
+            ledc_channel_config_t lc2 = {
+                .gpio_num   = GPIO_NUM_4,
+                .speed_mode = LEDC_LOW_SPEED_MODE,
+                .channel    = LEDC_CHANNEL_4,
+                .timer_sel  = LEDC_TIMER_1,
+                .duty       = 1,
+                .hpoint     = 0,
+            };
+            ledc_channel_config(&lc2);
+            best_sda = CAM_SCCB_SDA;
+            best_scl = CAM_SCCB_SCL;
+        }
+
+        // Create HP I2C bus using the confirmed (or fallback) SDA/SCL GPIOs
+        i2c_master_bus_config_t cam_bc = {
+            .i2c_port          = I2C_NUM_1,
+            .sda_io_num        = best_sda,
+            .scl_io_num        = best_scl,
+            .clk_source        = I2C_CLK_SRC_DEFAULT,
+            .glitch_ignore_cnt = 7,
+            .flags.enable_internal_pullup = true,
+        };
+        ret = i2c_new_master_bus(&cam_bc, &s_cam_i2c_bus);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Camera: HP I2C bus create failed: %s", esp_err_to_name(ret));
+            return ret;
+        }
+        // Reset HP I2C hardware to a clean state before esp_video_init uses it.
+        // Do NOT call i2c_master_probe() here — standard probes timeout for SCCB
+        // sensors (they don't ACK the standard probe pattern), and each timeout
+        // corrupts the HP I2C hardware state, causing subsequent SCCB transactions
+        // to return ESP_ERR_INVALID_STATE.
+        i2c_master_bus_reset(s_cam_i2c_bus);
+        vTaskDelay(pdMS_TO_TICKS(5));
+        // HP I2C defaults to open-drain SCL with 45kΩ internal pull-up.
+        // Slow pull-up rise time triggers the hardware clock-stretch detection
+        // before SCL reaches VIH, stalling the state machine → 500ms timeout.
+        // SCCB doesn't use clock stretching, so push-pull SCL is safe.
+        gpio_od_disable(best_scl);
+        ESP_LOGI(TAG, "Camera: HP I2C bus created (SCL=GPIO%d SDA=GPIO%d, SCL push-pull) — ready for SCCB",
+                 best_scl, best_sda);
+    }
+
+    return s_cam_i2c_bus ? ESP_OK : ESP_ERR_INVALID_STATE;
+}
+
+static volatile bool s_cam_running  = false;
+static volatile bool s_cam_stop     = false;
+
+static void camera_task(void *arg) {
+    if (lvgl_lock(200)) { ui_cam_set_status("POWERING UP..."); lvgl_unlock(); }
+
+    // Power on camera analog rails via SGM38121 + LDO before sensor probe
+    if (cam_power_on() != ESP_OK) {
+        if (lvgl_lock(200)) { ui_cam_set_status("CAM PWR FAIL"); lvgl_unlock(); }
+        s_cam_running = false;
+        vTaskDelete(NULL);
+        return;
+    }
+
+    // Use the already-initialized I2C bus handle so esp_video_init doesn't
+    // try to create a second master on the same port
+    esp_video_init_csi_config_t csi_cfg = {
+        .sccb_config = {
+            .init_sccb  = false,
+            .i2c_handle = s_cam_i2c_bus,
+            .freq       = 100000,
+        },
+        .reset_pin = CAM_RESET_PIN,
+        .pwdn_pin  = CAM_PWDN_PIN,
+    };
+    esp_video_init_config_t vcfg = { .csi = &csi_cfg };
+
+    // Note: i2c_master_probe fails for SCCB sensors that don't ACK the probe
+    // pattern — do NOT use probe as a guard here. Let esp_video_init run.
+    // sc2336_detect now allocates dev in PSRAM, so free(dev) on failure can't
+    // corrupt the internal-SRAM sccb_io_i2c_t struct.
+    if (lvgl_lock(200)) { ui_cam_set_status("CSI INIT..."); lvgl_unlock(); }
+
+    esp_err_t init_ret = esp_video_init(&vcfg);
+    if (init_ret != ESP_OK) {
+        ESP_LOGE(TAG, "Camera: esp_video_init failed: %s", esp_err_to_name(init_ret));
+        if (lvgl_lock(200)) { ui_cam_set_status("CAM INIT FAIL"); lvgl_unlock(); }
+        s_cam_running = false;
+        vTaskDelete(NULL);
+        return;
+    }
+
+    int fd = open(ESP_VIDEO_MIPI_CSI_DEVICE_NAME, O_RDONLY);
+    if (fd < 0) {
+        ESP_LOGE(TAG, "Camera: open failed after init (SDA=%d SCL=%d)",
+                 CAM_SCCB_SDA, CAM_SCCB_SCL);
+        if (lvgl_lock(200)) { ui_cam_set_status("OPEN FAILED"); lvgl_unlock(); }
+        s_cam_running = false;
+        vTaskDelete(NULL);
+        return;
+    }
+
+    // Set RGB565 format
+    struct v4l2_format fmt = {
+        .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+        .fmt.pix = {
+            .width       = CAM_WIDTH,
+            .height      = CAM_HEIGHT,
+            .pixelformat = V4L2_PIX_FMT_RGB565,
+        },
+    };
+    if (ioctl(fd, VIDIOC_S_FMT, &fmt) != 0) {
+        // Try RGB24 as fallback
+        fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+        if (ioctl(fd, VIDIOC_S_FMT, &fmt) != 0) {
+            ESP_LOGE(TAG, "Camera: VIDIOC_S_FMT failed");
+            if (lvgl_lock(200)) { ui_cam_set_status("CAM FMT FAIL"); lvgl_unlock(); }
+            close(fd); esp_video_deinit();
+            vTaskDelete(NULL);
+            return;
+        }
+    }
+
+    // Request mmap buffers
+    struct v4l2_requestbuffers req = {
+        .count  = CAM_BUFS,
+        .type   = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+        .memory = V4L2_MEMORY_MMAP,
+    };
+    if (ioctl(fd, VIDIOC_REQBUFS, &req) != 0) {
+        ESP_LOGE(TAG, "Camera: REQBUFS failed");
+        if (lvgl_lock(200)) { ui_cam_set_status("CAM BUF FAIL"); lvgl_unlock(); }
+        close(fd); esp_video_deinit();
+        vTaskDelete(NULL);
+        return;
+    }
+
+    uint8_t *bufs[CAM_BUFS];
+    size_t   buf_sizes[CAM_BUFS];
+    for (int i = 0; i < CAM_BUFS; i++) {
+        struct v4l2_buffer b = { .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+                                 .memory = V4L2_MEMORY_MMAP, .index = i };
+        if (ioctl(fd, VIDIOC_QUERYBUF, &b) != 0) {
+            if (lvgl_lock(200)) { ui_cam_set_status("CAM QBUF FAIL"); lvgl_unlock(); }
+            close(fd); esp_video_deinit(); vTaskDelete(NULL); return;
+        }
+        bufs[i] = mmap(NULL, b.length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, b.m.offset);
+        buf_sizes[i] = b.length;
+        ioctl(fd, VIDIOC_QBUF, &b);
+    }
+
+    const int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (ioctl(fd, VIDIOC_STREAMON, &type) != 0) {
+        ESP_LOGE(TAG, "Camera: STREAMON failed");
+        if (lvgl_lock(200)) { ui_cam_set_status("CAM STREAM FAIL"); lvgl_unlock(); }
+        close(fd); esp_video_deinit(); vTaskDelete(NULL); return;
+    }
+
+    if (lvgl_lock(200)) { ui_cam_set_status("LIVE"); lvgl_unlock(); }
+    ESP_LOGI(TAG, "Camera streaming %dx%d", CAM_WIDTH, CAM_HEIGHT);
+
+    while (!s_cam_stop) {
+        struct v4l2_buffer b = { .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
+                                 .memory = V4L2_MEMORY_MMAP };
+        if (ioctl(fd, VIDIOC_DQBUF, &b) != 0) {
+            vTaskDelay(pdMS_TO_TICKS(10));
+            continue;
+        }
+        if (lvgl_lock(100)) {
+            ui_cam_set_frame(bufs[b.index], CAM_WIDTH, CAM_HEIGHT);
+            lvgl_unlock();
+        }
+        ioctl(fd, VIDIOC_QBUF, &b);
+    }
+
+    ioctl(fd, VIDIOC_STREAMOFF, &type);
+    close(fd);
+    esp_video_deinit();
+    s_cam_running = false;
+    if (lvgl_lock(200)) { ui_cam_set_status("CAMERA STOPPED"); lvgl_unlock(); }
+    vTaskDelete(NULL);
+}
+
+static void capture_cb(void) {
+    if (!s_cam_running) {
+        s_cam_stop    = false;
+        s_cam_running = true;
+        xTaskCreatePinnedToCore(camera_task, "camera", 16384, NULL, 3, NULL, 1);
+    } else {
+        s_cam_stop = true;
+    }
+}
+
+// ── WiFi credential NVS helpers ───────────────────────────────────────────────
+#include "nvs.h"
+static void wifi_cred_save(const char *ssid, const char *pass) {
+    nvs_handle_t h;
+    if (nvs_open("wifi_cred", NVS_READWRITE, &h) != ESP_OK) return;
+    nvs_set_str(h, "ssid", ssid);
+    nvs_set_str(h, "pass", pass ? pass : "");
+    nvs_commit(h);
+    nvs_close(h);
+    ESP_LOGI(TAG, "WiFi creds saved: ssid='%s'", ssid);
+}
+static bool wifi_cred_load(char *ssid, size_t ssid_len, char *pass, size_t pass_len) {
+    nvs_handle_t h;
+    if (nvs_open("wifi_cred", NVS_READONLY, &h) != ESP_OK) return false;
+    bool ok = (nvs_get_str(h, "ssid", ssid, &ssid_len) == ESP_OK &&
+               nvs_get_str(h, "pass", pass, &pass_len) == ESP_OK &&
+               ssid[0] != '\0');
+    nvs_close(h);
+    return ok;
+}
+
 // ── WiFi reconnect button callback ───────────────────────────────────────────
 static void wifi_reconnect_cb(void) {
     if (lvgl_lock(200)) { ui_net_set_status("RECONNECTING..."); lvgl_unlock(); }
@@ -385,16 +1215,39 @@ static void wifi_connect_task(void *arg) {
     wifi_con_args_t *a = (wifi_con_args_t *)arg;
     if (lvgl_lock(200)) { ui_net_set_status("CONNECTING..."); lvgl_unlock(); }
     bool ok = wifi_at_connect(a->ssid, a->pass);
+    if (ok) {
+        wifi_cred_save(a->ssid, a->pass);
+        strlcpy(s_wifi_ssid, a->ssid, sizeof(s_wifi_ssid));
+    }
     free(a);
     if (ok) {
         s_wifi_up = true;
         char ip[40] = "";
         wifi_at_get_ip(ip, sizeof(ip));
         strlcpy((char *)s_device_ip, ip, sizeof(s_device_ip));
+        s_wifi_status_dirty = true;
         if (lvgl_lock(200)) {
             ui_net_set_status("WIFI OK");
             ui_set_wifi_ip(ip);
             lvgl_unlock();
+        }
+        /* Sync clock now that WiFi is up */
+        time_t epoch = wifi_at_get_epoch();
+        if (epoch > 0) {
+            struct timeval tv = { .tv_sec = epoch, .tv_usec = 0 };
+            settimeofday(&tv, NULL);
+            ESP_LOGI(TAG, "Time synced after manual connect: %lld", (long long)epoch);
+            /* Force-update time labels immediately (don't wait for 1-s LVGL timer) */
+            struct tm tm_now;
+            localtime_r(&epoch, &tm_now);
+            char tbuf[8], dbuf[12];
+            strftime(tbuf, sizeof(tbuf), "%H:%M", &tm_now);
+            strftime(dbuf, sizeof(dbuf), "%Y-%m-%d", &tm_now);
+            if (lvgl_lock(200)) {
+                ui_set_time(tbuf);
+                ui_set_time_date(dbuf);
+                lvgl_unlock();
+            }
         }
     } else {
         if (lvgl_lock(200)) { ui_net_set_status("CONNECT FAIL"); lvgl_unlock(); }
@@ -420,6 +1273,7 @@ static void wifi_connect_cb(const char *ssid, const char *pass) {
 #define I2S_MCLK_MULTI    256
 
 static i2s_chan_handle_t        s_i2s_tx        = NULL;
+static i2s_chan_handle_t        s_i2s_rx        = NULL;  // mic capture — shared with walkie
 static volatile bool            s_audio_playing = false;
 static volatile bool            s_audio_stop    = false;
 
@@ -432,58 +1286,59 @@ static esp_err_t es8311_reg_write(i2c_master_dev_handle_t dev, uint8_t reg, uint
 
 static esp_err_t audio_codec_init(void)
 {
-    /* ── I2C bus for ES8311 (I2C_NUM_1, SDA=20, SCL=21) ── */
-    i2c_master_bus_config_t bc = {
-        .i2c_port              = I2C_NUM_1,
-        .sda_io_num            = ES8311_I2C_SDA,
-        .scl_io_num            = ES8311_I2C_SCL,
-        .clk_source            = I2C_CLK_SRC_DEFAULT,
-        .glitch_ignore_cnt     = 7,
-        .flags.enable_internal_pullup = true,
-    };
-    i2c_master_bus_handle_t audio_bus = NULL;
-    ESP_RETURN_ON_ERROR(i2c_new_master_bus(&bc, &audio_bus), TAG, "audio i2c bus");
+    /* ── I2C bus for ES8311 — reuse IIC_2 if already created by xl9535_init() ── */
+    if (!s_iic2_bus) {
+        i2c_master_bus_config_t bc = {
+            .i2c_port              = I2C_NUM_1,
+            .sda_io_num            = ES8311_I2C_SDA,
+            .scl_io_num            = ES8311_I2C_SCL,
+            .clk_source            = I2C_CLK_SRC_DEFAULT,
+            .glitch_ignore_cnt     = 7,
+            .flags.enable_internal_pullup = true,
+        };
+        ESP_RETURN_ON_ERROR(i2c_new_master_bus(&bc, &s_iic2_bus), TAG, "audio i2c bus");
+    }
+    i2c_master_bus_handle_t audio_bus = s_iic2_bus;
 
     i2c_device_config_t dc = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
         .device_address  = ES8311_I2C_ADDR,
         .scl_speed_hz    = 100000,
     };
-    i2c_master_dev_handle_t codec = NULL;
-    ESP_RETURN_ON_ERROR(i2c_master_bus_add_device(audio_bus, &dc, &codec), TAG, "es8311 add");
+    ESP_RETURN_ON_ERROR(i2c_master_bus_add_device(audio_bus, &dc, &s_es8311_dev), TAG, "es8311 add");
 
     /* ── ES8311 register init: 44100 Hz, 16-bit, I2S, MCLK=256×Fs ── */
-    es8311_reg_write(codec, 0x00, 0x1F); /* reset */
+    es8311_reg_write(s_es8311_dev, 0x00, 0x1F); /* reset */
     vTaskDelay(pdMS_TO_TICKS(20));
-    es8311_reg_write(codec, 0x00, 0x00);
-    es8311_reg_write(codec, 0x00, 0x80); /* power-on */
-    es8311_reg_write(codec, 0x01, 0x3F); /* enable all clocks, use MCLK pin */
-    es8311_reg_write(codec, 0x06, 0x00); /* SCLK not inverted */
-    es8311_reg_write(codec, 0x02, 0x00); /* pre_div=1, pre_multi=1x */
-    es8311_reg_write(codec, 0x03, 0x10); /* adc_osr=0x10, single-speed */
-    es8311_reg_write(codec, 0x04, 0x10); /* dac_osr=0x10 */
-    es8311_reg_write(codec, 0x05, 0x00); /* adc_div=1, dac_div=1 */
-    es8311_reg_write(codec, 0x06, 0x03); /* bclk_div=4 (i.e. 4-1=3) */
-    es8311_reg_write(codec, 0x07, 0x00); /* lrck_h=0 */
-    es8311_reg_write(codec, 0x08, 0xFF); /* lrck_l=255 → LRCK=MCLK/256=44100 */
-    es8311_reg_write(codec, 0x00, 0x80); /* slave serial port */
-    es8311_reg_write(codec, 0x09, 0x0C); /* DAC SDP: I2S 16-bit */
-    es8311_reg_write(codec, 0x0A, 0x0C); /* ADC SDP: I2S 16-bit */
-    es8311_reg_write(codec, 0x0D, 0x01); /* power up analog */
-    es8311_reg_write(codec, 0x0E, 0x02); /* enable PGA + ADC modulator */
-    es8311_reg_write(codec, 0x12, 0x00); /* power up DAC */
-    es8311_reg_write(codec, 0x13, 0x10); /* enable HP drive */
-    es8311_reg_write(codec, 0x1C, 0x6A); /* ADC equalizer bypass */
-    es8311_reg_write(codec, 0x37, 0x08); /* bypass DAC equalizer */
-    es8311_reg_write(codec, 0x17, 0xC8); /* ADC gain */
-    es8311_reg_write(codec, 0x14, 0x1A); /* analog mic, max PGA gain */
-    es8311_reg_write(codec, 0x32, 0xCB); /* DAC volume 80% */
+    es8311_reg_write(s_es8311_dev, 0x00, 0x00);
+    es8311_reg_write(s_es8311_dev, 0x00, 0x80); /* power-on */
+    es8311_reg_write(s_es8311_dev, 0x01, 0x3F); /* enable all clocks, use MCLK pin */
+    es8311_reg_write(s_es8311_dev, 0x06, 0x00); /* SCLK not inverted */
+    es8311_reg_write(s_es8311_dev, 0x02, 0x00); /* pre_div=1, pre_multi=1x */
+    es8311_reg_write(s_es8311_dev, 0x03, 0x10); /* adc_osr=0x10, single-speed */
+    es8311_reg_write(s_es8311_dev, 0x04, 0x10); /* dac_osr=0x10 */
+    es8311_reg_write(s_es8311_dev, 0x05, 0x00); /* adc_div=1, dac_div=1 */
+    es8311_reg_write(s_es8311_dev, 0x06, 0x03); /* bclk_div=4 (i.e. 4-1=3) */
+    es8311_reg_write(s_es8311_dev, 0x07, 0x00); /* lrck_h=0 */
+    es8311_reg_write(s_es8311_dev, 0x08, 0xFF); /* lrck_l=255 → LRCK=MCLK/256=44100 */
+    es8311_reg_write(s_es8311_dev, 0x00, 0x80); /* slave serial port */
+    es8311_reg_write(s_es8311_dev, 0x09, 0x0C); /* DAC SDP: I2S 16-bit */
+    es8311_reg_write(s_es8311_dev, 0x0A, 0x0C); /* ADC SDP: I2S 16-bit */
+    es8311_reg_write(s_es8311_dev, 0x0D, 0x01); /* power up analog */
+    es8311_reg_write(s_es8311_dev, 0x0E, 0x02); /* enable PGA + ADC modulator */
+    es8311_reg_write(s_es8311_dev, 0x12, 0x00); /* power up DAC */
+    es8311_reg_write(s_es8311_dev, 0x13, 0x10); /* enable HP drive */
+    es8311_reg_write(s_es8311_dev, 0x1C, 0x6A); /* ADC equalizer bypass */
+    es8311_reg_write(s_es8311_dev, 0x37, 0x08); /* bypass DAC equalizer */
+    es8311_reg_write(s_es8311_dev, 0x17, 0xC8); /* ADC gain */
+    es8311_reg_write(s_es8311_dev, 0x14, 0x1A); /* analog mic, max PGA gain */
+    es8311_reg_write(s_es8311_dev, 0x32, 0xCB); /* DAC volume 80% */
     ESP_LOGI(TAG, "ES8311 init OK");
 
-    /* ── I2S TX channel ── */
+    /* ── I2S TX + RX channels (shared bus, ES8311 master) ── */
     i2s_chan_config_t chan = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
     chan.auto_clear = true;
-    ESP_RETURN_ON_ERROR(i2s_new_channel(&chan, &s_i2s_tx, NULL), TAG, "i2s channel");
+    ESP_RETURN_ON_ERROR(i2s_new_channel(&chan, &s_i2s_tx, &s_i2s_rx), TAG, "i2s channel");
 
     i2s_std_config_t std = {
         .clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(ES8311_SAMPLE_RATE),
@@ -498,8 +1353,10 @@ static esp_err_t audio_codec_init(void)
         },
     };
     std.clk_cfg.mclk_multiple = I2S_MCLK_MULTI;
-    ESP_RETURN_ON_ERROR(i2s_channel_init_std_mode(s_i2s_tx, &std), TAG, "i2s std mode");
-    ESP_RETURN_ON_ERROR(i2s_channel_enable(s_i2s_tx), TAG, "i2s enable");
+    ESP_RETURN_ON_ERROR(i2s_channel_init_std_mode(s_i2s_tx, &std), TAG, "i2s std TX mode");
+    ESP_RETURN_ON_ERROR(i2s_channel_init_std_mode(s_i2s_rx, &std), TAG, "i2s std RX mode");
+    ESP_RETURN_ON_ERROR(i2s_channel_enable(s_i2s_tx), TAG, "i2s TX enable");
+    ESP_RETURN_ON_ERROR(i2s_channel_enable(s_i2s_rx), TAG, "i2s RX enable");
 
     ESP_LOGI(TAG, "Audio init OK");
     return ESP_OK;
@@ -1508,23 +2365,26 @@ static void screenshot_task(void *arg) {
 #define BATT_ADC_CHAN   ADC_CHANNEL_0   // GPIO1
 
 static void battery_task(void *arg) {
-    adc_oneshot_unit_handle_t adc;
-    adc_oneshot_unit_init_cfg_t unit_cfg = {
-        .unit_id       = ADC_UNIT_1,
-        .ulp_mode      = ADC_ULP_MODE_DISABLE,
-    };
-    if (adc_oneshot_new_unit(&unit_cfg, &adc) != ESP_OK) {
-        ESP_LOGE(TAG, "ADC unit init failed — battery disabled");
-        vTaskDelete(NULL);
-        return;
+    /* On ESP32-P4, ADC1 channels map to GPIO16-23 which are all used:
+       GPIO14-19 = C6 SDIO, GPIO20-21 = ES8311 I2C, GPIO22-23 = GPS UART.
+       Battery voltage reading via ADC is not available without a free analog pin.
+       Show a fixed indicator until hardware schematic provides the correct pin. */
+    ESP_LOGW(TAG, "Battery ADC unavailable on P4 — all ADC1 pins in use by other peripherals");
+    vTaskDelete(NULL);
+    return;
+
+    /* Dead code — kept as reference for when correct pin is found */
+    adc_oneshot_unit_handle_t adc = NULL;
+    {
+        adc_oneshot_unit_init_cfg_t unit_cfg = { .unit_id = ADC_UNIT_1 };
+        adc_oneshot_new_unit(&unit_cfg, &adc);
     }
     adc_oneshot_chan_cfg_t chan_cfg = {
-        .atten    = ADC_ATTEN_DB_11,
+        .atten    = ADC_ATTEN_DB_12,
         .bitwidth = ADC_BITWIDTH_12,
     };
-    if (adc_oneshot_config_channel(adc, BATT_ADC_CHAN, &chan_cfg) != ESP_OK) {
-        ESP_LOGE(TAG, "ADC channel config failed — battery disabled");
-        adc_oneshot_del_unit(adc);
+    if (!adc || adc_oneshot_config_channel(adc, BATT_ADC_CHAN, &chan_cfg) != ESP_OK) {
+        if (adc) adc_oneshot_del_unit(adc);
         vTaskDelete(NULL);
         return;
     }
@@ -1556,6 +2416,118 @@ static void battery_task(void *arg) {
             lvgl_unlock();
         }
         vTaskDelay(pdMS_TO_TICKS(30000));
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  GPS — L76K NMEA parser
+// ─────────────────────────────────────────────────────────────────────────────
+#include "driver/uart.h"
+
+static bool parse_nmea_gga(const char *s, double *lat, double *lon,
+                            float *alt, int *sats, bool *fix) {
+    if (strncmp(s, "$GPGGA", 6) != 0 && strncmp(s, "$GNGGA", 6) != 0) return false;
+    char buf[128];
+    strncpy(buf, s, sizeof(buf) - 1);
+    buf[sizeof(buf)-1] = '\0';
+    char *fields[15] = {0};
+    int n = 0;
+    char *p = buf;
+    while (n < 15 && (fields[n] = strsep(&p, ",")) != NULL) n++;
+    if (n < 10) return false;
+    int quality = atoi(fields[6]);
+    *sats = atoi(fields[7]);
+    *fix  = (quality > 0);
+    if (!*fix) return true;
+    double raw_lat = atof(fields[2]);
+    int deg_lat = (int)(raw_lat / 100);
+    *lat = deg_lat + (raw_lat - deg_lat * 100) / 60.0;
+    if (fields[3][0] == 'S') *lat = -*lat;
+    double raw_lon = atof(fields[4]);
+    int deg_lon = (int)(raw_lon / 100);
+    *lon = deg_lon + (raw_lon - deg_lon * 100) / 60.0;
+    if (fields[5][0] == 'W') *lon = -*lon;
+    *alt = atof(fields[9]);
+    return true;
+}
+
+static bool parse_nmea_rmc(const char *s, float *speed_kmh) {
+    if (strncmp(s, "$GPRMC", 6) != 0 && strncmp(s, "$GNRMC", 6) != 0) return false;
+    char buf[128];
+    strncpy(buf, s, sizeof(buf)-1);
+    buf[sizeof(buf)-1] = '\0';
+    char *fields[12] = {0};
+    int n = 0; char *p = buf;
+    while (n < 12 && (fields[n] = strsep(&p, ",")) != NULL) n++;
+    if (n < 8) return false;
+    *speed_kmh = atof(fields[7]) * 1.852f;
+    return true;
+}
+
+static void gps_task(void *arg) {
+    /* Wait for GPS module to power on after 3V3 enable */
+    vTaskDelay(pdMS_TO_TICKS(3000));
+
+    uart_config_t uc = {
+        .baud_rate  = GPS_BAUD,
+        .data_bits  = UART_DATA_8_BITS,
+        .parity     = UART_PARITY_DISABLE,
+        .stop_bits  = UART_STOP_BITS_1,
+        .flow_ctrl  = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_DEFAULT,
+    };
+    if (uart_driver_install(GPS_UART_NUM, 1024, 0, 0, NULL, 0) != ESP_OK ||
+        uart_param_config(GPS_UART_NUM, &uc) != ESP_OK ||
+        uart_set_pin(GPS_UART_NUM, GPS_TX_PIN, GPS_RX_PIN,
+                     UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE) != ESP_OK) {
+        ESP_LOGW(TAG, "GPS: UART init failed");
+        vTaskDelete(NULL); return;
+    }
+
+    /* Probe — wait up to 5 s for any byte (L76K outputs NMEA immediately) */
+    uint8_t probe;
+    bool detected = (uart_read_bytes(GPS_UART_NUM, &probe, 1, pdMS_TO_TICKS(5000)) == 1);
+    if (!detected) {
+        ESP_LOGW(TAG, "GPS: no data on GPIO%d (RX) — no fix signal available", GPS_RX_PIN);
+    } else {
+        ESP_LOGI(TAG, "GPS: L76K detected on GPIO%d/%d — sending PMTK config", GPS_TX_PIN, GPS_RX_PIN);
+        /* 1 Hz update rate, all standard sentences, hot-start */
+        const char *pmtk_rate  = "$PMTK220,1000*1F\r\n";
+        const char *pmtk_sbas  = "$PMTK313,1*2E\r\n";   // enable SBAS
+        const char *pmtk_waas  = "$PMTK301,2*2E\r\n";   // use SBAS for DGPS
+        uart_write_bytes(GPS_UART_NUM, pmtk_rate,  strlen(pmtk_rate));
+        uart_write_bytes(GPS_UART_NUM, pmtk_sbas,  strlen(pmtk_sbas));
+        uart_write_bytes(GPS_UART_NUM, pmtk_waas,  strlen(pmtk_waas));
+    }
+
+    char line[128];
+    int  li = 0;
+    double lat = 0, lon = 0;
+    float  alt = 0, speed_kmh = 0;
+    int    sats = 0;
+    bool   fix = false;
+
+    /* Prime line buffer with probe byte if valid */
+    if (detected && probe != '\r' && probe != '\n') line[li++] = (char)probe;
+
+    while (1) {
+        uint8_t ch;
+        if (uart_read_bytes(GPS_UART_NUM, &ch, 1, pdMS_TO_TICKS(2000)) != 1) continue;
+        if (ch == '\r') continue;
+        if (ch == '\n' || li >= (int)sizeof(line) - 1) {
+            line[li] = '\0';
+            li = 0;
+            bool gga = parse_nmea_gga(line, &lat, &lon, &alt, &sats, &fix);
+            bool rmc = parse_nmea_rmc(line, &speed_kmh);
+            if (gga || rmc) {
+                if (lvgl_lock(50)) {
+                    ui_gps_update(lat, lon, alt, speed_kmh, sats, fix);
+                    lvgl_unlock();
+                }
+            }
+        } else {
+            line[li++] = (char)ch;
+        }
     }
 }
 
@@ -1671,9 +2643,35 @@ static void lvgl_tick_task(void *arg) {
     while (1) { lv_tick_inc(5); vTaskDelay(pdMS_TO_TICKS(5)); }
 }
 static void lvgl_task(void *arg) {
+    time_t last_tick = 0;
     while (1) {
         uint32_t d = 10;
-        if (lvgl_lock(portMAX_DELAY)) { d = lv_timer_handler(); lvgl_unlock(); }
+        if (lvgl_lock(portMAX_DELAY)) {
+            /* Update clock labels once per second — we hold the mutex here so
+               lv_label_set_text is safe without any additional locking. */
+            time_t now = time(NULL);
+            if (now != last_tick) {
+                last_tick = now;
+                ui_clock_tick();
+            }
+            /* Apply pending wifi status update (set by connect tasks) */
+            if (s_wifi_status_dirty) {
+                s_wifi_status_dirty = false;
+                if (s_wifi_up) {
+                    char wifi_info[128];
+                    const char *disp_ssid = s_wifi_ssid[0] ? s_wifi_ssid : CONFIG_WIFI_SSID;
+                    snprintf(wifi_info, sizeof(wifi_info),
+                             LV_SYMBOL_WIFI "  %.48s  |  %.39s",
+                             disp_ssid, (char *)s_device_ip);
+                    ui_set_status(wifi_info);
+                    ui_set_wifi_ip((const char *)s_device_ip);
+                } else {
+                    ui_set_status("CONNECTING...");
+                }
+            }
+            d = lv_timer_handler();
+            lvgl_unlock();
+        }
         vTaskDelay(pdMS_TO_TICKS(d < 1 ? 1 : d > 50 ? 50 : d));
     }
 }
@@ -1747,37 +2745,10 @@ static void locate_start_cb(bool start) {
         xTaskCreate(locator_task, "locate", 3072, NULL, 3, NULL);
 }
 
-// ── 1-second clock tick — updates time/date on all headers ───────────────────
+// ── 1-second clock tick — only triggers wifi status refresh ──────────────────
+// Time/date labels are updated by lv_clock_cb (LVGL timer inside lv_timer_handler).
 static void time_tick_cb(void *arg) {
-    time_t now;
-    struct tm t;
-    time(&now);
-    localtime_r(&now, &t);
-
-    char time_buf[8], date_buf[12];
-    strftime(time_buf, sizeof(time_buf), "%H:%M", &t);
-    strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", &t);
-
-    if (lvgl_lock(10)) {
-        ui_set_time(time_buf);
-        ui_set_time_date(date_buf);
-
-        if (s_wifi_status_dirty) {
-            s_wifi_status_dirty = false;
-            if (s_wifi_up) {
-                char wifi_info[64];
-                snprintf(wifi_info, sizeof(wifi_info),
-                         LV_SYMBOL_WIFI "  %s  |  %s",
-                         CONFIG_WIFI_SSID, (char *)s_device_ip);
-                ui_set_status(wifi_info);
-                ui_set_wifi_ip((const char *)s_device_ip);
-            } else {
-                ui_set_status("CONNECTING...");
-            }
-        }
-
-        lvgl_unlock();
-    }
+    (void)arg;
 }
 
 /* Callback used by wifi_at_init to power-cycle C6 via XL9535 */
@@ -1793,7 +2764,20 @@ static void c6_init_task(void *arg) {
 
     if (lvgl_lock(200)) { ui_net_set_status("AT INIT..."); lvgl_unlock(); }
 
-    bool ok = wifi_at_init(c6_en_ctrl, CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD);
+    /* Try saved credentials first, fall back to compiled-in SSIDs */
+    char nvs_ssid[64] = "", nvs_pass[64] = "";
+    bool has_saved = wifi_cred_load(nvs_ssid, sizeof(nvs_ssid), nvs_pass, sizeof(nvs_pass));
+    const char *boot_ssid = has_saved ? nvs_ssid : CONFIG_WIFI_SSID;
+    const char *boot_pass = has_saved ? nvs_pass : CONFIG_WIFI_PASSWORD;
+    if (has_saved) ESP_LOGI(TAG, "Using saved WiFi: '%s'", nvs_ssid);
+
+    bool ok = wifi_at_init(c6_en_ctrl, boot_ssid, boot_pass);
+    if (!ok && has_saved) {
+        /* Saved creds failed — try compiled-in primary */
+        ESP_LOGW(TAG, "Saved WiFi failed, trying primary '%s'", CONFIG_WIFI_SSID);
+        if (lvgl_lock(200)) { ui_net_set_status("TRYING PRIMARY..."); lvgl_unlock(); }
+        ok = wifi_at_connect(CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD);
+    }
     if (!ok) {
         ESP_LOGW(TAG, "Primary WiFi failed, trying fallback '%s'", CONFIG_WIFI_SSID2);
         if (lvgl_lock(200)) { ui_net_set_status("TRYING FALLBACK..."); lvgl_unlock(); }
@@ -1808,6 +2792,8 @@ static void c6_init_task(void *arg) {
 
     /* Populate shared state so rest of code knows WiFi is up */
     s_wifi_up = true;
+    strlcpy(s_wifi_ssid, boot_ssid, sizeof(s_wifi_ssid));
+    s_wifi_status_dirty = true;
     wifi_at_get_ip((char *)s_device_ip, sizeof(s_device_ip));
 
     if (lvgl_lock(200)) {
@@ -1823,9 +2809,34 @@ static void c6_init_task(void *arg) {
         struct timeval tv = { .tv_sec = epoch, .tv_usec = 0 };
         settimeofday(&tv, NULL);
         ESP_LOGI(TAG, "System time synced via SNTP: %lld", (long long)epoch);
+        /* Force-update time labels immediately (don't wait for 1-s LVGL timer) */
+        struct tm tm_now;
+        localtime_r(&epoch, &tm_now);
+        char tbuf[8], dbuf[12];
+        strftime(tbuf, sizeof(tbuf), "%H:%M", &tm_now);
+        strftime(dbuf, sizeof(dbuf), "%Y-%m-%d", &tm_now);
+        if (lvgl_lock(200)) {
+            ui_set_time(tbuf);
+            ui_set_time_date(dbuf);
+            lvgl_unlock();
+        }
+    } else {
+        ESP_LOGW(TAG, "SNTP failed — clock not set");
     }
 
     vTaskDelete(NULL);
+}
+
+// ── Walkie-talkie callbacks ───────────────────────────────────────────────────
+static void walkie_ptt_cb(bool pressed)
+{
+    walkie_set_ptt(pressed);
+}
+
+static void walkie_rx_event(int rssi, int snr)
+{
+    // Forward signal info to the UI (called from RX task, safe via lv_mutex)
+    ui_walkie_set_rx_info(rssi, snr);
 }
 
 static void network_init_task(void *arg) {
@@ -1885,12 +2896,23 @@ static void lvgl_init_task(void *arg) {
     if (audio_codec_init() != ESP_OK)
         ESP_LOGW(TAG, "Audio init failed — radio streaming unavailable");
 
+    /* Walkie-talkie init — uses the I2S handles created above */
+    if (sx1262_init() == ESP_OK) {
+        if (walkie_init(s_i2s_tx, s_i2s_rx) == ESP_OK) {
+            ui_set_walkie_ptt_cb(walkie_ptt_cb);
+            walkie_set_rx_cb(walkie_rx_event);
+        }
+    } else {
+        ESP_LOGW(TAG, "SX1262 init failed — walkie-talkie unavailable");
+    }
+
     ui_set_flap_cb(flap_cb);
     ui_set_wifi_scan_cb(wifi_scan_cb);
     ui_set_wifi_connect_cb(wifi_connect_cb);
     ui_set_c6_flash_cb(wifi_reconnect_cb);
     ui_set_weather_radio_cb(weather_radio_cb);
     ui_set_weather_fetch_cb(weather_fetch_cb);
+    ui_set_capture_cb(capture_cb);
     ui_set_screenshot_cb(screenshot_cb);
     ui_set_cable_test_cb(cable_test_start_cb);
     ui_set_speed_test_cb(speed_test_start_cb);
@@ -1915,7 +2937,12 @@ static void lvgl_init_task(void *arg) {
     /* 16 KB: esp_vfs_fat_sdmmc_mount alone needs ~8 KB deep in the call chain;
        combined with save_bmp + screenshot_task frames 8 KB is not enough. */
     xTaskCreate(screenshot_task, "shot", 16384, NULL, 1, NULL);
+    xTaskCreate(gps_task,        "gps",   4096, NULL, 1, NULL);
     xTaskCreate(network_init_task, "net",  8192,  NULL, 3, NULL);
+    // Auto-start camera scan at boot for diagnostics (remove once camera is working)
+    s_cam_stop    = false;
+    s_cam_running = true;
+    xTaskCreatePinnedToCore(camera_task, "camera", 16384, NULL, 3, NULL, 1);
 
     vTaskDelete(NULL);
 }

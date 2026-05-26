@@ -5,6 +5,7 @@
 #include "ui.h"
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "esp_log.h"
 
 static const char *TAG = "UI";
@@ -42,6 +43,7 @@ static ui_weather_fetch_cb_t s_cb_wx_fetch;
 static ui_flap_cb_t          s_cb_flap;
 static ui_screenshot_cb_t    s_cb_ss;
 static ui_lora_send_cb_t     s_cb_lora_send;
+static ui_walkie_ptt_cb_t    s_cb_walkie_ptt;
 static ui_cable_test_cb_t    s_cb_cable_test;
 static ui_locate_cb_t        s_cb_locate;
 static ui_c6_flash_cb_t      s_cb_c6_flash;
@@ -78,7 +80,7 @@ static lv_obj_t *s_home_ip_lbl;
 static lv_obj_t *s_home_status_lbl;
 
 /* Global header label registry — updated by ui_set_time / ui_set_battery */
-#define MAX_HDR_LBLS 14
+#define MAX_HDR_LBLS 20
 static lv_obj_t *s_all_time_lbls[MAX_HDR_LBLS];
 static lv_obj_t *s_all_date_lbls[MAX_HDR_LBLS];
 static lv_obj_t *s_all_batt_lbls[MAX_HDR_LBLS];
@@ -146,8 +148,9 @@ static lv_obj_t *s_can_log_cont;
 static char      s_can_buf[3072];
 
 /* ── Camera screen ───────────────────────────────────────────────────────── */
-static lv_obj_t *s_cam_status_lbl;
-static bool      s_cam_dirty;
+static lv_obj_t      *s_cam_status_lbl;
+static lv_obj_t      *s_cam_canvas  = NULL;
+static lv_image_dsc_t s_cam_img_dsc;
 
 /* ── Dashboard screen ────────────────────────────────────────────────────── */
 static lv_obj_t *s_dash_heap_lbl;
@@ -163,6 +166,7 @@ static lv_obj_t *s_scr_comms_spotify;
 static lv_obj_t *s_scr_comms_weather;
 static lv_obj_t *s_scr_comms_broadcast;
 static lv_obj_t *s_scr_comms_lora;
+static lv_obj_t *s_scr_walkie;
 
 /* Spotify panel */
 static lv_obj_t *s_music_title_lbl;
@@ -185,6 +189,12 @@ static lv_obj_t *s_lora_log_lbl;
 static lv_obj_t *s_lora_log_cont;
 static lv_obj_t *s_lora_tx_ta;
 static char      s_lora_buf[2048];
+
+/* Walkie-talkie screen */
+static lv_obj_t *s_walkie_state_lbl;
+static lv_obj_t *s_walkie_rssi_lbl;
+static lv_obj_t *s_walkie_ptt_btn;
+static lv_obj_t *s_walkie_ptt_lbl;
 
 /* ── Settings screen ─────────────────────────────────────────────────────── */
 static lv_obj_t *s_settings_ssid_lbl;
@@ -210,6 +220,7 @@ void ui_set_weather_fetch_cb(ui_weather_fetch_cb_t cb) { s_cb_wx_fetch   = cb; }
 void ui_set_flap_cb(ui_flap_cb_t cb)                   { s_cb_flap       = cb; }
 void ui_set_screenshot_cb(ui_screenshot_cb_t cb)       { s_cb_ss         = cb; }
 void ui_set_lora_send_cb(ui_lora_send_cb_t cb)         { s_cb_lora_send  = cb; }
+void ui_set_walkie_ptt_cb(ui_walkie_ptt_cb_t cb)       { s_cb_walkie_ptt = cb; }
 void ui_set_cable_test_cb(ui_cable_test_cb_t cb)       { s_cb_cable_test  = cb; }
 void ui_set_speed_test_cb(ui_speed_test_cb_t cb)       { s_cb_speed_test  = cb; }
 void ui_set_locate_cb(ui_locate_cb_t cb)               { s_cb_locate      = cb; }
@@ -349,7 +360,7 @@ static lv_obj_t *make_hdr(lv_obj_t *scr, const char *title, bool with_back) {
 
     /* ── Battery (top-right) ── */
     lv_obj_t *bl = lv_label_create(hdr);
-    lv_label_set_text(bl, LV_SYMBOL_BATTERY_FULL " ?%");
+    lv_label_set_text(bl, LV_SYMBOL_BATTERY_FULL);
     lv_obj_set_style_text_color(bl, C_YELLOW, 0);
     lv_obj_set_style_text_font(bl, &lv_font_montserrat_14, 0);
     lv_obj_align(bl, LV_ALIGN_TOP_RIGHT, -70, 6);
@@ -865,15 +876,26 @@ static void build_cam(void) {
     lv_obj_add_event_cb(s_scr_cam, swipe_back_cb, LV_EVENT_GESTURE, NULL);
     make_hdr(s_scr_cam, LV_SYMBOL_IMAGE "  CAMERA", true);
 
-    /* Placeholder panel */
-    lv_obj_t *cam_panel = make_card(s_scr_cam, 8, HDR + 8, W - 16, CY - 80);
+    /* Camera preview area — fills most of the screen */
+    int preview_w = W - 16;
+    int preview_h = CY - 80;
+    lv_obj_t *cam_panel = make_card(s_scr_cam, 8, HDR + 8, preview_w, preview_h);
     lv_obj_set_style_border_color(cam_panel, C_DIMMER, 0);
+    lv_obj_set_style_pad_all(cam_panel, 0, 0);
 
-    s_cam_status_lbl = make_label(cam_panel, LV_SYMBOL_IMAGE "\nCAMERA INITIALIZING...",
+    /* Status label shown when camera is not streaming */
+    s_cam_status_lbl = make_label(cam_panel, LV_SYMBOL_IMAGE "\nTAP CAPTURE\nTO START",
                                   &lv_font_montserrat_16, C_DIM);
     lv_label_set_long_mode(s_cam_status_lbl, LV_LABEL_LONG_WRAP);
     lv_obj_set_style_text_align(s_cam_status_lbl, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_align(s_cam_status_lbl, LV_ALIGN_CENTER, 0, 0);
+
+    /* LVGL image widget for live camera frames (hidden until first frame arrives) */
+    s_cam_canvas = lv_image_create(cam_panel);
+    lv_obj_set_size(s_cam_canvas, preview_w, preview_h);
+    lv_obj_align(s_cam_canvas, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_add_flag(s_cam_canvas, LV_OBJ_FLAG_HIDDEN);
+    lv_image_set_scale(s_cam_canvas, 256);  /* 1:1 initially, updated in set_frame */
 
     /* Button row */
     int by = HDR + CY - 68;
@@ -1446,22 +1468,181 @@ static void build_comms_lora_screen(void) {
     lv_obj_set_pos(sb, W - 98, y);
 }
 
-/* ── COMMS landing page (2×2 tile grid) ──────────────────────────────────── */
+/* ── Walkie-talkie screen ────────────────────────────────────────────────── */
+
+static void ptt_event_cb(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    bool pressed = (code == LV_EVENT_PRESSED);
+
+    if (s_cb_walkie_ptt) s_cb_walkie_ptt(pressed);
+
+    if (pressed) {
+        lv_obj_set_style_bg_color(s_walkie_ptt_btn, C_ORANGE, 0);
+        if (s_walkie_ptt_lbl) lv_label_set_text(s_walkie_ptt_lbl, LV_SYMBOL_AUDIO "  TRANSMITTING");
+        if (s_walkie_state_lbl) lv_label_set_text(s_walkie_state_lbl,
+                                                   LV_SYMBOL_UPLOAD "  TX");
+        lv_obj_set_style_text_color(s_walkie_state_lbl, C_ORANGE, 0);
+    } else {
+        lv_obj_set_style_bg_color(s_walkie_ptt_btn, C_DIM, 0);
+        if (s_walkie_ptt_lbl) lv_label_set_text(s_walkie_ptt_lbl, "HOLD TO TALK");
+        if (s_walkie_state_lbl) lv_label_set_text(s_walkie_state_lbl,
+                                                   LV_SYMBOL_EYE_OPEN "  LISTENING");
+        lv_obj_set_style_text_color(s_walkie_state_lbl, C_GREEN, 0);
+    }
+}
+
+static void build_walkie_screen(void)
+{
+    s_scr_walkie = lv_obj_create(NULL);
+    scr_bg(s_scr_walkie);
+    lv_obj_add_event_cb(s_scr_walkie, swipe_back_cb, LV_EVENT_GESTURE, NULL);
+    make_hdr(s_scr_walkie, LV_SYMBOL_AUDIO "  WALKIE-TALKIE", true);
+
+    int y = HDR + 24;
+
+    /* State label */
+    s_walkie_state_lbl = make_label(s_scr_walkie, LV_SYMBOL_EYE_OPEN "  LISTENING",
+                                     &lv_font_montserrat_20, C_GREEN);
+    lv_obj_set_pos(s_walkie_state_lbl, 0, y);
+    lv_obj_set_width(s_walkie_state_lbl, W);
+    lv_obj_set_style_text_align(s_walkie_state_lbl, LV_TEXT_ALIGN_CENTER, 0);
+    y += 36;
+
+    /* RSSI / SNR label */
+    s_walkie_rssi_lbl = make_label(s_scr_walkie, "Last RX:  \xe2\x80\x94 dBm  /  \xe2\x80\x94 dB SNR",
+                                    &lv_font_montserrat_14, C_DIM);
+    lv_obj_set_pos(s_walkie_rssi_lbl, 0, y);
+    lv_obj_set_width(s_walkie_rssi_lbl, W);
+    lv_obj_set_style_text_align(s_walkie_rssi_lbl, LV_TEXT_ALIGN_CENTER, 0);
+    y += 32;
+
+    /* Config label */
+    lv_obj_t *cfg = make_label(s_scr_walkie, "Codec2 2400 bps  |  915 MHz  SF7 BW125  +14 dBm",
+                                &lv_font_montserrat_14, C_DIM);
+    lv_obj_set_pos(cfg, 0, y);
+    lv_obj_set_width(cfg, W);
+    lv_obj_set_style_text_align(cfg, LV_TEXT_ALIGN_CENTER, 0);
+    y += 48;
+
+    /* PTT button — centred, large, takes up most of remaining screen */
+    const int BTN_W = W - 48;
+    const int BTN_H = CY - (y - HDR) - 60;
+    int btn_x = 24;
+
+    s_walkie_ptt_btn = lv_btn_create(s_scr_walkie);
+    lv_obj_set_pos(s_walkie_ptt_btn, btn_x, y);
+    lv_obj_set_size(s_walkie_ptt_btn, BTN_W, BTN_H);
+    lv_obj_set_style_bg_color(s_walkie_ptt_btn, C_DIM, 0);
+    lv_obj_set_style_radius(s_walkie_ptt_btn, 24, 0);
+    lv_obj_set_style_border_width(s_walkie_ptt_btn, 2, 0);
+    lv_obj_set_style_border_color(s_walkie_ptt_btn, C_ORANGE, 0);
+    lv_obj_set_style_shadow_width(s_walkie_ptt_btn, 0, 0);
+    lv_obj_add_event_cb(s_walkie_ptt_btn, ptt_event_cb, LV_EVENT_PRESSED,  NULL);
+    lv_obj_add_event_cb(s_walkie_ptt_btn, ptt_event_cb, LV_EVENT_RELEASED, NULL);
+    /* Allow touch-cancel (finger slides off) to release PTT */
+    lv_obj_add_event_cb(s_walkie_ptt_btn, ptt_event_cb, LV_EVENT_PRESS_LOST, NULL);
+    lv_obj_clear_flag(s_walkie_ptt_btn, LV_OBJ_FLAG_PRESS_LOCK);
+
+    s_walkie_ptt_lbl = lv_label_create(s_walkie_ptt_btn);
+    lv_label_set_text(s_walkie_ptt_lbl, "HOLD TO TALK");
+    lv_obj_set_style_text_font(s_walkie_ptt_lbl, &lv_font_montserrat_20, 0);
+    lv_obj_set_style_text_color(s_walkie_ptt_lbl, C_WHITE, 0);
+    lv_obj_align(s_walkie_ptt_lbl, LV_ALIGN_CENTER, 0, 0);
+}
+
+void ui_walkie_set_rx_info(int rssi, int snr)
+{
+    if (!s_walkie_rssi_lbl) return;
+    char buf[64];
+    snprintf(buf, sizeof(buf), "Last RX:  %d dBm  /  %d dB SNR", rssi, snr / 4);
+    lv_label_set_text(s_walkie_rssi_lbl, buf);
+    lv_obj_set_style_text_color(s_walkie_rssi_lbl, C_GREEN, 0);
+    if (s_walkie_state_lbl) {
+        lv_label_set_text(s_walkie_state_lbl, LV_SYMBOL_DOWNLOAD "  RECEIVED");
+        lv_obj_set_style_text_color(s_walkie_state_lbl, C_BLUE, 0);
+    }
+}
+
+/* ── COMMS landing page (2×2 tile grid + walkie row) ────────────────────── */
 static void build_music(void) {
     s_scr_music = lv_obj_create(NULL);
     scr_bg(s_scr_music);
+    /* Re-enable vertical scroll so walkie tile at row 3 is reachable */
+    lv_obj_add_flag(s_scr_music, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scroll_dir(s_scr_music, LV_DIR_VER);
+    lv_obj_set_scrollbar_mode(s_scr_music, LV_SCROLLBAR_MODE_OFF);
     lv_obj_add_event_cb(s_scr_music, swipe_back_cb, LV_EVENT_GESTURE, NULL);
     make_hdr(s_scr_music, LV_SYMBOL_WIFI "  COMMS", true);
 
     build_comms_tile(s_scr_music, 0, 0, LV_SYMBOL_AUDIO,   "SPOTIFY",   "Bluetooth music",  C_BLUE,   s_scr_comms_spotify);
     build_comms_tile(s_scr_music, 1, 0, LV_SYMBOL_REFRESH, "WEATHER",   "NOAA radio feed",  C_BLUE,   s_scr_comms_weather);
     build_comms_tile(s_scr_music, 0, 1, LV_SYMBOL_UPLOAD,  "BROADCAST", "Mesh network TX",  C_ORANGE, s_scr_comms_broadcast);
-    build_comms_tile(s_scr_music, 1, 1, LV_SYMBOL_BARS,    "LORA",      "SX1262 915MHz",    C_ORANGE, s_scr_comms_lora);
+    build_comms_tile(s_scr_music, 1, 1, LV_SYMBOL_BARS,    "LORA",      "SX1262 text",      C_ORANGE, s_scr_comms_lora);
+
+    /* Walkie-talkie — full-width tile at row 2 */
+    {
+        const int GAP  = 8;
+        const int TW   = (W - 3 * GAP) / 2;
+        const int TH   = (CY - 3 * GAP) / 2;
+        int ww = W - 2 * GAP;
+        int wx = GAP;
+        int wy = HDR + GAP + 2 * (TH + GAP);
+
+        lv_obj_t *card = make_card(s_scr_music, wx, wy, ww, TH);
+        lv_obj_add_flag(card, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_add_event_cb(card, tile_nav_cb, LV_EVENT_CLICKED, s_scr_walkie);
+
+        lv_obj_t *bar = lv_obj_create(card);
+        lv_obj_set_pos(bar, 0, 0);
+        lv_obj_set_size(bar, ww, 6);
+        lv_obj_set_style_bg_color(bar, C_ORANGE, 0);
+        lv_obj_set_style_bg_opa(bar, LV_OPA_COVER, 0);
+        lv_obj_set_style_border_width(bar, 0, 0);
+        lv_obj_set_style_radius(bar, 0, 0);
+
+        lv_obj_t *ic = lv_label_create(card);
+        lv_label_set_text(ic, LV_SYMBOL_AUDIO);
+        lv_obj_set_style_text_color(ic, C_ORANGE, 0);
+        lv_obj_set_style_text_font(ic, &lv_font_montserrat_48, 0);
+        lv_obj_align(ic, LV_ALIGN_CENTER, -80, -16);
+
+        lv_obj_t *ttl = lv_label_create(card);
+        lv_label_set_text(ttl, "WALKIE-TALKIE");
+        lv_obj_set_style_text_color(ttl, C_WHITE, 0);
+        lv_obj_set_style_text_font(ttl, &lv_font_montserrat_20, 0);
+        lv_obj_align(ttl, LV_ALIGN_CENTER, 20, -14);
+
+        lv_obj_t *st = lv_label_create(card);
+        lv_label_set_text(st, "Codec2 voice  |  LoRa SX1262");
+        lv_obj_set_style_text_color(st, C_DIM, 0);
+        lv_obj_set_style_text_font(st, &lv_font_montserrat_14, 0);
+        lv_obj_align(st, LV_ALIGN_CENTER, 20, 16);
+
+        (void)TW;  /* suppress unused warning */
+    }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
  *  ui_init / ui_splash_done
  * ═══════════════════════════════════════════════════════════════════════════ */
+/* Called from lvgl_task (which holds the LVGL mutex) once per second. */
+void ui_clock_tick(void) {
+    time_t now;
+    struct tm tm;
+    time(&now);
+    localtime_r(&now, &tm);
+
+    char tbuf[8], dbuf[12];
+    strftime(tbuf, sizeof(tbuf), "%H:%M", &tm);
+    strftime(dbuf, sizeof(dbuf), "%Y-%m-%d", &tm);
+
+    for (int i = 0; i < s_hdr_lbl_cnt; i++) {
+        if (s_all_time_lbls[i]) lv_label_set_text(s_all_time_lbls[i], tbuf);
+        if (s_all_date_lbls[i]) lv_label_set_text(s_all_date_lbls[i], dbuf);
+    }
+}
+
 void ui_init(void) {
     ESP_LOGI(TAG, "Building BLUE-NET OS UI (%dx%d)", W, H);
 
@@ -1480,6 +1661,7 @@ void ui_init(void) {
     build_comms_weather_screen();
     build_comms_broadcast_screen();
     build_comms_lora_screen();
+    build_walkie_screen();
     build_music();
     build_home();
 
@@ -1747,9 +1929,15 @@ void ui_net_add_scan_result(const char *ssid, int rssi) {
 void ui_gps_update(double lat, double lon, float alt, float speed_kmh,
                    int sats, bool fix) {
     if (s_gps_fix_lbl) {
-        lv_label_set_text(s_gps_fix_lbl, fix ? "FIX" : "NO FIX");
-        lv_obj_set_style_text_color(s_gps_fix_lbl,
-                                    fix ? C_GREEN : C_RED, 0);
+        if (fix) {
+            lv_label_set_text(s_gps_fix_lbl, "FIX");
+            lv_obj_set_style_text_color(s_gps_fix_lbl, C_GREEN, 0);
+        } else {
+            char buf[24];
+            snprintf(buf, sizeof(buf), sats > 0 ? "SEARCHING (%d)" : "NO FIX", sats);
+            lv_label_set_text(s_gps_fix_lbl, buf);
+            lv_obj_set_style_text_color(s_gps_fix_lbl, sats > 0 ? C_YELLOW : C_RED, 0);
+        }
     }
     if (s_gps_lat_lbl) {
         char buf[24];
@@ -1801,12 +1989,29 @@ void ui_can_append_msg(const char *msg) {
  *  Camera
  * ═══════════════════════════════════════════════════════════════════════════ */
 void ui_cam_set_frame(const void *rgb565, int w, int h) {
-    (void)rgb565; (void)w; (void)h;
-    s_cam_dirty = true;
+    if (!s_cam_canvas || !rgb565) return;
+
+    s_cam_img_dsc.header.cf         = LV_COLOR_FORMAT_RGB565;
+    s_cam_img_dsc.header.w          = (uint32_t)w;
+    s_cam_img_dsc.header.h          = (uint32_t)h;
+    s_cam_img_dsc.data_size         = (uint32_t)(w * h * 2);
+    s_cam_img_dsc.data              = (const uint8_t *)rgb565;
+
+    lv_image_set_src(s_cam_canvas, &s_cam_img_dsc);
+    lv_obj_clear_flag(s_cam_canvas, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(s_cam_status_lbl, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_invalidate(s_cam_canvas);
 }
 
 void ui_cam_invalidate_cache(void) {
-    s_cam_dirty = false;
+    if (s_cam_canvas) lv_obj_invalidate(s_cam_canvas);
+}
+
+void ui_cam_set_status(const char *msg) {
+    if (!s_cam_status_lbl) return;
+    lv_label_set_text(s_cam_status_lbl, msg ? msg : "");
+    lv_obj_clear_flag(s_cam_status_lbl, LV_OBJ_FLAG_HIDDEN);
+    if (s_cam_canvas) lv_obj_add_flag(s_cam_canvas, LV_OBJ_FLAG_HIDDEN);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
