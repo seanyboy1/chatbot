@@ -65,10 +65,10 @@
 #include "minimp3.h"
 
 // ── User config ───────────────────────────────────────────────────────────────
-#define CONFIG_WIFI_SSID        "your_wifi_ssid"
-#define CONFIG_WIFI_PASSWORD    "your_wifi_password"
-#define CONFIG_WIFI_SSID2       "your_wifi_ssid"
-#define CONFIG_WIFI_PASSWORD2   "your_wifi_password"
+#define CONFIG_WIFI_SSID        "SK"
+#define CONFIG_WIFI_PASSWORD    "Soscared1"
+#define CONFIG_WIFI_SSID2       "SK"
+#define CONFIG_WIFI_PASSWORD2   "Soscared1"
 #ifndef CONFIG_BLUENET_SERVER
 #define CONFIG_BLUENET_SERVER   "http://10.0.0.242:3000"
 #endif
@@ -135,8 +135,8 @@
 
 // ── GPS — L76K on UART1 ───────────────────────────────────────────────────────
 #define GPS_UART_NUM  UART_NUM_1
-#define GPS_TX_PIN    22          // P4 TX → GPS RX
-#define GPS_RX_PIN    23          // GPS TX → P4 RX
+#define GPS_TX_PIN    23          // P4 TX → GPS RX
+#define GPS_RX_PIN    22          // GPS TX → P4 RX
 #define GPS_BAUD      9600
 
 // ── GT9895 touch controller ───────────────────────────────────────────────────
@@ -2359,60 +2359,63 @@ static void screenshot_task(void *arg) {
     }
 }
 
-// ── Battery ADC ───────────────────────────────────────────────────────────────
-// T-Display P4: battery voltage divider on ADC1_CH0 (GPIO1).
-// If reading is stuck at 0% or 100% unplugged, the pin needs adjusting.
-#define BATT_ADC_CHAN   ADC_CHANNEL_0   // GPIO1
+// ── Battery — BQ27220 fuel gauge (I2C 0x55, IIC_1 = GPIO7/8 = I2C_NUM_0) ──────
+#define BQ27220_ADDR         0x55
+#define BQ27220_REG_VOLTAGE  0x08   // 2 bytes LE, mV
+#define BQ27220_REG_BATT_ST  0x0A   // 2 bytes LE — bit0=DSG (1=discharging)
+#define BQ27220_REG_SOC      0x2C   // 2 bytes LE, 0-100 %
+
+static i2c_master_dev_handle_t s_bq27220 = NULL;
+
+static bool bq27220_read(uint8_t reg, uint16_t *val) {
+    if (!s_bq27220) return false;
+    uint8_t data[2] = {0, 0};
+    esp_err_t r = i2c_master_transmit_receive(s_bq27220, &reg, 1, data, 2,
+                                              pdMS_TO_TICKS(100));
+    if (r != ESP_OK) return false;
+    *val = (uint16_t)(data[0] | (data[1] << 8));
+    return true;
+}
 
 static void battery_task(void *arg) {
-    /* On ESP32-P4, ADC1 channels map to GPIO16-23 which are all used:
-       GPIO14-19 = C6 SDIO, GPIO20-21 = ES8311 I2C, GPIO22-23 = GPS UART.
-       Battery voltage reading via ADC is not available without a free analog pin.
-       Show a fixed indicator until hardware schematic provides the correct pin. */
-    ESP_LOGW(TAG, "Battery ADC unavailable on P4 — all ADC1 pins in use by other peripherals");
-    vTaskDelete(NULL);
-    return;
+    vTaskDelay(pdMS_TO_TICKS(3000));   // let XL9535 + power rails settle first
 
-    /* Dead code — kept as reference for when correct pin is found */
-    adc_oneshot_unit_handle_t adc = NULL;
-    {
-        adc_oneshot_unit_init_cfg_t unit_cfg = { .unit_id = ADC_UNIT_1 };
-        adc_oneshot_new_unit(&unit_cfg, &adc);
-    }
-    adc_oneshot_chan_cfg_t chan_cfg = {
-        .atten    = ADC_ATTEN_DB_12,
-        .bitwidth = ADC_BITWIDTH_12,
+    // Add BQ27220 onto the existing IIC_1 bus (shared with XL9535)
+    i2c_device_config_t dc = {
+        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+        .device_address  = BQ27220_ADDR,
+        .scl_speed_hz    = 100000,
     };
-    if (!adc || adc_oneshot_config_channel(adc, BATT_ADC_CHAN, &chan_cfg) != ESP_OK) {
-        if (adc) adc_oneshot_del_unit(adc);
+    if (!s_i2c_bus ||
+        i2c_master_bus_add_device(s_i2c_bus, &dc, &s_bq27220) != ESP_OK) {
+        ESP_LOGE(TAG, "BQ27220: failed to add I2C device");
         vTaskDelete(NULL);
         return;
     }
 
+    // Verify the gauge is present
+    uint16_t soc = 0;
+    if (!bq27220_read(BQ27220_REG_SOC, &soc)) {
+        ESP_LOGE(TAG, "BQ27220: no response at 0x55 — check IIC_1 wiring");
+        vTaskDelete(NULL);
+        return;
+    }
+    ESP_LOGI(TAG, "BQ27220 OK — initial SOC: %d%%", soc);
+
     while (1) {
-        /* Average 4 samples to reduce noise */
-        int sum = 0;
-        for (int i = 0; i < 4; i++) {
-            int raw = 0;
-            if (adc_oneshot_read(adc, BATT_ADC_CHAN, &raw) == ESP_OK)
-                sum += raw;
-            vTaskDelay(pdMS_TO_TICKS(5));
-        }
-        int raw_avg = sum / 4;
+        uint16_t pct = 0, batt_st = 0, mv = 0;
+        bq27220_read(BQ27220_REG_SOC,    &pct);
+        bq27220_read(BQ27220_REG_BATT_ST, &batt_st);
+        bq27220_read(BQ27220_REG_VOLTAGE, &mv);
 
-        /* ADC_ATTEN_DB_11: ~0–3.9V full scale over 4095 counts
-           Voltage divider 1:1 → batt_mv = raw_avg * 3900 / 4095 * 2 */
-        int batt_mv = (int)((float)raw_avg * 7800.0f / 4095.0f);
-
-        /* LiPo: 3000mV = 0%, 4200mV = 100% */
-        int pct = (batt_mv - 3000) * 100 / (4200 - 3000);
-        if (pct < 0)   pct = 0;
         if (pct > 100) pct = 100;
+        bool discharging = (batt_st & 0x01);   // DSG bit
+        bool charging    = !discharging;
 
-        ESP_LOGI(TAG, "Batt: raw=%d batt_mv=%d pct=%d%%", raw_avg, batt_mv, pct);
+        ESP_LOGI(TAG, "Batt: %d%% %dmV %s", pct, mv, charging ? "CHG" : "DSG");
 
         if (lvgl_lock(200)) {
-            ui_set_battery(pct, false);
+            ui_set_battery((int)pct, charging);
             lvgl_unlock();
         }
         vTaskDelay(pdMS_TO_TICKS(30000));
@@ -2448,6 +2451,23 @@ static bool parse_nmea_gga(const char *s, double *lat, double *lon,
     *lon = deg_lon + (raw_lon - deg_lon * 100) / 60.0;
     if (fields[5][0] == 'W') *lon = -*lon;
     *alt = atof(fields[9]);
+    return true;
+}
+
+// Parse $GPGSV/$GLGSV/$GNGSV — returns total satellites IN VIEW (field 3).
+// Called for every GSV sentence; only the first message (field 2 == "1")
+// carries the authoritative total, so we update sats_view on msg 1 only.
+static bool parse_nmea_gsv(const char *s, int *sats_view) {
+    if (strncmp(s + 3, "GSV,", 4) != 0) return false;   // accepts $GP/$GL/$GN
+    char buf[128];
+    strncpy(buf, s, sizeof(buf) - 1);
+    buf[sizeof(buf)-1] = '\0';
+    char *fields[5] = {0};
+    int n = 0; char *p = buf;
+    while (n < 5 && (fields[n] = strsep(&p, ",")) != NULL) n++;
+    if (n < 4) return false;
+    if (atoi(fields[2]) != 1) return false;   // only first message has total count
+    *sats_view = atoi(fields[3]);
     return true;
 }
 
@@ -2504,8 +2524,10 @@ static void gps_task(void *arg) {
     int  li = 0;
     double lat = 0, lon = 0;
     float  alt = 0, speed_kmh = 0;
-    int    sats = 0;
+    int    sats_used = 0;   // from GGA: satellites in the fix
+    int    sats_view = 0;   // from GSV: satellites visible to antenna
     bool   fix = false;
+    int    diag_lines = 0;  // log first 20 NMEA lines to confirm data flow
 
     /* Prime line buffer with probe byte if valid */
     if (detected && probe != '\r' && probe != '\n') line[li++] = (char)probe;
@@ -2517,11 +2539,24 @@ static void gps_task(void *arg) {
         if (ch == '\n' || li >= (int)sizeof(line) - 1) {
             line[li] = '\0';
             li = 0;
-            bool gga = parse_nmea_gga(line, &lat, &lon, &alt, &sats, &fix);
+
+            if (diag_lines < 20 && line[0] == '$') {
+                ESP_LOGI(TAG, "GPS NMEA: %s", line);
+                diag_lines++;
+            }
+
+            bool gga = parse_nmea_gga(line, &lat, &lon, &alt, &sats_used, &fix);
             bool rmc = parse_nmea_rmc(line, &speed_kmh);
-            if (gga || rmc) {
+            int sv = 0;
+            bool gsv = parse_nmea_gsv(line, &sv);
+            if (gsv && sv > sats_view) sats_view = sv;
+
+            // Show the larger of the two counts: in-view beats in-use before fix
+            int display_sats = fix ? sats_used : sats_view;
+
+            if (gga || rmc || gsv) {
                 if (lvgl_lock(50)) {
-                    ui_gps_update(lat, lon, alt, speed_kmh, sats, fix);
+                    ui_gps_update(lat, lon, alt, speed_kmh, display_sats, fix);
                     lvgl_unlock();
                 }
             }
